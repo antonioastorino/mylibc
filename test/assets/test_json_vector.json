@@ -1,0 +1,22 @@
+[
+	{
+		"item1": [
+			1,
+			2
+		],
+		"item2": "string_type"
+	},
+	{
+		"another": 34
+	},
+	{
+		"nested": {
+			"object_a": "item_a",
+			"object_b": "item_b"
+		},
+		"nested2": {
+			"object_1": "item_1",
+			"object_2": "item_2"
+		}
+	}
+]

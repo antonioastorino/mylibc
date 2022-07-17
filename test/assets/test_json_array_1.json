@@ -1,0 +1,14 @@
+{
+	"array_key": [
+		{
+			"object 1": 56
+		},
+		{
+			"object 2": 404.5
+		},
+		{
+			"object 3": "SOME STRING"
+		},
+		32
+	]
+}

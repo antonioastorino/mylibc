@@ -1,0 +1,16 @@
+{
+	"array_key": [
+		{
+			"inner array 1": [
+				12314,
+				-32.4
+			]
+		},
+		{
+			"inner array 2": [
+				1.4,
+				"hello"
+			]
+		}
+	]
+}

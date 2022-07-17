@@ -1,0 +1,29 @@
+{
+	"Snapshot": {
+		"ChartInfo": {
+			"DelayedByMinutes": 15,
+			"Horizon": 1
+		},
+		"Data": [
+			{
+				"Time": "2021-07-23T08:09:00.000000Z",
+				"Volume": 810.0
+			},
+			{
+				"Close": 230.3,
+				"Time": "2021-07-23T08:10:00.000000Z"
+			}
+		],
+		"DataVersion": 27114464,
+		"DisplayAndFormat": {
+			"Currency": "DKK",
+			"Decimals": 2
+		},
+		"Value": 1
+	},
+	"State": "Active",
+	"ContextId": "3742456406",
+	"Format": "application/x-protobuf",
+	"Schema": "syntax = proto3; option saxobank_root = ChartResponse;import google/protobuf/timestamp.proto; message ChartInfo {   repeated int32 __meta_nulls = 1;   int32 DelayedByMinutes = 2;   string ExchangeId = 3;   .google.protobuf.Timestamp FirstSampleTime = 4;   int32 Horizon = 5;}message ChartSample {   repeated int32 __meta_nulls = 1;   double Close = 2;   double CloseAsk = 3;   double CloseBid = 4;   double Growth = 5;   double High = 6;   double HighAsk = 7;   double HighBid = 8;   double Interest = 9;   double Low = 10;   double LowAsk = 11;   double LowBid = 12;   double Open = 13;   double OpenAsk = 14;   double OpenBid = 15;   .google.protobuf.Timestamp Time = 16;   double Volume = 17;}message DisplayAndFormat {   repeated int32 __meta_nulls = 1;   string Currency = 2;   int32 Decimals = 3;   string Description = 4;   string Format = 5;   int32 NumeratorDecimals = 6;   string Symbol = 7;}message ChartResponse {   repeated int32 __meta_nulls = 1;   repeated int32 __meta_empty = 2;   ChartInfo ChartInfo = 3;   repeated ChartSample Data = 4;   int32 DataVersion = 5;   DisplayAndFormat DisplayAndFormat = 6;}",
+	"SchemaName": "Chart-3.1.204+9577875a44"
+}

@@ -1,0 +1,21 @@
+{
+	"text_key": "text_value",
+	"nested_1": {
+		"object_1.1": "item_1.1",
+		"object_1.2": "item_1.2"
+	},
+	"test_array": [
+		14352,
+		2.15,
+		"string_element"
+	],
+	"nested_2": {
+		"object_2.1": "item_2.1",
+		"object_2.2": {
+			"item_2.2": "value_2.2.1"
+		}
+	},
+	"test_integer": 435234,
+	"test_float": 435.234,
+	"text_sibling": "sibling_value"
+}

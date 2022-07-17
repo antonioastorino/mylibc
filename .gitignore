@@ -1,0 +1,8 @@
+lfs
+lib
+build
+*.swp
+*.swo
+*.bak
+test/artifacts 
+Makefile
