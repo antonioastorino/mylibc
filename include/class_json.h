@@ -3,6 +3,22 @@
 #include "class_string.h"
 #include "common.h"
 
+#define CHECK_MISSING_ENTRY(entry, bool_value, success_string)                                     \
+    if (is_err(result))                                                                            \
+    {                                                                                              \
+        LOG_ERROR("Missing entry `%s`.", entry);                                                   \
+        bool_value = true;                                                                         \
+    }                                                                                              \
+    LOG_DEBUG("%s", success_string);
+
+#define SET_MISSING_ENTRY(result, bool_value, success_string)                                      \
+    if (is_err(result))                                                                            \
+    {                                                                                              \
+        LOG_ERROR("Missing entry.");                                                   \
+        bool_value = true;                                                                         \
+    }                                                                                              \
+    LOG_DEBUG("%s", success_string);
+
 // A air `key` `value`, plus a `parent` to make a double-linked list, and a `sibling`.
 typedef struct JsonItem JsonItem;
 // Any possible value, including another `JsonItem`.
@@ -19,7 +35,7 @@ typedef enum
     VALUE_ITEM,
     VALUE_INVALID,
 } ValueType;
- 
+
 /**
  *
  * JSON operators (if found outside a string):

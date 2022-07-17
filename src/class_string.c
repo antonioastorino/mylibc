@@ -134,7 +134,8 @@ Error String_replace_char(
     const char replace,
     size_t* out_count)
 {
-    return_on_err(String_is_null(haystack_string_p)) char tmp_str[haystack_string_p->length + 1];
+    return_on_err(String_is_null(haystack_string_p));
+    char tmp_str[haystack_string_p->length + 1];
     size_t i = 0, j = 0, cnt = 0;
     while (i < haystack_string_p->length)
     {
