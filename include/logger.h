@@ -1,6 +1,11 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 #include "common.h"
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 #define LEVEL_TRACE 5
@@ -22,9 +27,11 @@
 #endif
 
 #if TEST == 1
+#define log_out stdout
 #define log_err stdout
 #else
-#define log_err stderr
+#define log_out get_log_out_file()
+#define log_err get_log_err_file()
 #endif
 
 #define return_on_err(_expr)                                                                       \
@@ -37,15 +44,18 @@
         }                                                                                          \
     }
 
-
 #if LOG_LEVEL > LEVEL_NO_LOGS
-#define PRINT_SEPARATOR() printf("--------" __TIMESTAMP__ "--------\n")
+    void logger_init(const char*, const char*);
+
+    FILE* get_log_out_file();
+    FILE* get_log_err_file();
+#define PRINT_SEPARATOR() fprintf(log_out, "--------" __TIMESTAMP__ "--------\n")
 #define DATE_TIME_STR_LEN 26
-void get_date_time(char* date_time_str);
-#else
+    void get_date_time(char* date_time_str);
+#else /* LOG_LEVEL > LEVEL_NO_LOGS */
 #define get_date_time(something)
 #define PRINT_SEPARATOR()
-#endif
+#endif /* LOG_LEVEL > LEVEL_NO_LOGS */
 
 #if LOG_LEVEL >= LEVEL_ERROR
 #define LOG_ERROR(...)                                                                             \
@@ -92,9 +102,9 @@ void get_date_time(char* date_time_str);
     {                                                                                              \
         char date_time_str[DATE_TIME_STR_LEN];                                                     \
         get_date_time(date_time_str);                                                              \
-        printf("[TNFO ] %s %s:%d", date_time_str, __FILENAME__, __LINE__);                         \
-        printf(" | " __VA_ARGS__);                                                                 \
-        printf("\n");                                                                              \
+        fprintf(log_out, "[TNFO ] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
+        fprintf(log_out, " | " __VA_ARGS__);                                                       \
+        fprintf(log_out, "\n");                                                                    \
     }
 #else
 #define LOG_INFO(...)
@@ -105,9 +115,9 @@ void get_date_time(char* date_time_str);
     {                                                                                              \
         char date_time_str[DATE_TIME_STR_LEN];                                                     \
         get_date_time(date_time_str);                                                              \
-        printf("[DEBUG] %s %s:%d", date_time_str, __FILENAME__, __LINE__);                         \
-        printf(" | " __VA_ARGS__);                                                                 \
-        printf("\n");                                                                              \
+        fprintf(log_out, "[DEBUG] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
+        fprintf(log_out, " | " __VA_ARGS__);                                                       \
+        fprintf(log_out, "\n");                                                                    \
     }
 #else
 #define LOG_DEBUG(...)
@@ -118,12 +128,15 @@ void get_date_time(char* date_time_str);
     {                                                                                              \
         char date_time_str[DATE_TIME_STR_LEN];                                                     \
         get_date_time(date_time_str);                                                              \
-        printf("[TRACE] %s %s:%d", date_time_str, __FILENAME__, __LINE__);                         \
-        printf(" | " __VA_ARGS__);                                                                 \
-        printf("\n");                                                                              \
+        fprintf(log_out, "[TRACE] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
+        fprintf(log_out, " | " __VA_ARGS__);                                                       \
+        fprintf(log_out, "\n");                                                                    \
     }
 #else
 #define LOG_TRACE(...)
 #endif
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* LOGGER_H */

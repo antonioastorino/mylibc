@@ -2,7 +2,10 @@
 #define CLASS_JSON_H
 #include "class_string.h"
 #include "common.h"
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
 #define CHECK_MISSING_ENTRY(entry, bool_value, success_string)                                     \
     if (is_err(result))                                                                            \
     {                                                                                              \
@@ -14,108 +17,112 @@
 #define SET_MISSING_ENTRY(result, bool_value, success_string)                                      \
     if (is_err(result))                                                                            \
     {                                                                                              \
-        LOG_ERROR("Missing entry.");                                                   \
+        LOG_ERROR("Missing entry.");                                                               \
         bool_value = true;                                                                         \
     }                                                                                              \
     LOG_DEBUG("%s", success_string);
 
-// A air `key` `value`, plus a `parent` to make a double-linked list, and a `sibling`.
-typedef struct JsonItem JsonItem;
-// Any possible value, including another `JsonItem`.
-typedef struct JsonValue JsonValue;
+    // A air `key` `value`, plus a `parent` to make a double-linked list, and a `sibling`.
+    typedef struct JsonItem JsonItem;
+    // Any possible value, including another `JsonItem`.
+    typedef struct JsonValue JsonValue;
 
-typedef enum
-{
-    VALUE_UNDEFINED,
-    VALUE_INT,
-    VALUE_UINT,
-    VALUE_FLOAT,
-    VALUE_STR,
-    VALUE_ARRAY,
-    VALUE_ITEM,
-    VALUE_INVALID,
-} ValueType;
-
-/**
- *
- * JSON operators (if found outside a string):
- *     {"  => create an item and its key is starting
- *             :[  => create value
- *                  ,   => creates a sibling value (in array) of the same type the previous item
- *         ":  => create a single value
- *         ,"  => create a sibling key
- *     ]," => create sibling key
- *     },"  => create sibling item
- *     }   => go to the parent
- * Invalid sequences (outside strings):
- *     { not followed by "
- *     [[
- *     ,,
- *     ::
- *     :,
- *     ] not followed by , or }
- */
-
-// Used only for returning data in a convenient way. Not used for storage.
-typedef struct JsonArray
-{
-    struct JsonItem* element;
-} JsonArray;
-
-typedef struct JsonValue
-{
-    ValueType value_type;
-    union
+    typedef enum
     {
-        int value_int;                   // leaf int
-        size_t value_uint;               // leaf size_t
-        float value_float;               // leaf float
-        const char* value_char_p;        // leaf c-string
-        struct JsonItem* value_child_p;  // another item
-        struct JsonArray* value_array_p; // the first item of an array
-    };
-} JsonValue;
+        VALUE_UNDEFINED,
+        VALUE_INT,
+        VALUE_BOOL,
+        VALUE_UINT,
+        VALUE_FLOAT,
+        VALUE_STR,
+        VALUE_ARRAY,
+        VALUE_ITEM,
+        VALUE_INVALID,
+    } ValueType;
 
-typedef struct JsonItem
-{
-    const char* key_p;
-    size_t index; // For arrays only
-    JsonValue value;
-    struct JsonItem* parent;
-    struct JsonItem* next_sibling;
-} JsonItem;
+    /**
+     *
+     * JSON operators (if found outside a string):
+     *     {"  => create an item and its key is starting
+     *             :[  => create value
+     *                  ,   => creates a sibling value (in array) of the same type the previous item
+     *         ":  => create a single value
+     *         ,"  => create a sibling key
+     *     ]," => create sibling key
+     *     },"  => create sibling item
+     *     }   => go to the parent
+     * Invalid sequences (outside strings):
+     *     { not followed by "
+     *     [[
+     *     ,,
+     *     ::
+     *     :,
+     *     ] not followed by , or }
+     */
 
-typedef struct JsonObj
-{
-    String json_string;
-    JsonItem* root_p;
-} JsonObj;
+    // Used only for returning data in a convenient way. Not used for storage.
+    typedef struct JsonArray
+    {
+        struct JsonItem* element;
+    } JsonArray;
 
-Error JsonObj_new_from_string_p(const String*, JsonObj*);
-Error JsonObj_new_from_char_p(const char*, JsonObj*);
-void JsonObj_destroy(JsonObj*);
-void JsonObj_get_tokens(String*);
+    typedef struct JsonValue
+    {
+        ValueType value_type;
+        union
+        {
+            int value_int;                   // leaf int
+            size_t value_uint;               // leaf size_t
+            float value_float;               // leaf float
+            bool value_bool;                 // leaf bool
+            const char* value_char_p;        // leaf c-string
+            struct JsonItem* value_child_p;  // another item
+            struct JsonArray* value_array_p; // the first item of an array
+        };
+    } JsonValue;
 
-// Created to have a symmetry between GET_VALUE and GET_ARRAY_VALUE
-Error invalid_request(const JsonArray*, size_t, const JsonArray**);
+    typedef struct JsonItem
+    {
+        const char* key_p;
+        size_t index; // For arrays only
+        JsonValue value;
+        struct JsonItem* parent;
+        struct JsonItem* next_sibling;
+    } JsonItem;
+
+    typedef struct JsonObj
+    {
+        String json_string;
+        JsonItem* root_p;
+    } JsonObj;
+
+    Error JsonObj_new_from_string_p(const String*, JsonObj*);
+    Error JsonObj_new_from_char_p(const char*, JsonObj*);
+    void JsonObj_destroy(JsonObj*);
+    void JsonObj_get_tokens(String*);
+
+    // Created to have a symmetry between GET_VALUE and GET_ARRAY_VALUE
+    Error invalid_request(const JsonArray*, size_t, const JsonArray**);
 
 #define GET_VALUE_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
-GET_VALUE_h(value_char_p, const char**);
-GET_VALUE_h(value_child_p, JsonItem**);
-GET_VALUE_h(value_array_p, JsonArray**);
+    GET_VALUE_h(value_char_p, const char**);
+    GET_VALUE_h(value_child_p, JsonItem**);
+    GET_VALUE_h(value_array_p, JsonArray**);
 
 #define GET_NUMBER_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
-GET_VALUE_h(value_int, int*);
-GET_VALUE_h(value_uint, size_t*);
-GET_VALUE_h(value_float, float*);
+    GET_VALUE_h(value_int, int*);
+    GET_VALUE_h(value_uint, size_t*);
+    GET_VALUE_h(value_float, float*);
+    GET_VALUE_h(value_bool, bool*);
 
 #define GET_ARRAY_VALUE_h(suffix, out_type)                                                        \
     Error get_array_##suffix(const JsonArray*, size_t, out_type);
-GET_ARRAY_VALUE_h(value_char_p, const char**);
-GET_ARRAY_VALUE_h(value_int, int*);
-GET_ARRAY_VALUE_h(value_uint, size_t*);
-GET_ARRAY_VALUE_h(value_float, float*);
-GET_ARRAY_VALUE_h(value_child_p, JsonItem**);
+    GET_ARRAY_VALUE_h(value_char_p, const char**);
+    GET_ARRAY_VALUE_h(value_int, int*);
+    GET_ARRAY_VALUE_h(value_uint, size_t*);
+    GET_ARRAY_VALUE_h(value_float, float*);
+    GET_ARRAY_VALUE_h(value_bool, bool*);
+    GET_ARRAY_VALUE_h(value_child_p, JsonItem**);
 
 // clang-format off
 #define JsonObj_new(in_json, out_json)                                                             \
@@ -131,6 +138,7 @@ GET_ARRAY_VALUE_h(value_child_p, JsonItem**);
             int*         : get_value_int,                                                          \
             size_t*      : get_value_uint,                                                         \
             float*       : get_value_float,                                                        \
+            bool*        : get_value_bool,                                                         \
             JsonItem**   : get_value_child_p,                                                      \
             JsonArray**  : get_value_array_p                                                       \
             ),                                                                                     \
@@ -139,13 +147,17 @@ GET_ARRAY_VALUE_h(value_child_p, JsonItem**);
             int*         : get_array_value_int,                                                    \
             size_t*      : get_array_value_uint,                                                   \
             float*       : get_array_value_float,                                                  \
+            bool*        : get_array_value_bool,                                                   \
             JsonItem**   : get_array_value_child_p,                                                \
             JsonArray**  : invalid_request                                                         \
             )                                                                                      \
         )(json_stuff, needle, out_p)
 // clang-format on
 #if TEST == 1
-void test_class_json(void);
+    void test_class_json(void);
 #endif
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif

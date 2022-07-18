@@ -9,6 +9,8 @@ typedef enum
     NUMBER,
     STRING,
     KEY,
+    BOOLEAN_TRUE,
+    BOOLEAN_FALSE,
     INVALID,
 } ElementType;
 
@@ -32,6 +34,14 @@ ElementType get_value_type(char* initial_char_p)
     else if (initial_char_p[0] == '"')
     {
         return STRING;
+    }
+    else if (strncmp(initial_char_p, "true", 4) == 0)
+    {
+        return BOOLEAN_TRUE;
+    }
+    else if (strncmp(initial_char_p, "false", 5) == 0)
+    {
+        return BOOLEAN_FALSE;
     }
     else
     {
@@ -264,6 +274,24 @@ void deserialize(JsonItem* curr_item_p, char** start_pos_p)
                 exit(ERR_FATAL);
             }
             curr_pos_p++; // Skip the ':'.
+            break;
+        }
+        case BOOLEAN_TRUE:
+        {
+            curr_pos_p += 4;
+            // Null terminate the string.
+            curr_item_p->value.value_type = VALUE_BOOL;
+            curr_item_p->value.value_bool = true;
+            LOG_TRACE("Found value TRUE");
+            break;
+        }
+        case BOOLEAN_FALSE:
+        {
+            curr_pos_p += 5;
+            // Null terminate the string.
+            curr_item_p->value.value_type = VALUE_BOOL;
+            curr_item_p->value.value_bool = false;
+            LOG_TRACE("Found value FALSE");
             break;
         }
         case INVALID:
@@ -503,11 +531,13 @@ GET_VALUE_c(
 GET_NUMBER_c(value_int, VALUE_INT, int*, );
 GET_NUMBER_c(value_uint, VALUE_UINT, size_t*, );
 GET_NUMBER_c(value_float, VALUE_FLOAT, float*, );
+GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, );
 
 GET_ARRAY_VALUE_c(value_char_p, VALUE_STR, const char**);
 GET_ARRAY_VALUE_c(value_int, VALUE_INT, int*);
 GET_ARRAY_VALUE_c(value_uint, VALUE_UINT, size_t*);
 GET_ARRAY_VALUE_c(value_float, VALUE_FLOAT, float*);
+GET_ARRAY_VALUE_c(value_bool, VALUE_BOOL, bool*);
 GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**);
 
 #if TEST == 1
@@ -617,6 +647,7 @@ void test_class_json()
         size_t value_uint;
         const char* value_str;
         float value_float;
+        bool value_bool;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json_array_1.json");
         ASSERT(is_ok(JsonObj_new(&json_string, &json_obj)), "Json object created");
@@ -635,6 +666,8 @@ void test_class_json()
         ASSERT_EQ(value_str, "SOME STRING", "Array element STRING found.");
         Json_get(json_array, 3, &value_uint);
         ASSERT_EQ(value_uint, 32, "Array element INT found.");
+        Json_get(json_array, 4, &value_bool);
+        ASSERT_EQ(value_bool, false, "Array element BOOL found.");
         JsonObj_destroy(&json_obj);
         String_destroy(&json_string);
     }
@@ -646,6 +679,7 @@ void test_class_json()
         size_t value_uint;
         const char* value_str;
         float value_float;
+        bool value_bool;
         JsonArray* json_array;
         JsonArray* json_array_2;
         ASSERT(is_ok(JsonObj_new(&json_string, &json_obj)), "Json object created");
@@ -658,6 +692,8 @@ void test_class_json()
         ASSERT_EQ(value_uint, 12314, "Value SIZE_T found");
         Json_get(json_array_2, 1, &value_float);
         ASSERT_EQ(value_float, -32.4f, "Value FLOAT found");
+        Json_get(json_array_2, 2, &value_bool);
+        ASSERT_EQ(value_bool, true, "Value TRUE found");
         Json_get(json_array, 1, &json_item);
         ASSERT_EQ(json_item != NULL, true, "Second array element is an item.");
         Json_get(json_item, "inner array 2", &json_array_2);
@@ -665,6 +701,8 @@ void test_class_json()
         ASSERT_EQ(value_float, 1.4f, "Value FLOAT found");
         Json_get(json_array_2, 1, &value_str);
         ASSERT_EQ(value_str, "hello", "Value STRING found");
+        Json_get(json_array_2, 2, &value_bool);
+        ASSERT_EQ(value_bool, false, "Value FALSE found");
         JsonObj_destroy(&json_obj);
         String_destroy(&json_string);
     }
@@ -693,6 +731,7 @@ void test_class_json()
         const char* value_str;
         size_t value_uint;
         float value_float;
+        bool value_bool;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json.json");
         ASSERT(is_ok(JsonObj_new_from_string_p(&json_string, &json_obj)), "Json object created");
@@ -731,6 +770,14 @@ void test_class_json()
         Json_get(json_obj.root_p, "test_float", &value_float);
         ASSERT_EQ(value_float, 435.234f, "Float found and read correctly");
 
+        PRINT_TEST_TITLE("Test bool true");
+        Json_get(json_obj.root_p, "test_bool_true", &value_bool);
+        ASSERT_EQ(value_bool, true, "Boolean found and read correctly");
+
+        PRINT_TEST_TITLE("Test bool false");
+        Json_get(json_obj.root_p, "test_bool_false", &value_bool);
+        ASSERT_EQ(value_bool, false, "Boolean found and read correctly");
+
         Json_get(json_obj.root_p, "test_array", &json_array);
         Json_get(json_array, 0, &value_uint);
         ASSERT_EQ(value_uint, 14352, "Array element of type INT read correctly");
@@ -738,7 +785,6 @@ void test_class_json()
         ASSERT_EQ(value_float, 2.15f, "Array element of type FLOAT read correctly");
         Json_get(json_array, 2, &value_str);
         ASSERT_EQ(value_str, "string_element", "Array element of type C-string read correctly");
-
         JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("Invalid JSON string - empty")

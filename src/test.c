@@ -9,12 +9,12 @@
 #if TEST == 1
 int main()
 {
-    test_class_string();
-    test_class_string_array();
+//    test_class_string();
+//    test_class_string_array();
     test_class_json();
-    test_converter();
-    test_fs_utils();
-    test_tcp_utils();
+//    test_converter();
+//    test_fs_utils();
+//    test_tcp_utils();
 }
 #else
 #error "TEST must be 1"

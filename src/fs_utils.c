@@ -13,19 +13,6 @@
 
 Error _fs_utils_recursive_rm_r(FTS*, const char*);
 
-bool _fs_utils_does_exist(const char* p_path)
-{
-    struct stat st = {0};
-    if (stat(p_path, &st) == -1)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
 Error _fs_utils_create_or_append(
     const char* file_path_char_p,
     const char* new_content_char_p,
@@ -45,10 +32,10 @@ Error _fs_utils_create_or_append(
 /* ------------------------------------------ Folders ------------------------------------------- */
 Error fs_utils_mkdir(const char* dir_path_char_p, mode_t permission)
 {
-    Error ret_res   = ERR_ALL_GOOD;
+    Error ret_res = ERR_ALL_GOOD;
     // Save the current mode mask and reset the mask.
     mode_t old_mask = umask(0);
-    if (!_fs_utils_does_exist(dir_path_char_p))
+    if (!fs_utils_does_exist(dir_path_char_p))
     {
         LOG_TRACE("Trying to create %s", dir_path_char_p);
         if (mkdir(dir_path_char_p, permission) == -1)
@@ -75,7 +62,7 @@ Error fs_utils_mkdir_p(const char* dir_path_char_p, mode_t permission)
 {
     size_t path_length = strlen(dir_path_char_p);
     LOG_TRACE("Trying to create `%s`", dir_path_char_p);
-    if (_fs_utils_does_exist(dir_path_char_p))
+    if (fs_utils_does_exist(dir_path_char_p))
     {
         LOG_ERROR("The folder already exists.");
         return ERR_FORBIDDEN;
@@ -86,7 +73,7 @@ Error fs_utils_mkdir_p(const char* dir_path_char_p, mode_t permission)
     {
         partial_path[0] = '/';
         // Skip the fist folder found (root folder) in the path - it's an absolute path.
-        start_index     = 1;
+        start_index = 1;
     }
     for (size_t i = start_index; i < path_length; i++)
     {
@@ -97,7 +84,7 @@ Error fs_utils_mkdir_p(const char* dir_path_char_p, mode_t permission)
             LOG_TRACE("Trying to create `%s`.", partial_path);
 
             // Check if this path exists or try to create it.
-            if (!_fs_utils_does_exist(partial_path))
+            if (!fs_utils_does_exist(partial_path))
             {
                 return_on_err(fs_utils_mkdir(partial_path, permission));
             }
@@ -120,7 +107,7 @@ Error fs_utils_mkdir_p(const char* dir_path_char_p, mode_t permission)
 Error fs_utils_rmdir(const char* dir_path_char_p)
 {
     LOG_INFO("Trying to remove `%s` folder.", dir_path_char_p);
-    if (!_fs_utils_does_exist(dir_path_char_p))
+    if (!fs_utils_does_exist(dir_path_char_p))
     {
         LOG_ERROR("Folder not found.");
         return ERR_INVALID;
@@ -142,7 +129,7 @@ Error fs_utils_rm_from_path_as_char_p(const char* file_path_char_p)
     char* paths[2] = {(char*)file_path_char_p, NULL};
 
     // Create the received path handle.
-    FTS* fts_p     = fts_open(paths, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
+    FTS* fts_p = fts_open(paths, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
     if (fts_p == NULL)
     {
         LOG_ERROR("Failed to initialize fts. errno: `%d`", errno);
@@ -289,14 +276,14 @@ Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
 Error fs_utils_rm_r(const char* dir_path_char_p)
 {
     LOG_INFO("Trying to remove `%s` recursively.", dir_path_char_p);
-    if (!_fs_utils_does_exist(dir_path_char_p))
+    if (!fs_utils_does_exist(dir_path_char_p))
     {
         LOG_ERROR("Folder `%s` not found.", dir_path_char_p);
         return ERR_INVALID;
     }
     char* paths[] = {(char*)dir_path_char_p, NULL};
     // Create the received path handle.
-    FTS* fts_p    = fts_open(paths, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
+    FTS* fts_p = fts_open(paths, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
     if (fts_p == NULL)
     {
         LOG_ERROR("Failed to initialize fts. errno `%d`.", errno);
@@ -323,6 +310,19 @@ bool fs_utils_is_file(char* path_to_file_char_p)
         return true;
     }
     return false;
+}
+
+bool fs_utils_does_exist(const char* p_path)
+{
+    struct stat st = {0};
+    if (stat(p_path, &st) == -1)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 Error fs_utils_get_file_size(char* path_to_file_char_p, off_t* out_file_size)

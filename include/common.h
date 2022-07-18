@@ -1,13 +1,17 @@
 #ifndef COMMON_H
 #define COMMON_H
+#include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
 
-#define TEST 1
+#define TEST 0
 
 #include "error.h"
 #include "logger.h"
@@ -16,25 +20,25 @@
 #define UNUSED(x) (void)(x)
 #if TEST == 1
 
-void ASSERT_(bool, const char*, const char*, int);
+    void ASSERT_(bool, const char*, const char*, int);
 
-void ASSERT_EQ_int(int, int, const char*, const char*, int);
-void ASSERT_EQ_uint8(uint8_t, uint8_t, const char*, const char*, int);
-void ASSERT_EQ_uint16(uint16_t, uint16_t, const char*, const char*, int);
-void ASSERT_EQ_uint(size_t, size_t, const char*, const char*, int);
-void ASSERT_EQ_bool(bool v1, bool v2, const char*, const char*, int);
-void ASSERT_EQ_float(float, float, const char*, const char*, int);
-void ASSERT_EQ_double(double, double, const char*, const char*, int);
-void ASSERT_EQ_char_p(const char*, const char*, const char*, const char*, int);
+    void ASSERT_EQ_int(int, int, const char*, const char*, int);
+    void ASSERT_EQ_uint8(uint8_t, uint8_t, const char*, const char*, int);
+    void ASSERT_EQ_uint16(uint16_t, uint16_t, const char*, const char*, int);
+    void ASSERT_EQ_uint(size_t, size_t, const char*, const char*, int);
+    void ASSERT_EQ_bool(bool v1, bool v2, const char*, const char*, int);
+    void ASSERT_EQ_float(float, float, const char*, const char*, int);
+    void ASSERT_EQ_double(double, double, const char*, const char*, int);
+    void ASSERT_EQ_char_p(const char*, const char*, const char*, const char*, int);
 
-void ASSERT_NE_int(int, int, const char*, const char*, int);
-void ASSERT_NE_uint8(uint8_t, uint8_t, const char*, const char*, int);
-void ASSERT_NE_uint16(uint16_t, uint16_t, const char*, const char*, int);
-void ASSERT_NE_uint(size_t, size_t, const char*, const char*, int);
-void ASSERT_NE_bool(bool v1, bool v2, const char*, const char*, int);
-void ASSERT_NE_float(float, float, const char*, const char*, int);
-void ASSERT_NE_double(double, double, const char*, const char*, int);
-void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
+    void ASSERT_NE_int(int, int, const char*, const char*, int);
+    void ASSERT_NE_uint8(uint8_t, uint8_t, const char*, const char*, int);
+    void ASSERT_NE_uint16(uint16_t, uint16_t, const char*, const char*, int);
+    void ASSERT_NE_uint(size_t, size_t, const char*, const char*, int);
+    void ASSERT_NE_bool(bool v1, bool v2, const char*, const char*, int);
+    void ASSERT_NE_float(float, float, const char*, const char*, int);
+    void ASSERT_NE_double(double, double, const char*, const char*, int);
+    void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 
 #define PRINT_BANNER()                                                                             \
     printf("\n");                                                                                  \
@@ -80,9 +84,13 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
         const char*   : ASSERT_NE_char_p          \
     )(value_1, value_2, message, __FILE__, __LINE__)
 
-// clang-format on
+    // clang-format on
 
 #define PRINT_TEST_TITLE(title) printf("\n------- T:%lu < %s > -------\n", ++test_counter_, title);
 #endif
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif // COMMON_H

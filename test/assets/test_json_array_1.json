@@ -9,6 +9,7 @@
 		{
 			"object 3": "SOME STRING"
 		},
-		32
+		32,
+        false
 	]
 }
