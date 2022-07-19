@@ -21,6 +21,8 @@ extern "C"
 #if TEST == 1
 
     void ASSERT_(bool, const char*, const char*, int);
+    void ASSERT_OK_(Error, const char*, const char*, int);
+    void ASSERT_ERR_(Error, const char*, const char*, int);
 
     void ASSERT_EQ_int(int, int, const char*, const char*, int);
     void ASSERT_EQ_uint8(uint8_t, uint8_t, const char*, const char*, int);
@@ -55,7 +57,8 @@ extern "C"
     size_t test_counter_ = 0;
 
 #define ASSERT(value, message) ASSERT_(value, message, __FILE__, __LINE__)
-
+#define ASSERT_OK(value, message) ASSERT_OK_(value, message, __FILE__, __LINE__)
+#define ASSERT_ERR(value, message) ASSERT_ERR_(value, message, __FILE__, __LINE__)
 // clang-format off
 #define ASSERT_EQ(value_1, value_2, message)      \
     _Generic((value_1),                           \

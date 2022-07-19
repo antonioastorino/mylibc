@@ -587,7 +587,7 @@ void test_class_json()
         JsonObj json_obj;
         const char* value_str;
         const char* json_char_p = " {\"key\": \"value string\"}";
-        ASSERT(is_ok(JsonObj_new(json_char_p, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(json_obj.root_p, "key", &value_str);
         ASSERT_EQ("value string", value_str, "Key for root found with correct value STRING");
         Json_get(json_obj.root_p, "missing key", &value_str);
@@ -600,7 +600,7 @@ void test_class_json()
         const char* value_str;
         size_t value_uint;
         const char* json_char_p = " {\"key\": \"value string\", \"sibling\": 56}";
-        ASSERT(is_ok(JsonObj_new(json_char_p, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(json_obj.root_p, "key", &value_str);
         Json_get(json_obj.root_p, "sibling", &value_uint);
         ASSERT_EQ("value string", value_str, "Key for root value STRING");
@@ -615,7 +615,7 @@ void test_class_json()
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [\"array value\", 56]}";
         printf("\n%s\n", json_char_p);
-        ASSERT(is_ok(JsonObj_new(json_char_p, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(json_obj.root_p, "key", &json_array);
         Json_get(json_array, 0, &value_str);
         ASSERT_EQ("array value", value_str, "Array STRING element retrieved.");
@@ -631,7 +631,7 @@ void test_class_json()
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [ {\"array key\": 56}]}";
         printf("\n%s\n", json_char_p);
-        ASSERT(is_ok(JsonObj_new(json_char_p, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(json_obj.root_p, "key", &json_array);
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item->key_p, "array key", "Array STRING element retrieved.");
@@ -650,7 +650,7 @@ void test_class_json()
         bool value_bool;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json_array_1.json");
-        ASSERT(is_ok(JsonObj_new(&json_string, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
         Json_get(json_obj.root_p, "array_key", &json_array);
         ASSERT_EQ(json_array != NULL, true, "Array found as root element.");
         Json_get(json_array, 0, &json_item);
@@ -682,7 +682,7 @@ void test_class_json()
         bool value_bool;
         JsonArray* json_array;
         JsonArray* json_array_2;
-        ASSERT(is_ok(JsonObj_new(&json_string, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
         Json_get(json_obj.root_p, "array_key", &json_array);
         ASSERT_EQ(json_array != NULL, true, "Array found as root element.");
         Json_get(json_array, 0, &json_item);
@@ -714,7 +714,7 @@ void test_class_json()
         size_t value_uint;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json_array_3.json");
-        ASSERT(is_ok(JsonObj_new(&json_string, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
         ASSERT(Json_get(json_obj.root_p, "Snapshot", &json_item) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_item, "Value", &value_uint) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_item, "Data", &json_array) == ERR_ALL_GOOD, "Ok");
@@ -734,7 +734,7 @@ void test_class_json()
         bool value_bool;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json.json");
-        ASSERT(is_ok(JsonObj_new_from_string_p(&json_string, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new_from_string_p(&json_string, &json_obj), "Json object created");
         String_destroy(&json_string); // We can delete it.
         Json_get(json_obj.root_p, "text_key", &value_str);
         ASSERT_EQ("text_value", value_str, "String*value found in first item");
@@ -824,7 +824,7 @@ void test_class_json()
         int value_int;
         Error ret_res;
         String json_string = load_file("test/assets/test_json_numbers.json");
-        ASSERT(is_ok(JsonObj_new(&json_string, &json_obj)), "Json object created");
+        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
         Json_get(json_obj.root_p, "value_int", &value_uint);
         ASSERT_EQ((size_t)23, value_uint, "Conversion from INT to SIZE_T successfull");
         Json_get(json_obj.root_p, "value_small_uint", &value_int);

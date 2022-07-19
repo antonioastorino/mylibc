@@ -27,6 +27,32 @@ void ASSERT_(bool value, const char* message, const char* filename, int line_num
     }
 }
 
+void ASSERT_OK_(Error result, const char* message, const char* filename, int line_number)
+{
+    if (is_ok(result))
+    {
+        PRINT_PASS_MESSAGE(message);
+    }
+    else
+    {
+        PRINT_FAIL_MESSAGE_(message, filename, line_number);
+        fprintf(stderr, "The value is `false`\n");
+    }
+}
+
+void ASSERT_ERR_(Error result, const char* message, const char* filename, int line_number)
+{
+    if (is_err(result))
+    {
+        PRINT_PASS_MESSAGE(message);
+    }
+    else
+    {
+        PRINT_FAIL_MESSAGE_(message, filename, line_number);
+        fprintf(stderr, "The value is `false`\n");
+    }
+}
+
 void ASSERT_EQ_int(
     int value_1,
     int value_2,
