@@ -6,13 +6,6 @@
 extern "C"
 {
 #endif /* __cplusplus */
-#define CHECK_MISSING_ENTRY(entry, bool_value, success_string)                                     \
-    if (is_err(result))                                                                            \
-    {                                                                                              \
-        LOG_ERROR("Missing entry `%s`.", entry);                                                   \
-        bool_value = true;                                                                         \
-    }                                                                                              \
-    LOG_DEBUG("%s", success_string);
 
 #define SET_MISSING_ENTRY(result, bool_value, success_string)                                      \
     if (is_err(result))                                                                            \
@@ -20,7 +13,7 @@ extern "C"
         LOG_ERROR("Missing entry.");                                                               \
         bool_value = true;                                                                         \
     }                                                                                              \
-    LOG_DEBUG("%s", success_string);
+    LOG_TRACE("%s", success_string);
 
     // A air `key` `value`, plus a `parent` to make a double-linked list, and a `sibling`.
     typedef struct JsonItem JsonItem;

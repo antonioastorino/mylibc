@@ -45,12 +45,19 @@ extern "C"
     }
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
+#define DATE_TIME_STR_LEN 26
     void logger_init(const char*, const char*);
 
     FILE* get_log_out_file();
     FILE* get_log_err_file();
-#define PRINT_SEPARATOR() fprintf(log_out, "--------" __TIMESTAMP__ "--------\n")
-#define DATE_TIME_STR_LEN 26
+
+#define PRINT_SEPARATOR()                                                                          \
+    {                                                                                              \
+        char date_time_str[DATE_TIME_STR_LEN];                                                     \
+        get_date_time(date_time_str);                                                              \
+        fprintf(log_out, "-------- %s --------\n", date_time_str);                                 \
+    }
+
     void get_date_time(char* date_time_str);
 #else /* LOG_LEVEL > LEVEL_NO_LOGS */
 #define get_date_time(something)
@@ -65,6 +72,7 @@ extern "C"
         fprintf(log_err, "[ERROR] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
         fprintf(log_err, " | " __VA_ARGS__);                                                       \
         fprintf(log_err, "\n");                                                                    \
+        fflush(log_err);                                                                           \
     }
 #define LOG_PERROR(...)                                                                            \
     {                                                                                              \
@@ -79,6 +87,7 @@ extern "C"
             strerror(errno));                                                                      \
         fprintf(log_err, " | " __VA_ARGS__);                                                       \
         fprintf(log_err, "\n");                                                                    \
+        fflush(log_err);                                                                           \
     }
 #else
 #define LOG_ERROR(...)
@@ -92,6 +101,7 @@ extern "C"
         fprintf(log_err, "[WARN ] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
         fprintf(log_err, " | " __VA_ARGS__);                                                       \
         fprintf(log_err, "\n");                                                                    \
+        fflush(log_err);                                                                           \
     }
 #else
 #define LOG_WARNING(...)
@@ -105,6 +115,7 @@ extern "C"
         fprintf(log_out, "[TNFO ] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
         fprintf(log_out, " | " __VA_ARGS__);                                                       \
         fprintf(log_out, "\n");                                                                    \
+        fflush(log_out);                                                                           \
     }
 #else
 #define LOG_INFO(...)
@@ -118,6 +129,7 @@ extern "C"
         fprintf(log_out, "[DEBUG] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
         fprintf(log_out, " | " __VA_ARGS__);                                                       \
         fprintf(log_out, "\n");                                                                    \
+        fflush(log_out);                                                                           \
     }
 #else
 #define LOG_DEBUG(...)
@@ -131,6 +143,7 @@ extern "C"
         fprintf(log_out, "[TRACE] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
         fprintf(log_out, " | " __VA_ARGS__);                                                       \
         fprintf(log_out, "\n");                                                                    \
+        fflush(log_out);                                                                           \
     }
 #else
 #define LOG_TRACE(...)

@@ -21,7 +21,7 @@ Error _fs_utils_create_or_append(
     FILE* file_handler = fopen(file_path_char_p, flags_char_p);
     if (!file_handler)
     {
-        LOG_ERROR("Failed to open file.");
+        LOG_ERROR("Failed to open file `%s`.", file_path_char_p);
         return ERR_NULL;
     }
     fprintf(file_handler, "%s", new_content_char_p);
