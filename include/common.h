@@ -11,7 +11,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define TEST 0
+#define TEST 1
 
 #include "error.h"
 #include "logger.h"

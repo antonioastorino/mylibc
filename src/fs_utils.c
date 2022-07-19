@@ -37,7 +37,7 @@ Error fs_utils_mkdir(const char* dir_path_char_p, mode_t permission)
     mode_t old_mask = umask(0);
     if (!fs_utils_does_exist(dir_path_char_p))
     {
-        LOG_TRACE("Trying to create %s", dir_path_char_p);
+        LOG_TRACE("Trying to create `%s`.", dir_path_char_p);
         if (mkdir(dir_path_char_p, permission) == -1)
         {
             LOG_ERROR("mkdir returned with errno `%d`", errno);

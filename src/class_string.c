@@ -68,10 +68,16 @@ String String_clone(const String* origin) { return String_new(origin->str); }
 
 void String_destroy(String* string_obj_p)
 {
+    if (String_is_null(string_obj_p))
+    {
+        LOG_WARNING("String already destroyed");
+        return;
+    }
     FREE(string_obj_p->str);
-    string_obj_p->str    = 0;
-    string_obj_p->length = -1;
-    string_obj_p->size   = -1;
+    string_obj_p->str    = NULL;
+    string_obj_p->length = 0;
+    string_obj_p->size   = 0;
+    LOG_TRACE("String destroyed.");
 }
 
 Error _String_print(const String* string_obj_p)
@@ -324,7 +330,16 @@ void test_class_string()
         ASSERT_EQ(test_string.size, (size_t)(strlen(str) * 1.5), "Size correct.");
         ASSERT_EQ((int)_String_println(&test_string), ERR_ALL_GOOD, "Printing functions work.");
         String_destroy(&test_string);
-        ASSERT_EQ(String_is_null(&test_string), true, "Already destroyed.");
+        ASSERT_EQ(String_is_null(&test_string), true, "Destroyed.");
+    }
+    PRINT_TEST_TITLE("Destroy string twice")
+    {
+        const char* str    = "Hello everybody";
+        String test_string = String_new(str);
+        String_destroy(&test_string);
+        ASSERT_EQ(String_is_null(&test_string), true, "Destroyed.");
+        String_destroy(&test_string);
+        ASSERT_EQ(String_is_null(&test_string), true, "Already destroyed - does not crash.");
     }
     PRINT_TEST_TITLE("New from formatter");
     {
