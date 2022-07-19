@@ -321,11 +321,23 @@ Error String_between_patterns_in_string_p(
 void test_class_string()
 {
     PRINT_BANNER();
+    PRINT_TEST_TITLE("Destroy empty string without failure")
+    {
+        String_empty(string_name);
+        ASSERT(string_name.str == NULL, "Empty string created.");
+        ASSERT_EQ(string_name.size, 0, "Empty string created.");
+        ASSERT_EQ(string_name.length, 0, "Empty string created.");
+        String_destroy(&string_name);
+        string_name = String_new("hi");
+        String_destroy(&string_name);
+        String_destroy(&string_name);
+        ASSERT(string_name.str == NULL, "String destroyed twice without failing.");
+    }
 
     PRINT_TEST_TITLE("New from string")
     {
-        const char* str    = "Hello everybody";
-        String test_string = String_new(str);
+        const char* str = "Hello everybody";
+        String_full(test_string, str);
         ASSERT_EQ(test_string.length, strlen(str), "Length correct.");
         ASSERT_EQ(test_string.size, (size_t)(strlen(str) * 1.5), "Size correct.");
         ASSERT_EQ((int)_String_println(&test_string), ERR_ALL_GOOD, "Printing functions work.");

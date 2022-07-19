@@ -8,7 +8,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-    typedef struct String
+    typedef struct
     {
         // Length that would be returned by `strlen(str)`.
         size_t length;
@@ -37,6 +37,9 @@ extern "C"
     Error String_replace_pattern_size_t(String*, const char*, const char*, const size_t, size_t*);
     Error String_replace_pattern_float(String*, const char*, const char*, const float, size_t*);
     Error String_replace_pattern_int(String*, const char*, const char*, const int, size_t*);
+
+#define String_empty(string_name) String string_name = {.length = 0, .size = 0, .str = NULL}
+#define String_full(string_name, ...) String string_name = String_new(__VA_ARGS__)
 
 // clang-format off
 #define String_between_patterns(in_value, prefix, suffix, out_string) \
