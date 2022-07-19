@@ -15,7 +15,7 @@ extern "C"
 #define LEVEL_ERROR 1
 #define LEVEL_NO_LOGS 0
 #ifndef LOG_LEVEL
-#define LOG_LEVEL LEVEL_TRACE
+#define LOG_LEVEL LEVEL_DEBUG
 #endif
 
 #define UNUSED(x) (void)(x)

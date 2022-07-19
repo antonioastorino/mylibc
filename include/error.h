@@ -1,6 +1,5 @@
 #ifndef ERROR_H
 #define ERROR_H
-#include "common.h"
 #ifdef __cplusplus
 extern "C"
 {
