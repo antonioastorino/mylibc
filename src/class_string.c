@@ -19,6 +19,11 @@ bool String_is_null(const String* string_obj_p)
 
 String String_new(const char* format, ...)
 {
+    if (format == NULL)
+    {
+        LOG_WARNING("NULL pointer used as format string. Returning empty string.");
+        return String_new("");
+    }
     va_list args;
     char* tmp_str_p = NULL;
     String out_string_obj;
