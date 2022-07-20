@@ -40,7 +40,8 @@ Error fs_utils_mkdir(const char* dir_path_char_p, mode_t permission)
         LOG_TRACE("Trying to create `%s`.", dir_path_char_p);
         if (mkdir(dir_path_char_p, permission) == -1)
         {
-            LOG_ERROR("mkdir returned with errno `%d`", errno);
+            LOG_PERROR(
+                "mkdir returned with errno `%d` while creating `%s`.", errno, dir_path_char_p);
             ret_res = ERR_FS_INTERNAL;
         }
         else
@@ -114,7 +115,7 @@ Error fs_utils_rmdir(const char* dir_path_char_p)
     }
     if (rmdir(dir_path_char_p))
     {
-        LOG_ERROR("Failed to delete `%s`. errno: `%d`", dir_path_char_p, errno)
+        LOG_PERROR("Failed to delete `%s`. errno: `%d`", dir_path_char_p, errno)
         return ERR_FS_INTERNAL;
     }
 
@@ -132,7 +133,7 @@ Error fs_utils_rm_from_path_as_char_p(const char* file_path_char_p)
     FTS* fts_p = fts_open(paths, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
     if (fts_p == NULL)
     {
-        LOG_ERROR("Failed to initialize fts. errno: `%d`", errno);
+        LOG_PERROR("Failed to initialize fts. errno: `%d`", errno);
         return ERR_FS_INTERNAL;
     }
     /*
@@ -175,7 +176,7 @@ Error _fs_utils_read_to_string(const char* file_path_char_p, String* out_string_
     FILE* file_handler = fopen(file_path_char_p, "r");
     if (!file_handler)
     {
-        LOG_ERROR("Failed to open `%s`", file_path_char_p);
+        LOG_PERROR("Failed to open `%s`", file_path_char_p);
         return ERR_FS_INTERNAL;
     }
     int c;
@@ -184,7 +185,7 @@ Error _fs_utils_read_to_string(const char* file_path_char_p, String* out_string_
     char* buf         = MALLOC(size);
     if (buf == NULL)
     {
-        LOG_ERROR("FATAL: out of memory");
+        LOG_PERROR("FATAL: out of memory");
         exit(ERR_FATAL);
     }
 
@@ -197,7 +198,7 @@ Error _fs_utils_read_to_string(const char* file_path_char_p, String* out_string_
             buf  = REALLOC(buf, size);
             if (buf == NULL)
             {
-                LOG_ERROR("FATAL: out of memory");
+                LOG_PERROR("FATAL: out of memory");
                 exit(ERR_FATAL);
             }
         }
@@ -246,7 +247,7 @@ Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
     struct stat st;
     if (lstat(dir_path_char_p, &st) == -1)
     {
-        LOG_ERROR("%s", strerror(errno));
+        LOG_PERROR("Failed.");
         return ERR_FS_INTERNAL;
     }
     switch (st.st_mode & S_IFMT)
@@ -260,7 +261,7 @@ Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
         LOG_TRACE("Trying to delete file `%s`", dir_path_char_p);
         if (unlink(dir_path_char_p))
         {
-            LOG_ERROR("Removal failed with errno: %d.", errno);
+            LOG_PERROR("Removal failed with errno: %d.", errno);
             ret_res = ERR_FS_INTERNAL;
         }
         break;
