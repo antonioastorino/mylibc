@@ -299,7 +299,7 @@ Error fs_utils_rm_r(const char* dir_path_char_p)
     return ret_res;
 }
 
-bool fs_utils_is_file(char* path_to_file_char_p)
+bool fs_utils_is_file(const char* path_to_file_char_p)
 {
     struct stat st = {0};
     if (stat(path_to_file_char_p, &st) == -1)
@@ -326,7 +326,7 @@ bool fs_utils_does_exist(const char* p_path)
     }
 }
 
-Error fs_utils_get_file_size(char* path_to_file_char_p, off_t* out_file_size)
+Error fs_utils_get_file_size(const char* path_to_file_char_p, off_t* out_file_size)
 {
     struct stat st = {0};
     if (stat(path_to_file_char_p, &st) == -1)

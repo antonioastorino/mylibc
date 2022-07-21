@@ -27,7 +27,7 @@ Error tcp_utils_server_init()
     int on             = 1;
 
     // create a socket
-    g_server_socket    = socket(domain, type, protocol);
+    g_server_socket = socket(domain, type, protocol);
     if (g_server_socket == -1)
     {
         LOG_PERROR("Failed to create socket");
@@ -92,14 +92,14 @@ int tcp_utils_get_client_socket() { return g_client_socket; }
 
 void tcp_utils_close_server_socket()
 {
-    LOG_INFO("PID `%d` closing server socket Nr. `%d`.", getpid(), g_server_socket);
+    LOG_INFO("PID `%d` - Closing server socket Nr. `%d`.", getpid(), g_server_socket);
     close(g_server_socket);
     shutdown(g_server_socket, SHUT_RDWR);
 }
 
 void tcp_utils_close_client_socket()
 {
-    LOG_INFO("Closing client socket Nr. `%d`", g_client_socket);
+    LOG_INFO("PID `%d` - Closing client socket Nr. `%d`", getpid(), g_client_socket);
     close(g_client_socket);
     shutdown(g_client_socket, SHUT_RDWR);
 }
@@ -113,6 +113,7 @@ Error tcp_utils_read(char* in_buff)
         return ERR_TCP_INTERNAL;
     }
     LOG_TRACE("Client socket: `%d` - bytes `%d`", g_client_socket, bytes_recv);
+    printf("%s\n", in_buff);
     return ERR_ALL_GOOD;
 }
 
@@ -155,5 +156,5 @@ Error tcp_utils_send_file(char* file_path, long file_size)
 }
 
 #if TEST == 1
-void test_tcp_utils(){}
+void test_tcp_utils() {}
 #endif
