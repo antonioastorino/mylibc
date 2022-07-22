@@ -5,6 +5,10 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+#ifndef __APP_DEFINED__
+#define __APP_DEFINED__
+#endif /* __APP_DEFINED__ */
+
     typedef enum
     {
         ERR_ALL_GOOD,
@@ -25,10 +29,10 @@ extern "C"
         ERR_JSON_MISSING_ENTRY,
         ERR_TYPE_MISMATCH,
         ERR_FS_INTERNAL,
-        ERR_HTTP_INTERNAL,
         ERR_TCP_INTERNAL,
         ERR_NOT_FOUND,
         ERR_FATAL,
+        __APP_DEFINED__
     } Error;
 
 #define is_err(_expr) (_expr != ERR_ALL_GOOD)
