@@ -545,26 +545,29 @@ GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**);
 String load_file(char* filename)
 {
     FILE* json_file = fopen(filename, "r");
+    if (json_file == NULL)
+    {
+        LOG_PERROR("Could not read file");
+    }
     int c;
     size_t chars_read = 0;
     size_t size       = 4096;
     char* buf         = MALLOC(size);
     if (buf == NULL)
     {
-        fprintf(stderr, "out of memory\n");
+        LOG_PERROR("out of memory");
         exit(1);
     }
-
-    while ((c = getc(json_file)) != EOF)
+    while ((c = fgetc(json_file)) != EOF)
     {
         if (chars_read >= size - 1)
         {
             /* time to make it bigger */
             size = (size_t)(size * 1.5);
-            buf  = realloc(buf, size);
+            buf  = REALLOC(buf, size);
             if (buf == NULL)
             {
-                fprintf(stderr, "out of memory\n");
+                LOG_PERROR("out of memory");
                 exit(1);
             }
         }
