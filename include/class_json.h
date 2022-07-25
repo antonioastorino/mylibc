@@ -86,7 +86,7 @@ extern "C"
     typedef struct JsonObj
     {
         String json_string;
-        JsonItem* root_p;
+        JsonItem root;
     } JsonObj;
 
     Error JsonObj_new_from_string_p(const String*, JsonObj*);
