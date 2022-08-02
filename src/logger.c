@@ -1,5 +1,6 @@
 #include "logger.h"
 #include <time.h>
+#include <unistd.h>
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
 
@@ -11,6 +12,7 @@ FILE* get_log_err_file() { return log_err_file_p == NULL ? stderr : log_err_file
 
 void logger_init(const char* log_out_file_path_str, const char* log_err_file_path_str)
 {
+    printf("PID `%d` - initializing logger.\n", getpid());
     if ((log_out_file_p != NULL) || (log_err_file_p != NULL))
     {
         perror("Fatal error: logger already initialized!");
@@ -18,9 +20,21 @@ void logger_init(const char* log_out_file_path_str, const char* log_err_file_pat
     }
 
     log_out_file_p = fopen(log_out_file_path_str, "w");
+    if (log_out_file_p == NULL)
+    {
+        perror("Fatal error: could not open logger out file.");
+        exit(-1);
+    }
+    fprintf(log_out_file_p, "PID `%d` - logger out file opened.\n", getpid());
     if (strcmp(log_out_file_path_str, log_err_file_path_str) != 0)
     {
         log_err_file_p = fopen(log_err_file_path_str, "w");
+        if (log_err_file_p == NULL)
+        {
+            perror("Fatal error: could not open logger err file");
+            exit(-1);
+        }
+        fprintf(log_err_file_p, "PID `%d` - logger err file opened.\n", getpid());
     }
     else
     {

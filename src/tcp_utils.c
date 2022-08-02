@@ -106,24 +106,26 @@ void tcp_utils_close_client_socket()
 
 Error tcp_utils_read(char* in_buff)
 {
+    LOG_TRACE("PID `%d` - trying to receive data.", getpid());
     int bytes_recv = read(g_client_socket, in_buff, TCP_MAX_MSG_LEN);
     if (bytes_recv == -1)
     {
-        LOG_PERROR("Socket error");
+        LOG_PERROR("PID `%d` - Socket error", getpid());
         return ERR_TCP_INTERNAL;
     }
-    LOG_TRACE("Client socket: `%d` - bytes `%d`", g_client_socket, bytes_recv);
-    printf("%s\n", in_buff);
+    LOG_TRACE("PID `%d` - Client socket: `%d` - bytes `%d`", getpid(), g_client_socket, bytes_recv);
     return ERR_ALL_GOOD;
 }
 
 Error tcp_utils_write(char* out_buff_char_p)
 {
+    LOG_TRACE("PID `%d` - trying to send data.", getpid());
     if (write(g_client_socket, out_buff_char_p, strlen(out_buff_char_p)) == -1)
     {
-        LOG_PERROR("Failed to send data");
+        LOG_PERROR("PID `%d` - Failed to send data.", getpid());
         return ERR_TCP_INTERNAL;
     }
+    LOG_TRACE("PID `%d` - Data successfully sent.", getpid());
     return ERR_ALL_GOOD;
 }
 
