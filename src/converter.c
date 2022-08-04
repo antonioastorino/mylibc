@@ -73,6 +73,25 @@ Error str_to_size_t(const char* str, size_t* out_size_t)
     return ERR_ALL_GOOD;
 }
 
+Error str_to_uint8_t(const char* str, uint8_t* out_size_t)
+{
+    size_t tmp_value;
+    if (is_err(str_to_size_t(str, &tmp_value)))
+    {
+        return ERR_INVALID;
+    }
+    else if (tmp_value > 255)
+    {
+        LOG_ERROR("%lu too large to fit in 1 byte", tmp_value);
+        return ERR_INVALID;
+    }
+    else
+    {
+        *out_size_t = (uint8_t)tmp_value;
+    }
+    return ERR_ALL_GOOD;
+}
+
 Error str_to_float(const char* str, float* out_float)
 {
     float ret_float = 0.0f;
@@ -145,7 +164,7 @@ float rounder(float to_be_rounded, float step, size_t num_of_decimals)
     to_be_rounded_int = (int)to_be_rounded;
     step_int          = (int)step;
 
-    int remainder     = to_be_rounded_int % step_int;
+    int remainder = to_be_rounded_int % step_int;
     int adjuster;
     if (to_be_rounded > 0)
     {
@@ -209,7 +228,29 @@ void test_converter()
         str_to_size_t("002", &parsed_size_t);
         ASSERT_EQ(parsed_size_t, 2, "size_t with leading zeros converted");
     }
-    PRINT_TEST_TITLE("Invalid to-int conversions");
+    PRINT_TEST_TITLE("Valid to-uint8_t conversions");
+    {
+        uint8_t parsed_uint8_t;
+        str_to_uint8_t("0", &parsed_uint8_t);
+        ASSERT_EQ(parsed_uint8_t, 0, "Zero successfully converted");
+        str_to_uint8_t("255", &parsed_uint8_t);
+        ASSERT_EQ(parsed_uint8_t, 255, "Max uint8_t successfully converted");
+        str_to_uint8_t("+1", &parsed_uint8_t);
+        ASSERT_EQ(parsed_uint8_t, +1, "uint8_t with sign successfully converted");
+        str_to_uint8_t("002", &parsed_uint8_t);
+        ASSERT_EQ(parsed_uint8_t, 2, "size_t with leading zeros converted");
+    }
+    PRINT_TEST_TITLE("Invalid to-uint8_t conversions");
+    {
+        uint8_t parsed_uint8_t;
+        ASSERT_ERR(str_to_uint8_t("1f5", &parsed_uint8_t), "Invalid string detected");
+        ASSERT_ERR(str_to_uint8_t("-235", &parsed_uint8_t), "Invalid string detected");
+        ASSERT_ERR(str_to_uint8_t("+-65", &parsed_uint8_t), "Invalid string detected");
+        ASSERT_ERR(str_to_uint8_t(NULL, &parsed_uint8_t), "NULL string detected");
+        ASSERT_ERR(str_to_uint8_t("", &parsed_uint8_t), "Empty string detected");
+        ASSERT_ERR(str_to_uint8_t("256", &parsed_uint8_t), "Number too large");
+    }
+    PRINT_TEST_TITLE("Invalid to-size_t conversions");
     {
         size_t parsed_size_t;
         ASSERT(
