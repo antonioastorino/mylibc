@@ -38,7 +38,11 @@ String String_new(const char* format, ...)
     // Allocate twice the required length
     size_t allocated_size = (size_t)(actual_size * SIZE_FACTOR);
     // printf("Allocated size: %zu\n", allocated_size);
-    tmp_str_p = (char*)REALLOC(tmp_str_p, sizeof(char) * allocated_size);
+    if (allocated_size)
+    {
+        // Linux will return a NULL pointer if allocated_size == 0
+        tmp_str_p = (char*)REALLOC(tmp_str_p, allocated_size);
+    }
     LOG_TRACE("Created string.")
     va_end(args);
     // Set the `.len` parameter as the length of the string, excluding the terminating '\0'.
