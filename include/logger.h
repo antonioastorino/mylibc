@@ -10,7 +10,7 @@ extern "C"
 
 #define LEVEL_TRACE 5
 #define LEVEL_DEBUG 4
-#define LEVEL_INFO 2
+#define LEVEL_INFO 3
 #define LEVEL_WARNING 2
 #define LEVEL_ERROR 1
 #define LEVEL_NO_LOGS 0
