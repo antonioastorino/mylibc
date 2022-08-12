@@ -135,6 +135,7 @@ while read -r SRC_FULL_PATH; do
     echo "Adding as dependencies header files and corresponding source files found in"
     echo " - ${SRC_FULL_PATH}"
     echo " - "${CORR_HEADER#"${BD}/"}
+    echo $UNIQUE_HEADER_FILES
     for HEADER_FILE in ${UNIQUE_HEADER_FILES[@]}; do
         # Some headers are imported with the path
         HEADER_NAME=$(basename "${HEADER_FILE}")

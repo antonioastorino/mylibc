@@ -1,6 +1,8 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 #include "common.h"
+#include <pthread.h>
+#include <unistd.h>
 #ifdef __cplusplus
 extern "C"
 {
@@ -47,18 +49,61 @@ extern "C"
 #if LOG_LEVEL > LEVEL_NO_LOGS
 #define DATE_TIME_STR_LEN 26
     void logger_init(const char*, const char*);
+    pthread_mutex_t* logger_get_out_mut_p();
+    pthread_mutex_t* logger_get_err_mut_p();
 
     FILE* get_log_out_file();
     FILE* get_log_err_file();
+
+    void get_date_time(char* date_time_str);
+
+#define log_header_o(TYPE)                                                                         \
+    char date_time_str[DATE_TIME_STR_LEN];                                                         \
+    get_date_time(date_time_str);                                                                  \
+    pthread_mutex_lock(logger_get_out_mut_p());                                                    \
+    fprintf(                                                                                       \
+        log_out,                                                                                   \
+        "[%5s] <%d> %s %s:%d | ",                                                                  \
+        #TYPE,                                                                                     \
+        getpid(),                                                                                  \
+        date_time_str,                                                                             \
+        __FILENAME__,                                                                              \
+        __LINE__);
+
+#define log_header_e(TYPE)                                                                         \
+    char date_time_str[DATE_TIME_STR_LEN];                                                         \
+    get_date_time(date_time_str);                                                                  \
+    pthread_mutex_lock(logger_get_err_mut_p());                                                    \
+    fprintf(                                                                                       \
+        log_err,                                                                                   \
+        "[%5s] <%d> %s %s:%d | ",                                                                  \
+        #TYPE,                                                                                     \
+        getpid(),                                                                                  \
+        date_time_str,                                                                             \
+        __FILENAME__,                                                                              \
+        __LINE__);
+
+#define log_footer_o(...)                                                                          \
+    fprintf(log_out, __VA_ARGS__);                                                                 \
+    fprintf(log_out, "\n");                                                                        \
+    fflush(log_out);                                                                               \
+    pthread_mutex_unlock(logger_get_out_mut_p());
+
+#define log_footer_e(...)                                                                          \
+    fprintf(log_err, __VA_ARGS__);                                                                 \
+    fprintf(log_err, "\n");                                                                        \
+    fflush(log_err);                                                                               \
+    pthread_mutex_unlock(logger_get_err_mut_p());
 
 #define PRINT_SEPARATOR()                                                                          \
     {                                                                                              \
         char date_time_str[DATE_TIME_STR_LEN];                                                     \
         get_date_time(date_time_str);                                                              \
-        fprintf(log_out, "-------- %s --------\n", date_time_str);                                 \
+        pthread_mutex_lock(logger_get_err_mut_p());                                                \
+        fprintf(log_out, "-------- <%d> %s --------\n", getpid(), date_time_str);                  \
+        pthread_mutex_unlock(logger_get_out_mut_p());                                              \
     }
 
-    void get_date_time(char* date_time_str);
 #else /* LOG_LEVEL > LEVEL_NO_LOGS */
 #define get_date_time(something)
 #define PRINT_SEPARATOR()
@@ -67,27 +112,15 @@ extern "C"
 #if LOG_LEVEL >= LEVEL_ERROR
 #define LOG_ERROR(...)                                                                             \
     {                                                                                              \
-        char date_time_str[DATE_TIME_STR_LEN];                                                     \
-        get_date_time(date_time_str);                                                              \
-        fprintf(log_err, "[ERROR] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
-        fprintf(log_err, " | " __VA_ARGS__);                                                       \
-        fprintf(log_err, "\n");                                                                    \
-        fflush(log_err);                                                                           \
+        log_header_e(ERROR);                                                                       \
+        log_footer_e(__VA_ARGS__);                                                                 \
     }
+
 #define LOG_PERROR(...)                                                                            \
     {                                                                                              \
-        char date_time_str[DATE_TIME_STR_LEN];                                                     \
-        get_date_time(date_time_str);                                                              \
-        fprintf(                                                                                   \
-            log_err,                                                                               \
-            "[ERROR] %s %s:%d | `%s`",                                                             \
-            date_time_str,                                                                         \
-            __FILENAME__,                                                                          \
-            __LINE__,                                                                              \
-            strerror(errno));                                                                      \
-        fprintf(log_err, " | " __VA_ARGS__);                                                       \
-        fprintf(log_err, "\n");                                                                    \
-        fflush(log_err);                                                                           \
+        log_header_e(ERROR);                                                                       \
+        fprintf(log_err, "`%s` | ", strerror(errno));                                              \
+        log_footer_e(__VA_ARGS__);                                                                 \
     }
 #else
 #define LOG_ERROR(...)
@@ -96,12 +129,8 @@ extern "C"
 #if LOG_LEVEL >= LEVEL_WARNING
 #define LOG_WARNING(...)                                                                           \
     {                                                                                              \
-        char date_time_str[DATE_TIME_STR_LEN];                                                     \
-        get_date_time(date_time_str);                                                              \
-        fprintf(log_err, "[WARN ] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
-        fprintf(log_err, " | " __VA_ARGS__);                                                       \
-        fprintf(log_err, "\n");                                                                    \
-        fflush(log_err);                                                                           \
+        log_header_e(WARN);                                                                        \
+        log_footer_e(__VA_ARGS__);                                                                 \
     }
 #else
 #define LOG_WARNING(...)
@@ -110,12 +139,8 @@ extern "C"
 #if LOG_LEVEL >= LEVEL_INFO
 #define LOG_INFO(...)                                                                              \
     {                                                                                              \
-        char date_time_str[DATE_TIME_STR_LEN];                                                     \
-        get_date_time(date_time_str);                                                              \
-        fprintf(log_out, "[TNFO ] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
-        fprintf(log_out, " | " __VA_ARGS__);                                                       \
-        fprintf(log_out, "\n");                                                                    \
-        fflush(log_out);                                                                           \
+        log_header_o(INFO);                                                                        \
+        log_footer_o(__VA_ARGS__);                                                                 \
     }
 #else
 #define LOG_INFO(...)
@@ -124,12 +149,8 @@ extern "C"
 #if LOG_LEVEL >= LEVEL_DEBUG
 #define LOG_DEBUG(...)                                                                             \
     {                                                                                              \
-        char date_time_str[DATE_TIME_STR_LEN];                                                     \
-        get_date_time(date_time_str);                                                              \
-        fprintf(log_out, "[DEBUG] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
-        fprintf(log_out, " | " __VA_ARGS__);                                                       \
-        fprintf(log_out, "\n");                                                                    \
-        fflush(log_out);                                                                           \
+        log_header_o(DEBUG);                                                                       \
+        log_footer_o(__VA_ARGS__);                                                                 \
     }
 #else
 #define LOG_DEBUG(...)
@@ -138,12 +159,8 @@ extern "C"
 #if LOG_LEVEL >= LEVEL_TRACE
 #define LOG_TRACE(...)                                                                             \
     {                                                                                              \
-        char date_time_str[DATE_TIME_STR_LEN];                                                     \
-        get_date_time(date_time_str);                                                              \
-        fprintf(log_out, "[TRACE] %s %s:%d", date_time_str, __FILENAME__, __LINE__);               \
-        fprintf(log_out, " | " __VA_ARGS__);                                                       \
-        fprintf(log_out, "\n");                                                                    \
-        fflush(log_out);                                                                           \
+        log_header_o(TRACE);                                                                       \
+        log_footer_o(__VA_ARGS__);                                                                 \
     }
 #else
 #define LOG_TRACE(...)

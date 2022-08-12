@@ -9,6 +9,7 @@
 #if TEST == 1
 int main()
 {
+    logger_init(NULL, NULL);
     test_class_string();
     test_class_string_array();
     test_class_json();
