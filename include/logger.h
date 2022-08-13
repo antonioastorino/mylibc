@@ -31,7 +31,8 @@ extern "C"
 #if TEST == 1
 #define log_out stdout
 #define log_err stdout
-#else
+void test_logger();
+#else /* TEST == 1 */
 #define log_out get_log_out_file()
 #define log_err get_log_err_file()
 #endif
@@ -99,8 +100,8 @@ extern "C"
     {                                                                                              \
         char date_time_str[DATE_TIME_STR_LEN];                                                     \
         get_date_time(date_time_str);                                                              \
-        pthread_mutex_lock(logger_get_err_mut_p());                                                \
-        fprintf(log_out, "-------- <%d> %s --------\n", getpid(), date_time_str);                  \
+        pthread_mutex_lock(logger_get_out_mut_p());                                                \
+        fprintf(log_out, "------- <%d> %s -------\n", getpid(), date_time_str);                  \
         pthread_mutex_unlock(logger_get_out_mut_p());                                              \
     }
 

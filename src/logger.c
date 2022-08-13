@@ -1,6 +1,6 @@
 #include "logger.h"
-#include <time.h>
 #include <stdlib.h>
+#include <time.h>
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
 
@@ -95,4 +95,18 @@ void get_date_time(char* date_time_str)
     // Overwrite the \n to avoid a new line.
     date_time_str[24] = 0;
 }
-#endif
+
+#endif /* LOG_LEVEL > LEVEL_NO_LOGS */
+#if TEST == 1
+void test_logger()
+{
+    PRINT_BANNER()
+    PRINT_TEST_TITLE("Logging all levels");
+    PRINT_SEPARATOR();
+    LOG_TRACE("Log trace.");
+    LOG_DEBUG("Log debug.");
+    LOG_INFO("Log info.");
+    LOG_WARNING("Log warning.");
+    LOG_ERROR("Log error.");
+}
+#endif /* TEST == 1 */
