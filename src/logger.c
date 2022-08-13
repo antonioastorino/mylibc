@@ -1,6 +1,6 @@
 #include "logger.h"
 #include <time.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
 
@@ -10,14 +10,14 @@ static pthread_mutex_t log_out_mutex;
 static pthread_mutex_t log_err_mutex;
 
 FILE* get_log_out_file() { return log_out_file_p == NULL ? stdout : log_out_file_p; }
-FILE* get_log_err_file() { return log_err_file_p == NULL ? stderr : log_out_file_p; }
+FILE* get_log_err_file() { return log_err_file_p == NULL ? stderr : log_err_file_p; }
 
 pthread_mutex_t* logger_get_out_mut_p() { return &log_out_mutex; }
 pthread_mutex_t* logger_get_err_mut_p() { return &log_err_mutex; }
 
 void _logger_open_out_file(const char* log_out_file_path_str)
 {
-    log_out_file_p = fopen(log_out_file_path_str, "w");
+    log_out_file_p = fopen(log_out_file_path_str, "a");
     if (log_out_file_p == NULL)
     {
         perror("Fatal error: could not open logger out file.");
@@ -27,7 +27,7 @@ void _logger_open_out_file(const char* log_out_file_path_str)
 }
 void _logger_open_err_file(const char* log_err_file_path_str)
 {
-    log_err_file_p = fopen(log_err_file_path_str, "w");
+    log_err_file_p = fopen(log_err_file_path_str, "a");
     if (log_err_file_p == NULL)
     {
         perror("Fatal error: could not open logger out file.");

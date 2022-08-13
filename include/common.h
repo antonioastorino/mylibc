@@ -6,16 +6,14 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#define TEST 0
+#include "error.h"
+#include "logger.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif /* __cplusplus */
-
-#define TEST 0
-
-#include "error.h"
-#include "logger.h"
-#include "my_memory.h"
 
 #define UNUSED(x) (void)(x)
 #if TEST == 1
