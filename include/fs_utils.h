@@ -13,6 +13,7 @@ extern "C"
     Error fs_utils_mkdir(const char*, mode_t);
     Error fs_utils_mkdir_p(const char*, mode_t);
     Error fs_utils_rmdir(const char*);
+    Error fs_utils_ls(const char*);
     // Files only.
     Error fs_utils_rm_from_path_as_char_p(const char*);
     Error _fs_utils_read_to_string(const char*, String*);

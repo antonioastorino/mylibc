@@ -70,6 +70,7 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
     touch "${ARTIFACT_FOLDER}/non-empty/inner/file.txt"
     touch "${ARTIFACT_FOLDER}/non-empty/inner/inner_l2/file.txt"
     touch "${ARTIFACT_FOLDER}/delete_me.txt"
+    touch "${ARTIFACT_FOLDER}/delete_me_2.txt"
 
     make MODE=TEST OPT=${OPT_LEVEL} 2>&1
     if [ "${MODE}" = "TEST" ]; then
