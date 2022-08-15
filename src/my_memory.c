@@ -63,10 +63,28 @@ int custom_vasprintf(
     return ret_val;
 }
 
+int custom_asprintf(const char* file, const int line, char** ptr_p, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    return custom_vasprintf(ptr_p, format, args, file, line);
+}
+
 void custom_free(void* ptr, const char* file, const int line)
 {
     remove_file(ptr, file, line);
     free(ptr);
 }
 
-#endif
+void test_my_memory()
+{
+    PRINT_BANNER();
+    PRINT_TEST_TITLE("custom_asprintf");
+    {
+        char* char_p;
+        ASSERT_EQ(ASPRINTF(&char_p, "%s %d", "hello", 1), 7, "It worked");
+        ASSERT_EQ(char_p, "hello 1", "Correct string");
+        FREE(char_p);
+    }
+}
+#endif /* TEST == 1 */

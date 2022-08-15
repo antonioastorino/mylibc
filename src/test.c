@@ -5,6 +5,7 @@
 #include "converter.h"
 #include "fs_utils.h"
 #include "tcp_utils.h"
+#include "my_memory.h"
 
 #if TEST == 1
 int main()
@@ -17,6 +18,7 @@ int main()
     test_converter();
     test_fs_utils();
     test_tcp_utils();
+    test_my_memory();
 }
 #else
 #error "TEST must be 1"
