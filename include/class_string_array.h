@@ -12,6 +12,8 @@ extern "C"
         char* str_char_p;
         char** str_array_char_p;
     } StringArray;
+
+    StringArray StringArray_empty();
     StringArray StringArray_new(const char*, const char*);
     void StringArray_destroy(StringArray*);
 

@@ -3,11 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-StringArray StringArray_new(const char* input_char_p, const char* pattern_char_p)
+StringArray StringArray_empty()
 {
     StringArray ret_string_array
         = {.num_of_elements = 0, .str_char_p = NULL, .str_array_char_p = NULL};
-    int origin_size = strlen(input_char_p);
+    return ret_string_array;
+}
+
+StringArray StringArray_new(const char* input_char_p, const char* pattern_char_p)
+{
+    StringArray ret_string_array = StringArray_empty();
+    int origin_size              = strlen(input_char_p);
     if (origin_size == 0)
     {
         return ret_string_array;
@@ -90,9 +96,17 @@ void StringArray_destroy(StringArray* string_array_p)
 #if TEST == 1
 void test_class_string_array()
 {
-    StringArray test_string_array;
+    StringArray test_string_array = StringArray_empty();
     PRINT_BANNER();
 
+    PRINT_TEST_TITLE("StringArray_empty");
+    {
+        StringArray empty_string_array_obj = StringArray_empty();
+        ASSERT_EQ(empty_string_array_obj.num_of_elements, 0, "Correct number of elements.");
+        ASSERT(empty_string_array_obj.str_char_p == NULL, "Correct NULL string.");
+        ASSERT(empty_string_array_obj.str_array_char_p == NULL, "Correct NULL string array.");
+        StringArray_destroy(&empty_string_array_obj); // This should not segfault
+    }
     PRINT_TEST_TITLE("Split using spaces");
     test_string_array = StringArray_new("Hi you", " ");
     ASSERT_EQ(test_string_array.str_array_char_p[0], "Hi", "First element correct.");
