@@ -8,7 +8,7 @@ extern "C"
 
 #define TCP_MAX_MSG_LEN 4096
 
-    Error tcp_utils_server_init();
+    Error tcp_utils_server_init(uint16_t port);
     Error tcp_utils_accept();
     int tcp_utils_get_client_socket();
     void tcp_utils_close_server_socket();

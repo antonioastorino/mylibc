@@ -13,7 +13,7 @@ static bool g_initialized = false;
 static int g_server_socket;
 static int g_client_socket;
 
-Error tcp_utils_server_init()
+Error tcp_utils_server_init(uint16_t port)
 {
     if (g_initialized)
     {
@@ -42,7 +42,7 @@ Error tcp_utils_server_init()
     // specify address
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
-    server_address.sin_port   = htons(8080);
+    server_address.sin_port   = htons(port);
 #ifdef __linux__
     // On RPi, we get traffic to/from the network.
     server_address.sin_addr.s_addr = INADDR_ANY;
