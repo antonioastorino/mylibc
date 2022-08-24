@@ -3,6 +3,7 @@
 #include "common.h"
 #include <stdbool.h>
 #include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -19,34 +20,56 @@ extern "C"
     } String;
 
     /************************************* (De)Constructors ***************************************/
-    String String_new(const char*, ...);
+    String _String_new(const char* file, int line, ...);
     String String_join(const char**, const char*);
     String String_clone(const String*);
-    void String_destroy(String*);
+    void _String_destroy(String*, const char* file, const int line);
 
     /***************************************** Checkers *******************************************/
     bool String_is_null(const String*);
     bool String_starts_with(const String*, const char*);
-    Error String_between_patterns_in_string_p(String*, const char*, const char*, String*);
-    Error String_between_patterns_in_char_p(const char*, const char*, const char*, String*);
+    Error _String_between_patterns_in_string_p(
+        const char* file,
+        const int line,
+        String*,
+        const char*,
+        const char*,
+        String*);
+    Error _String_between_patterns_in_char_p(
+        const char* file,
+        const int line,
+        const char*,
+        const char*,
+        const char*,
+        String*);
     bool String_match(const String*, const String*);
 
     /**************************************** Modifiers *******************************************/
     Error String_replace_char(String*, const char, const char, size_t*);
-    Error String_replace_pattern(String*, const char*, const char*, size_t*);
+    Error _String_replace_pattern(
+        String*,
+        const char*,
+        const char*,
+        size_t*,
+        const char* file,
+        const int line);
     Error String_replace_pattern_size_t(String*, const char*, const char*, const size_t, size_t*);
     Error String_replace_pattern_float(String*, const char*, const char*, const float, size_t*);
     Error String_replace_pattern_int(String*, const char*, const char*, const int, size_t*);
 
+#define String_new(...) _String_new(__FILE__, __LINE__, __VA_ARGS__)
+#define String_replace_pattern(haystack, needle, replacement, out_count)                           \
+    _String_replace_pattern(haystack, needle, replacement, out_count, __FILE__, __LINE__)
 #define String_empty(string_name) String string_name = {.length = 0, .size = 0, .str = NULL}
 #define String_full(string_name, ...) String string_name = String_new(__VA_ARGS__)
+#define String_destroy(string_p) _String_destroy(string_p, __FILE__, __LINE__)
 
 // clang-format off
 #define String_between_patterns(in_value, prefix, suffix, out_string) \
     _Generic((in_value), \
-     String*     : String_between_patterns_in_string_p, \
-     const char* : String_between_patterns_in_char_p \
-     )(in_value, prefix, suffix, out_string)
+     String*     : _String_between_patterns_in_string_p, \
+     const char* : _String_between_patterns_in_char_p \
+     )(__FILE__, __LINE__, in_value, prefix, suffix, out_string)
 
 #define String_replace_pattern_with_format(haystack, needle, format, replacement, out_count) \
     _Generic((replacement), \

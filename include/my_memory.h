@@ -9,12 +9,13 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#if TEST == 1
     void* custom_malloc(size_t, const char*, const int);
     void* custom_realloc(void*, size_t, const char*, const int);
     int custom_vasprintf(char**, const char*, va_list, const char*, const int);
     int custom_asprintf(const char* file, const int line, char** ptr_p, const char* format, ...);
     void custom_free(void*, const char*, const int);
+
+#if TEST == 1
 
 #define MALLOC(size) custom_malloc(size, __FILE__, __LINE__)
 #define REALLOC(ptr, size) custom_realloc(ptr, size, __FILE__, __LINE__)

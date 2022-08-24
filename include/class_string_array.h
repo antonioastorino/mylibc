@@ -1,6 +1,7 @@
 #ifndef CLASS_STRING_ARRAY_H
 #define CLASS_STRING_ARRAY_H
 #include "common.h"
+#define StringArray_new(str, separator) _StringArray_new(str, separator, __FILE__, __LINE__)
 #ifdef __cplusplus
 extern "C"
 {
@@ -14,7 +15,7 @@ extern "C"
     } StringArray;
 
     StringArray StringArray_empty();
-    StringArray StringArray_new(const char*, const char*);
+    StringArray _StringArray_new(const char*, const char*, const char* file, const int line);
     void StringArray_destroy(StringArray*);
 
 #if TEST == 1

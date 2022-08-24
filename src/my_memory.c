@@ -4,32 +4,49 @@
 #include <stdlib.h>
 #include <sys/errno.h>
 
-#if TEST == 1
-
-void create_file(void* pointer, const char* file, const int line)
-{
-    char file_name[256];
-    sprintf(file_name, "/tmp/pointers/%p", pointer);
-    FILE* fh = fopen(file_name, "wx");
-    if (!fh)
-    {
-        LOG_ERROR("Cannot create %p file", pointer);
-        exit(errno);
+#ifdef MEMORY_CHECK
+#define create_file(pointer, file, line)                                                           \
+    {                                                                                              \
+        char file_name[256];                                                                       \
+        sprintf(file_name, "/tmp/pointers/%p", pointer);                                           \
+        FILE* fh = fopen(file_name, "wx");                                                         \
+        if (!fh)                                                                                   \
+        {                                                                                          \
+            LOG_ERROR("Cannot create %p file", pointer);                                           \
+            exit(errno);                                                                           \
+        }                                                                                          \
+        fprintf(fh, "%s:%d", file, line);                                                          \
+        fclose(fh);                                                                                \
     }
-    fprintf(fh, "%s:%d", file, line);
-    fclose(fh);
-}
 
-void remove_file(void* pointer, const char* file, const int line)
-{
-    char file_name[256];
-    sprintf(file_name, "/tmp/pointers/%p", pointer);
-    if (remove(file_name))
-    {
-        fprintf(stderr, "Cannot remove %p file called by %s:%d.", pointer, file, line);
-        exit(errno);
+#define remove_file(pointer, file, line)                                                           \
+    {                                                                                              \
+        char file_name[256];                                                                       \
+        sprintf(file_name, "/tmp/pointers/%p", pointer);                                           \
+        if (remove(file_name))                                                                     \
+        {                                                                                          \
+            fprintf(stderr, "Cannot remove %p file called by %s:%d.", pointer, file, line);        \
+            exit(errno);                                                                           \
+        }                                                                                          \
     }
-}
+
+#else /* MEMORY_CHECK */
+
+#define create_file(pointer, file, line)                                                           \
+    {                                                                                              \
+        (void)(pointer);                                                                           \
+        (void)(file);                                                                              \
+        (void)(line);                                                                              \
+    }
+
+#define remove_file(pointer, file, line)                                                           \
+    {                                                                                              \
+        (void)(pointer);                                                                           \
+        (void)(file);                                                                              \
+        (void)(line);                                                                              \
+    }
+
+#endif /* MEMORY_CHECK */
 
 void* custom_malloc(size_t size, const char* file, const int line)
 {
@@ -76,6 +93,7 @@ void custom_free(void* ptr, const char* file, const int line)
     free(ptr);
 }
 
+#if TEST == 1
 void test_my_memory()
 {
     PRINT_BANNER();

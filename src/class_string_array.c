@@ -10,7 +10,11 @@ StringArray StringArray_empty()
     return ret_string_array;
 }
 
-StringArray StringArray_new(const char* input_char_p, const char* pattern_char_p)
+StringArray _StringArray_new(
+    const char* input_char_p,
+    const char* pattern_char_p,
+    const char* file,
+    const int line)
 {
     StringArray ret_string_array = StringArray_empty();
     int origin_size              = strlen(input_char_p);
@@ -39,13 +43,13 @@ StringArray StringArray_new(const char* input_char_p, const char* pattern_char_p
 
     // Making new string of enough length
     size_t new_string_length         = i + cnt * (1 - pattern_length);
-    char* result_char_p              = (char*)MALLOC(new_string_length + 1);
+    char* result_char_p              = (char*)custom_malloc(new_string_length + 1, file, line);
     result_char_p[new_string_length] = 0;
     /*
     pointers[0] always points to the beginning of the string. The others point to the next split.
     pointers[last] points to NULL;
     */
-    char** pointers   = (char**)MALLOC(sizeof(char*) * (cnt + 2));
+    char** pointers   = (char**)custom_malloc(sizeof(char*) * (cnt + 2), file, line);
     pointers[0]       = result_char_p;
     pointers[cnt + 1] = NULL;
 
@@ -108,19 +112,23 @@ void test_class_string_array()
         StringArray_destroy(&empty_string_array_obj); // This should not segfault
     }
     PRINT_TEST_TITLE("Split using spaces");
-    test_string_array = StringArray_new("Hi you", " ");
-    ASSERT_EQ(test_string_array.str_array_char_p[0], "Hi", "First element correct.");
-    ASSERT_EQ(test_string_array.str_array_char_p[1], "you", "Second element correct.");
-    ASSERT_EQ(test_string_array.str_array_char_p[2] == NULL, 1, "Last element (null) correct.");
-    ASSERT_EQ(test_string_array.num_of_elements, 2, "Number of elements correct.");
-    StringArray_destroy(&test_string_array);
+    {
+        StringArray string_array_obj = StringArray_new("Hi you", " ");
+        ASSERT_EQ(string_array_obj.str_array_char_p[0], "Hi", "First element correct.");
+        ASSERT_EQ(string_array_obj.str_array_char_p[1], "you", "Second element correct.");
+        ASSERT_EQ(string_array_obj.str_array_char_p[2] == NULL, 1, "Last element (null) correct.");
+        ASSERT_EQ(string_array_obj.num_of_elements, 2, "Number of elements correct.");
+        StringArray_destroy(&string_array_obj);
+    }
 
     PRINT_TEST_TITLE("Split without matching pattern");
-    test_string_array = StringArray_new("Hi you", "?");
-    ASSERT_EQ(test_string_array.str_array_char_p[0], "Hi you", "First element correct.");
-    ASSERT_EQ(test_string_array.str_array_char_p[1] == NULL, 1, "Last element (null) correct.");
-    ASSERT_EQ(test_string_array.num_of_elements, 1, "Number of elements correct.");
-    StringArray_destroy(&test_string_array);
+    {
+        StringArray string_array_obj = StringArray_new("Hi you", "?");
+        ASSERT_EQ(string_array_obj.str_array_char_p[0], "Hi you", "First element correct.");
+        ASSERT_EQ(string_array_obj.str_array_char_p[1] == NULL, 1, "Last element (null) correct.");
+        ASSERT_EQ(string_array_obj.num_of_elements, 1, "Number of elements correct.");
+        StringArray_destroy(&string_array_obj);
+    }
 
     PRINT_TEST_TITLE("Empty string returns empty array");
     test_string_array = StringArray_new("", "whatever");

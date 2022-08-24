@@ -17,19 +17,20 @@ bool String_is_null(const String* string_obj_p)
     return false;
 }
 
-String String_new(const char* format, ...)
+String _String_new(const char* file, const int line, ...)
 {
+    va_list args;
+    va_start(args, line);
+    const char* format = va_arg(args, char*);
     if (format == NULL)
     {
         LOG_WARNING("NULL pointer used as format string. Returning empty string.");
-        return String_new("");
+        return _String_new(file, line, "");
     }
-    va_list args;
     char* tmp_str_p = NULL;
     String out_string_obj;
-    va_start(args, format);
     // Calculate how many bytes are needed (excluding the terminating '\0').
-    if (VASPRINTF(&tmp_str_p, format, args) == -1)
+    if (custom_vasprintf(&tmp_str_p, format, args, file, line) == -1)
     {
         LOG_ERROR("Out of memory", errno)
         exit(ERR_NULL);
@@ -37,11 +38,10 @@ String String_new(const char* format, ...)
     size_t actual_size = strlen(tmp_str_p);
     // Allocate twice the required length
     size_t allocated_size = (size_t)(actual_size * SIZE_FACTOR);
-    // printf("Allocated size: %zu\n", allocated_size);
     if (allocated_size)
     {
         // Linux will return a NULL pointer if allocated_size == 0
-        tmp_str_p = (char*)REALLOC(tmp_str_p, allocated_size);
+        tmp_str_p = (char*)custom_realloc(tmp_str_p, allocated_size, file, line);
     }
     LOG_TRACE("Created string.")
     va_end(args);
@@ -62,7 +62,8 @@ String String_join(const char** char_array, const char* joint)
         return out_string_obj;
     }
     const char** curr_element = char_array;
-    out_string_obj            = String_new(*curr_element);
+    // TODO: use file, line
+    out_string_obj = String_new(*curr_element);
     while (*(curr_element + 1) != NULL)
     {
         // TODO: Use String_renew() instead.
@@ -75,14 +76,14 @@ String String_join(const char** char_array, const char* joint)
 
 String String_clone(const String* origin) { return String_new(origin->str); }
 
-void String_destroy(String* string_obj_p)
+void _String_destroy(String* string_obj_p, const char* file, const int line)
 {
     if (String_is_null(string_obj_p))
     {
         LOG_WARNING("String already destroyed");
         return;
     }
-    FREE(string_obj_p->str);
+    custom_free(string_obj_p->str, file, line);
     string_obj_p->str    = NULL;
     string_obj_p->length = 0;
     string_obj_p->size   = 0;
@@ -178,30 +179,32 @@ Error String_replace_char(
     return ERR_ALL_GOOD;
 }
 
-#define String_replace_pattern_c(suffix)                                                           \
-    Error String_replace_pattern_##suffix(                                                         \
-        String* haystack_string_p,                                                                 \
-        const char* needle,                                                                        \
-        const char* format,                                                                        \
-        const suffix replacement,                                                                  \
-        size_t* out_count)                                                                         \
-    {                                                                                              \
-        String replacement_string = String_new(format, replacement);                               \
-        Error res_replace         = String_replace_pattern(                                        \
-            haystack_string_p, needle, replacement_string.str, out_count);                 \
-        String_destroy(&replacement_string);                                                       \
-        return res_replace;                                                                        \
+#define String_replace_pattern_c(suffix)                                                               \
+    Error String_replace_pattern_##suffix(                                                             \
+        String* haystack_string_p,                                                                     \
+        const char* needle,                                                                            \
+        const char* format,                                                                            \
+        const suffix replacement,                                                                      \
+        size_t* out_count)                                                                             \
+    {                                                                                                  \
+        String replacement_string = String_new(format, replacement);                                   \
+        Error res_replace         = _String_replace_pattern(                                           \
+            haystack_string_p, needle, replacement_string.str, out_count, __FILE__, __LINE__); \
+        String_destroy(&replacement_string);                                                           \
+        return res_replace;                                                                            \
     }
 
 String_replace_pattern_c(size_t);
 String_replace_pattern_c(float);
 String_replace_pattern_c(int);
 
-Error String_replace_pattern(
+Error _String_replace_pattern(
     String* haystack_string_p,
     const char* needle,
     const char* replacement,
-    size_t* out_count)
+    size_t* out_count,
+    const char* file,
+    const int line)
 {
     if (String_is_null(haystack_string_p))
     {
@@ -239,7 +242,7 @@ Error String_replace_pattern(
 
     // Making new string of enough length
     size_t new_string_length         = i + cnt * (newWlen - oldWlen);
-    char* result_char_p              = (char*)MALLOC(new_string_length + 1);
+    char* result_char_p              = (char*)custom_malloc(new_string_length + 1, file, line);
     result_char_p[new_string_length] = 0;
 
     i = 0;
@@ -261,20 +264,23 @@ Error String_replace_pattern(
     {
         // Increase the allocated size.
         haystack_string_p->size = (size_t)(new_string_length * SIZE_FACTOR);
-        haystack_string_p->str  = (char*)REALLOC(haystack_string_p->str, haystack_string_p->size);
+        haystack_string_p->str
+            = (char*)custom_realloc(haystack_string_p->str, haystack_string_p->size, file, line);
     }
     haystack_string_p->length = new_string_length;
     // Copy an extra byte for the NULL characther.
     strncpy(haystack_string_p->str, result_char_p, new_string_length + 1);
     haystack_string_p->str[new_string_length] = 0;
-    FREE(result_char_p);
+    custom_free(result_char_p, file, line);
     result_char_p = NULL;
 
     *out_count = cnt;
     return ERR_ALL_GOOD;
 }
 
-Error String_between_patterns_in_char_p(
+Error _String_between_patterns_in_char_p(
+    const char* file,
+    const int line,
     const char* in_char_p,
     const char* prefix,
     const char* suffix,
@@ -307,23 +313,26 @@ Error String_between_patterns_in_char_p(
         LOG_ERROR("Suffix not found in input string");
         return ERR_NOT_FOUND;
     }
-    char* tmp = (char*)MALLOC(end - start + 1);
+    char* tmp = (char*)custom_malloc(end - start + 1, file, line);
     memcpy(tmp, start, end - start);
     tmp[end - start] = '\0';
 
-    (*out_string_obj_p) = String_new(tmp);
-    FREE(tmp);
+    (*out_string_obj_p) = _String_new(file, line, tmp);
+    custom_free(tmp, file, line);
     tmp = NULL;
     return ERR_ALL_GOOD;
 }
 
-Error String_between_patterns_in_string_p(
+Error _String_between_patterns_in_string_p(
+    const char* file,
+    const int line,
     String* in_string_p,
     const char* prefix,
     const char* suffix,
     String* out_string_obj_p)
 {
-    return String_between_patterns_in_char_p(in_string_p->str, prefix, suffix, out_string_obj_p);
+    return _String_between_patterns_in_char_p(
+        file, line, in_string_p->str, prefix, suffix, out_string_obj_p);
 }
 
 #if TEST == 1
