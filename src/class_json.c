@@ -126,7 +126,7 @@ String generate_tokens(String* json_string_p)
     return String_new(ret_tokens_char_p);
 }
 
-Error deserialize(JsonItem* curr_item_p, char** start_pos_p)
+Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char** start_pos_p)
 {
     char* curr_pos_p = *start_pos_p;
     bool parent_set  = false;
@@ -145,12 +145,12 @@ Error deserialize(JsonItem* curr_item_p, char** start_pos_p)
         if (curr_pos_p[0] == '[')
         {
             LOG_TRACE("Found beginning of array.");
-            JsonItem* new_item               = (JsonItem*)MALLOC(sizeof(JsonItem));
-            new_item->index                  = 0;
-            new_item->key_p                  = NULL;
-            new_item->parent                 = curr_item_p;
-            new_item->next_sibling           = NULL;
-            curr_item_p->value.value_type    = VALUE_ARRAY;
+            JsonItem* new_item            = (JsonItem*)custom_malloc(sizeof(JsonItem), file, line);
+            new_item->index               = 0;
+            new_item->key_p               = NULL;
+            new_item->parent              = curr_item_p;
+            new_item->next_sibling        = NULL;
+            curr_item_p->value.value_type = VALUE_ARRAY;
             curr_item_p->value.value_child_p = new_item;
             curr_pos_p++;
 
@@ -162,7 +162,7 @@ Error deserialize(JsonItem* curr_item_p, char** start_pos_p)
         {
             // This is a sibling of an array.
             LOG_TRACE("Found sibling in array.");
-            JsonItem* new_item        = (JsonItem*)MALLOC(sizeof(JsonItem));
+            JsonItem* new_item        = (JsonItem*)custom_malloc(sizeof(JsonItem), file, line);
             new_item->index           = curr_item_p->index + 1;
             new_item->key_p           = NULL;
             new_item->parent          = curr_item_p->parent;
@@ -251,9 +251,9 @@ Error deserialize(JsonItem* curr_item_p, char** start_pos_p)
                 {
                     // It's a child
                     LOG_TRACE("Found new object");
-                    JsonItem* new_item               = (JsonItem*)MALLOC(sizeof(JsonItem));
-                    new_item->next_sibling           = NULL;
-                    new_item->parent                 = curr_item_p;
+                    JsonItem* new_item     = (JsonItem*)custom_malloc(sizeof(JsonItem), file, line);
+                    new_item->next_sibling = NULL;
+                    new_item->parent       = curr_item_p;
                     curr_item_p->value.value_type    = VALUE_ITEM;
                     curr_item_p->value.value_child_p = new_item;
                     curr_item_p                      = new_item;
@@ -266,7 +266,7 @@ Error deserialize(JsonItem* curr_item_p, char** start_pos_p)
             else if (*curr_pos_p == ',')
             {
                 // It's a sibling - the parent must be in common.
-                JsonItem* new_item        = (JsonItem*)MALLOC(sizeof(JsonItem));
+                JsonItem* new_item        = (JsonItem*)custom_malloc(sizeof(JsonItem), file, line);
                 new_item->next_sibling    = NULL;
                 curr_item_p->next_sibling = new_item;
                 new_item->parent          = curr_item_p->parent;
@@ -326,16 +326,23 @@ Error deserialize(JsonItem* curr_item_p, char** start_pos_p)
     return ERR_ALL_GOOD;
 }
 
-// TODO: Create _Generic and unit tests.
-Error JsonObj_new_from_char_p(const char* json_char_p, JsonObj* out_json_obj_p)
+Error JsonObj_new_from_char_p(
+    const char* file,
+    const int line,
+    const char* json_char_p,
+    JsonObj* out_json_obj_p)
 {
     String json_string = String_new(json_char_p);
-    Error ret_result   = JsonObj_new(&json_string, out_json_obj_p);
+    Error ret_result   = JsonObj_new_from_string_p(file, line, &json_string, out_json_obj_p);
     String_destroy(&json_string);
     return ret_result;
 }
 
-Error JsonObj_new_from_string_p(const String* json_string_p, JsonObj* out_json_obj_p)
+Error JsonObj_new_from_string_p(
+    const char* file,
+    const int line,
+    const String* json_string_p,
+    JsonObj* out_json_obj_p)
 {
     if (json_string_p->length == 0)
     {
@@ -359,7 +366,7 @@ Error JsonObj_new_from_string_p(const String* json_string_p, JsonObj* out_json_o
     out_json_obj_p->root.next_sibling = NULL;
 
     LOG_DEBUG("JSON deserialization started.");
-    if (is_err(deserialize(&out_json_obj_p->root, &curr_pos_p)))
+    if (is_err(deserialize(file, line, &out_json_obj_p->root, &curr_pos_p)))
     {
         JsonObj_destroy(out_json_obj_p);
         LOG_ERROR("Failed to deserialize JSON");
@@ -786,7 +793,7 @@ void test_class_json()
         bool value_bool;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json.json");
-        ASSERT_OK(JsonObj_new_from_string_p(&json_string, &json_obj), "Json object created");
+        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
         String_destroy(&json_string); // We can delete it.
         Json_get(&json_obj.root, "text_key", &value_str);
         ASSERT_EQ("text_value", value_str, "String*value found in first item");
@@ -844,7 +851,7 @@ void test_class_json()
         JsonObj json_obj;
         String json_string = String_new("");
         ASSERT(
-            JsonObj_new_from_string_p(&json_string, &json_obj) == ERR_EMPTY_STRING,
+            JsonObj_new(&json_string, &json_obj) == ERR_EMPTY_STRING,
             "Empty JSON fails to initialize.");
         String_destroy(&json_string);
     }
@@ -853,7 +860,7 @@ void test_class_json()
         JsonObj json_obj;
         String json_string = String_new("This is not a JSON file");
         ASSERT(
-            JsonObj_new_from_string_p(&json_string, &json_obj) == ERR_JSON_INVALID,
+            JsonObj_new(&json_string, &json_obj) == ERR_JSON_INVALID,
             "Invalid JSON fails to initialize.");
         String_destroy(&json_string);
     }

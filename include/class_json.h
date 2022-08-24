@@ -89,8 +89,8 @@ extern "C"
         JsonItem root;
     } JsonObj;
 
-    Error JsonObj_new_from_string_p(const String*, JsonObj*);
-    Error JsonObj_new_from_char_p(const char*, JsonObj*);
+    Error JsonObj_new_from_string_p(const char* file, const int line, const String*, JsonObj*);
+    Error JsonObj_new_from_char_p(const char* file, const int line, const char*, JsonObj*);
     void JsonObj_destroy(JsonObj*);
     void JsonObj_get_tokens(String*);
 
@@ -122,7 +122,7 @@ extern "C"
     _Generic(in_json,                                                                              \
         const char*  : JsonObj_new_from_char_p,                                                    \
         String*     : JsonObj_new_from_string_p                                                   \
-        )(in_json, out_json)
+        )(__FILE__, __LINE__,in_json, out_json)
 
 #define Json_get(json_stuff, needle, out_p)                                                        \
     _Generic ((json_stuff),                                                                        \

@@ -62,7 +62,6 @@ String String_join(const char** char_array, const char* joint)
         return out_string_obj;
     }
     const char** curr_element = char_array;
-    // TODO: use file, line
     out_string_obj = String_new(*curr_element);
     while (*(curr_element + 1) != NULL)
     {
