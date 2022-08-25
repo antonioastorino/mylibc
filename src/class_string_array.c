@@ -43,13 +43,13 @@ StringArray _StringArray_new(
 
     // Making new string of enough length
     size_t new_string_length         = i + cnt * (1 - pattern_length);
-    char* result_char_p              = (char*)custom_malloc(file, line, new_string_length + 1);
+    char* result_char_p              = (char*)my_memory_malloc(file, line, new_string_length + 1);
     result_char_p[new_string_length] = 0;
     /*
     pointers[0] always points to the beginning of the string. The others point to the next split.
     pointers[last] points to NULL;
     */
-    char** pointers   = (char**)custom_malloc(file, line, sizeof(char*) * (cnt + 2));
+    char** pointers   = (char**)my_memory_malloc(file, line, sizeof(char*) * (cnt + 2));
     pointers[0]       = result_char_p;
     pointers[cnt + 1] = NULL;
 
@@ -91,8 +91,8 @@ void StringArray_destroy(StringArray* string_array_p)
         *ptr = NULL;
         ptr++;
     }
-    custom_free(string_array_p->str_char_p);
-    custom_free(string_array_p->str_array_char_p);
+    my_memory_free(string_array_p->str_char_p);
+    my_memory_free(string_array_p->str_array_char_p);
     string_array_p->str_array_char_p = NULL;
     string_array_p->str_char_p       = NULL;
 }

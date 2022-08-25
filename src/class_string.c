@@ -30,7 +30,7 @@ String _String_new(const char* file, const int line, ...)
     char* tmp_str_p = NULL;
     String out_string_obj;
     // Calculate how many bytes are needed (excluding the terminating '\0').
-    if (custom_vasprintf(file, line, &tmp_str_p, format, args) == -1)
+    if (my_memory_vasprintf(file, line, &tmp_str_p, format, args) == -1)
     {
         LOG_ERROR("Out of memory", errno)
         exit(ERR_NULL);
@@ -41,7 +41,7 @@ String _String_new(const char* file, const int line, ...)
     if (allocated_size)
     {
         // Linux will return a NULL pointer if allocated_size == 0
-        tmp_str_p = (char*)custom_realloc(file, line, tmp_str_p, allocated_size);
+        tmp_str_p = (char*)my_memory_realloc(file, line, tmp_str_p, allocated_size);
     }
     LOG_TRACE("Created string.")
     va_end(args);
@@ -82,7 +82,7 @@ void String_destroy(String* string_obj_p)
         LOG_WARNING("String already destroyed");
         return;
     }
-    custom_free(string_obj_p->str);
+    my_memory_free(string_obj_p->str);
     string_obj_p->str    = NULL;
     string_obj_p->length = 0;
     string_obj_p->size   = 0;
@@ -241,7 +241,7 @@ Error _String_replace_pattern(
 
     // Making new string of enough length
     size_t new_string_length         = i + cnt * (newWlen - oldWlen);
-    char* result_char_p              = (char*)custom_malloc(file, line,new_string_length + 1);
+    char* result_char_p              = (char*)my_memory_malloc(file, line,new_string_length + 1);
     result_char_p[new_string_length] = 0;
 
     i = 0;
@@ -264,13 +264,13 @@ Error _String_replace_pattern(
         // Increase the allocated size.
         haystack_string_p->size = (size_t)(new_string_length * SIZE_FACTOR);
         haystack_string_p->str
-            = (char*)custom_realloc(file, line, haystack_string_p->str, haystack_string_p->size);
+            = (char*)my_memory_realloc(file, line, haystack_string_p->str, haystack_string_p->size);
     }
     haystack_string_p->length = new_string_length;
     // Copy an extra byte for the NULL characther.
     strncpy(haystack_string_p->str, result_char_p, new_string_length + 1);
     haystack_string_p->str[new_string_length] = 0;
-    custom_free(result_char_p);
+    my_memory_free(result_char_p);
     result_char_p = NULL;
 
     *out_count = cnt;
@@ -312,12 +312,12 @@ Error _String_between_patterns_in_char_p(
         LOG_ERROR("Suffix not found in input string");
         return ERR_NOT_FOUND;
     }
-    char* tmp = (char*)custom_malloc(file, line, end - start + 1);
+    char* tmp = (char*)my_memory_malloc(file, line, end - start + 1);
     memcpy(tmp, start, end - start);
     tmp[end - start] = '\0';
 
     (*out_string_obj_p) = _String_new(file, line, tmp);
-    custom_free(tmp);
+    my_memory_free(tmp);
     tmp = NULL;
     return ERR_ALL_GOOD;
 }

@@ -145,7 +145,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         if (curr_pos_p[0] == '[')
         {
             LOG_TRACE("Found beginning of array.");
-            JsonItem* new_item            = (JsonItem*)custom_malloc(file, line, sizeof(JsonItem));
+            JsonItem* new_item            = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
             new_item->index               = 0;
             new_item->key_p               = NULL;
             new_item->parent              = curr_item_p;
@@ -162,7 +162,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         {
             // This is a sibling of an array.
             LOG_TRACE("Found sibling in array.");
-            JsonItem* new_item        = (JsonItem*)custom_malloc(file, line, sizeof(JsonItem));
+            JsonItem* new_item        = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
             new_item->index           = curr_item_p->index + 1;
             new_item->key_p           = NULL;
             new_item->parent          = curr_item_p->parent;
@@ -251,7 +251,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
                 {
                     // It's a child
                     LOG_TRACE("Found new object");
-                    JsonItem* new_item     = (JsonItem*)custom_malloc(file, line,sizeof(JsonItem));
+                    JsonItem* new_item     = (JsonItem*)my_memory_malloc(file, line,sizeof(JsonItem));
                     new_item->next_sibling = NULL;
                     new_item->parent       = curr_item_p;
                     curr_item_p->value.value_type    = VALUE_ITEM;
@@ -266,7 +266,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
             else if (*curr_pos_p == ',')
             {
                 // It's a sibling - the parent must be in common.
-                JsonItem* new_item        = (JsonItem*)custom_malloc(file, line, sizeof(JsonItem));
+                JsonItem* new_item        = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
                 new_item->next_sibling    = NULL;
                 curr_item_p->next_sibling = new_item;
                 new_item->parent          = curr_item_p->parent;
@@ -401,7 +401,7 @@ void JsonItem_destroy(JsonItem* json_item)
     json_item->value.value_type = VALUE_UNDEFINED;
     if (json_item != json_item->parent)
     {
-        custom_free(json_item);
+        my_memory_free(json_item);
     }
     json_item = NULL;
 }
@@ -586,7 +586,7 @@ String load_file(char* filename)
     int c;
     size_t chars_read = 0;
     size_t size       = 4096;
-    char* buf         = custom_malloc(__FILE__, __LINE__, size);
+    char* buf         = my_memory_malloc(__FILE__, __LINE__, size);
     if (buf == NULL)
     {
         LOG_PERROR("out of memory");
@@ -598,7 +598,7 @@ String load_file(char* filename)
         {
             /* time to make it bigger */
             size = (size_t)(size * 1.5);
-            buf  = custom_realloc(__FILE__, __LINE__, buf, size);
+            buf  = my_memory_realloc(__FILE__, __LINE__, buf, size);
             if (buf == NULL)
             {
                 LOG_PERROR("out of memory");
@@ -610,7 +610,7 @@ String load_file(char* filename)
     buf[chars_read++] = '\0';
     fclose(json_file);
     String json_string = String_new(buf);
-    custom_free(buf);
+    my_memory_free(buf);
     buf = NULL;
     return json_string;
 }

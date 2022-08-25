@@ -179,7 +179,7 @@ Error _fs_utils_read_to_string(
     int c;
     size_t chars_read = 0;
     size_t size       = 4096;
-    char* buf         = custom_malloc(file, line, size);
+    char* buf         = my_memory_malloc(file, line, size);
     if (buf == NULL)
     {
         LOG_PERROR("FATAL: out of memory");
@@ -192,7 +192,7 @@ Error _fs_utils_read_to_string(
         {
             /* time to make it bigger */
             size = (size_t)(size * 1.5);
-            buf  = custom_realloc(file, line, buf, size);
+            buf  = my_memory_realloc(file, line, buf, size);
             if (buf == NULL)
             {
                 LOG_PERROR("FATAL: out of memory");
@@ -204,7 +204,7 @@ Error _fs_utils_read_to_string(
     buf[chars_read++] = '\0';
     fclose(file_handler);
     (*out_string_obj_p) = String_new(buf);
-    custom_free(buf);
+    my_memory_free(buf);
     buf = NULL;
     return ERR_ALL_GOOD;
 }

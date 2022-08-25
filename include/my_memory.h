@@ -9,11 +9,11 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-    void* custom_malloc(const char* file, const int line, size_t size);
-    void* custom_realloc(const char* file, const int line, void* ptr, size_t size);
-    int custom_vasprintf(const char* file, const int line, char**, const char*, va_list);
-    int custom_asprintf(const char* file, const int line, char** ptr_p, const char* format, ...);
-    void custom_free(void*);
+    void* my_memory_malloc(const char* file, const int line, size_t size);
+    void* my_memory_realloc(const char* file, const int line, void* ptr, size_t size);
+    int my_memory_vasprintf(const char* file, const int line, char**, const char*, va_list);
+    int my_memory_asprintf(const char* file, const int line, char** ptr_p, const char* format, ...);
+    void my_memory_free(void*);
 
 #if TEST == 1
     void test_my_memory();

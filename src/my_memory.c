@@ -45,14 +45,14 @@
 
 #endif /* MEMORY_CHECK == 1 */
 
-void* custom_malloc(const char* file, const int line, size_t size)
+void* my_memory_malloc(const char* file, const int line, size_t size)
 {
     void* ptr = malloc(size);
     create_file(ptr, file, line);
     return ptr;
 }
 
-void* custom_realloc(const char* file, const int line, void* ptr, size_t size)
+void* my_memory_realloc(const char* file, const int line, void* ptr, size_t size)
 {
     void* new_ptr = realloc(ptr, size);
     if (new_ptr != ptr)
@@ -65,7 +65,7 @@ void* custom_realloc(const char* file, const int line, void* ptr, size_t size)
     return new_ptr;
 }
 
-int custom_vasprintf(
+int my_memory_vasprintf(
     const char* file,
     const int line,
     char** ptr_p,
@@ -77,14 +77,14 @@ int custom_vasprintf(
     return ret_val;
 }
 
-int custom_asprintf(const char* file, const int line, char** ptr_p, const char* format, ...)
+int my_memory_asprintf(const char* file, const int line, char** ptr_p, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    return custom_vasprintf(file, line, ptr_p, format, args);
+    return my_memory_vasprintf(file, line, ptr_p, format, args);
 }
 
-void custom_free(void* ptr)
+void my_memory_free(void* ptr)
 {
     remove_file(ptr);
     free(ptr);
@@ -94,13 +94,13 @@ void custom_free(void* ptr)
 void test_my_memory()
 {
     PRINT_BANNER();
-    PRINT_TEST_TITLE("custom_asprintf");
+    PRINT_TEST_TITLE("my_memory_asprintf");
     {
         char* char_p;
         ASSERT_EQ(
-            custom_asprintf(__FILE__, __LINE__, &char_p, "%s %d", "hello", 1), 7, "It worked");
+            my_memory_asprintf(__FILE__, __LINE__, &char_p, "%s %d", "hello", 1), 7, "It worked");
         ASSERT_EQ(char_p, "hello 1", "Correct string");
-        custom_free(char_p);
+        my_memory_free(char_p);
     }
 }
 #endif /* TEST == 1 */
