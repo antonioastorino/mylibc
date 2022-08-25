@@ -62,7 +62,7 @@ String String_join(const char** char_array, const char* joint)
         return out_string_obj;
     }
     const char** curr_element = char_array;
-    out_string_obj = String_new(*curr_element);
+    out_string_obj            = String_new(*curr_element);
     while (*(curr_element + 1) != NULL)
     {
         // TODO: Use String_renew() instead.
@@ -188,7 +188,7 @@ Error String_replace_char(
     {                                                                                                  \
         String replacement_string = String_new(format, replacement);                                   \
         Error res_replace         = _String_replace_pattern(                                           \
-            haystack_string_p, needle, replacement_string.str, out_count, __FILE__, __LINE__); \
+            __FILE__, __LINE__, haystack_string_p, needle, replacement_string.str, out_count); \
         String_destroy(&replacement_string);                                                           \
         return res_replace;                                                                            \
     }
@@ -198,12 +198,12 @@ String_replace_pattern_c(float);
 String_replace_pattern_c(int);
 
 Error _String_replace_pattern(
+    const char* file,
+    const int line,
     String* haystack_string_p,
     const char* needle,
     const char* replacement,
-    size_t* out_count,
-    const char* file,
-    const int line)
+    size_t* out_count)
 {
     if (String_is_null(haystack_string_p))
     {
@@ -241,7 +241,7 @@ Error _String_replace_pattern(
 
     // Making new string of enough length
     size_t new_string_length         = i + cnt * (newWlen - oldWlen);
-    char* result_char_p              = (char*)my_memory_malloc(file, line,new_string_length + 1);
+    char* result_char_p              = (char*)my_memory_malloc(file, line, new_string_length + 1);
     result_char_p[new_string_length] = 0;
 
     i = 0;

@@ -11,10 +11,10 @@ StringArray StringArray_empty()
 }
 
 StringArray _StringArray_new(
-    const char* input_char_p,
-    const char* pattern_char_p,
     const char* file,
-    const int line)
+    const int line,
+    const char* input_char_p,
+    const char* pattern_char_p)
 {
     StringArray ret_string_array = StringArray_empty();
     int origin_size              = strlen(input_char_p);

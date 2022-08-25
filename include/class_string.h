@@ -47,19 +47,19 @@ extern "C"
     /**************************************** Modifiers *******************************************/
     Error String_replace_char(String*, const char, const char, size_t*);
     Error _String_replace_pattern(
+        const char* file,
+        const int line,
         String*,
         const char*,
         const char*,
-        size_t*,
-        const char* file,
-        const int line);
+        size_t*);
     Error String_replace_pattern_size_t(String*, const char*, const char*, const size_t, size_t*);
     Error String_replace_pattern_float(String*, const char*, const char*, const float, size_t*);
     Error String_replace_pattern_int(String*, const char*, const char*, const int, size_t*);
 
 #define String_new(...) _String_new(__FILE__, __LINE__, __VA_ARGS__)
 #define String_replace_pattern(haystack, needle, replacement, out_count)                           \
-    _String_replace_pattern(haystack, needle, replacement, out_count, __FILE__, __LINE__)
+    _String_replace_pattern(__FILE__, __LINE__, haystack, needle, replacement, out_count)
 #define String_empty(string_name) String string_name = {.length = 0, .size = 0, .str = NULL}
 #define String_full(string_name, ...) String string_name = String_new(__VA_ARGS__)
 
