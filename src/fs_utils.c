@@ -1,7 +1,5 @@
 #include "class_string.h"
-#include "common.h"
 #include "fs_utils.h"
-#include "logger.h"
 #include "my_memory.h"
 #include <dirent.h>
 #include <errno.h>
