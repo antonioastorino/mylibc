@@ -164,7 +164,11 @@ Error fs_utils_create_with_content(const char* file_path_char_p, const char* new
     return _fs_utils_create_or_append(file_path_char_p, new_content_char_p, "w");
 }
 
-Error _fs_utils_read_to_string(const char* file_path_char_p, String* out_string_obj_p)
+Error _fs_utils_read_to_string(
+    const char* file,
+    const int line,
+    const char* file_path_char_p,
+    String* out_string_obj_p)
 {
     FILE* file_handler = fopen(file_path_char_p, "r");
     if (!file_handler)
@@ -175,7 +179,7 @@ Error _fs_utils_read_to_string(const char* file_path_char_p, String* out_string_
     int c;
     size_t chars_read = 0;
     size_t size       = 4096;
-    char* buf         = MALLOC(size);
+    char* buf         = custom_malloc(file, line, size);
     if (buf == NULL)
     {
         LOG_PERROR("FATAL: out of memory");
@@ -188,7 +192,7 @@ Error _fs_utils_read_to_string(const char* file_path_char_p, String* out_string_
         {
             /* time to make it bigger */
             size = (size_t)(size * 1.5);
-            buf  = REALLOC(buf, size);
+            buf  = custom_realloc(file, line, buf, size);
             if (buf == NULL)
             {
                 LOG_PERROR("FATAL: out of memory");
@@ -200,7 +204,7 @@ Error _fs_utils_read_to_string(const char* file_path_char_p, String* out_string_
     buf[chars_read++] = '\0';
     fclose(file_handler);
     (*out_string_obj_p) = String_new(buf);
-    FREE(buf);
+    custom_free(buf);
     buf = NULL;
     return ERR_ALL_GOOD;
 }
@@ -446,6 +450,6 @@ void test_fs_utils()
         ASSERT_OK(fs_utils_get_file_size("test/assets/readme.txt", &file_size), "File found.");
         ASSERT(file_size == 27, "File size correct.");
     }
-   /**/
+    /**/
 }
 #endif

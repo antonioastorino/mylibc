@@ -16,7 +16,7 @@ extern "C"
     Error fs_utils_ls(const char*);
     // Files only.
     Error fs_utils_rm_from_path_as_char_p(const char*);
-    Error _fs_utils_read_to_string(const char*, String*);
+    Error _fs_utils_read_to_string(const char* file, const int line, const char*, String*);
     Error fs_utils_append(const char*, const char*);
     Error fs_utils_create_with_content(const char*, const char*);
     // Files and folders.
@@ -36,7 +36,7 @@ extern "C"
     _Generic((file_path_p),                                             \
         const char* : _fs_utils_read_to_string,                         \
         char* : _fs_utils_read_to_string                                \
-    )(file_path_p, out_string)
+    )(__FILE__, __LINE__,file_path_p, out_string)
     // clang-format on
 
 #if TEST == 1

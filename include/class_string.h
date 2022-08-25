@@ -23,7 +23,7 @@ extern "C"
     String _String_new(const char* file, int line, ...);
     String String_join(const char**, const char*);
     String String_clone(const String*);
-    void _String_destroy(String*, const char* file, const int line);
+    void String_destroy(String*);
 
     /***************************************** Checkers *******************************************/
     bool String_is_null(const String*);
@@ -62,7 +62,6 @@ extern "C"
     _String_replace_pattern(haystack, needle, replacement, out_count, __FILE__, __LINE__)
 #define String_empty(string_name) String string_name = {.length = 0, .size = 0, .str = NULL}
 #define String_full(string_name, ...) String string_name = String_new(__VA_ARGS__)
-#define String_destroy(string_p) _String_destroy(string_p, __FILE__, __LINE__)
 
 // clang-format off
 #define String_between_patterns(in_value, prefix, suffix, out_string) \
