@@ -4,12 +4,12 @@
 #include "common.h"
 #include "converter.h"
 #include "fs_utils.h"
-#include "tcp_utils.h"
 #include "my_memory.h"
+#include "tcp_utils.h"
 
-#if TEST == 1
 int main()
 {
+#if TEST == 1
     logger_init(NULL, NULL);
     test_logger();
     test_class_string();
@@ -19,7 +19,5 @@ int main()
     test_fs_utils();
     test_tcp_utils();
     test_my_memory();
+#endif /* TEST == 1 */
 }
-#else
-#error "TEST must be 1"
-#endif /* TEST == 0 */

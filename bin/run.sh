@@ -1,5 +1,6 @@
 #!/bin/zsh
 set -eu
+setopt +o nomatch
 
 BD="$(pwd)/$(dirname $0)/.."
 source "${BD}/bin/variables.sh"
@@ -60,6 +61,11 @@ fi
 
 echo "Running"
 if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
+    [ $(grep -c '^#define TEST 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define TEST 0/#define TEST 1/g' "${BD}/${COMMON_HEADER}"
+    [ $(grep -c '^#define MEMORY_CHECK 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define MEMORY_CHECK 0/#define MEMORY_CHECK 1/g' "${BD}/${COMMON_HEADER}"
+
     mkdir -p /tmp/pointers
     # Set up dir entries for testing.
     mkdir -p "${ARTIFACT_FOLDER}/empty/" \
@@ -98,8 +104,15 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
     else
         lldb ./"${BUILD_DIR}/${APP_NAME}"
     fi
+elif [ "${MODE}" = "BUILD" ]; then
+    [ $(grep -c '^#define TEST 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define TEST 1/#define TEST 0/g' "${BD}/${COMMON_HEADER}"
+    [ $(grep -c '^#define MEMORY_CHECK 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define MEMORY_CHECK 1/#define MEMORY_CHECK 0/g' "${BD}/${COMMON_HEADER}"
+
+    make OPT=${OPT_LEVEL} 2>&1
 else
-    echo "Error: accpepted modes are 'test' or 'debug'"
+    echo "Error: accpepted mode is 'test', 'debug', or 'build'"
     exit 1
 fi
 popd

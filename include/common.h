@@ -6,7 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#define TEST 1
+#define TEST 0
+#define MEMORY_CHECK 0
 #include "error.h"
 #include "logger.h"
 

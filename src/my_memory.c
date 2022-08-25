@@ -1,10 +1,9 @@
-#include "common.h"
 #include "my_memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/errno.h>
 
-#ifdef MEMORY_CHECK
+#if MEMORY_CHECK == 1
 #define create_file(pointer, file, line)                                                           \
     {                                                                                              \
         char file_name[256];                                                                       \
@@ -30,7 +29,7 @@
         }                                                                                          \
     }
 
-#else /* MEMORY_CHECK */
+#else /* MEMORY_CHECK == 1 */
 
 #define create_file(pointer, file, line)                                                           \
     {                                                                                              \
@@ -46,7 +45,7 @@
         (void)(line);                                                                              \
     }
 
-#endif /* MEMORY_CHECK */
+#endif /* MEMORY_CHECK == 1 */
 
 void* custom_malloc(size_t size, const char* file, const int line)
 {
