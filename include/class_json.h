@@ -22,6 +22,7 @@ extern "C"
 
     typedef enum
     {
+        VALUE_ROOT,
         VALUE_UNDEFINED,
         VALUE_INT,
         VALUE_BOOL,
@@ -97,6 +98,17 @@ extern "C"
     // Created to have a symmetry between GET_VALUE and GET_ARRAY_VALUE
     Error invalid_request(const JsonArray*, size_t, const JsonArray**);
 
+#define OBJ_GET_VALUE_h(suffix, out_type) Error obj_get_##suffix(const JsonObj*, const char*, out_type);
+    OBJ_GET_VALUE_h(value_char_p, const char**);
+    OBJ_GET_VALUE_h(value_child_p, JsonItem**);
+    OBJ_GET_VALUE_h(value_array_p, JsonArray**);
+
+#define OBJ_GET_NUMBER_h(suffix, out_type) Error obj_get_##suffix(const JsonObj*, const char*, out_type);
+    OBJ_GET_VALUE_h(value_int, int*);
+    OBJ_GET_VALUE_h(value_uint, size_t*);
+    OBJ_GET_VALUE_h(value_float, float*);
+    OBJ_GET_VALUE_h(value_bool, bool*);
+
 #define GET_VALUE_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
     GET_VALUE_h(value_char_p, const char**);
     GET_VALUE_h(value_child_p, JsonItem**);
@@ -126,7 +138,16 @@ extern "C"
 
 #define Json_get(json_stuff, needle, out_p)                                                        \
     _Generic ((json_stuff),                                                                        \
-        JsonItem*: _Generic((out_p),                                                               \
+        JsonObj*: _Generic((out_p),                                                               \
+            const char** : obj_get_value_char_p,                                                       \
+            int*         : obj_get_value_int,                                                          \
+            size_t*      : obj_get_value_uint,                                                         \
+            float*       : obj_get_value_float,                                                        \
+            bool*        : obj_get_value_bool,                                                         \
+            JsonItem**   : obj_get_value_child_p,                                                      \
+            JsonArray**  : obj_get_value_array_p                                                       \
+            ),                                                                                     \
+         JsonItem*: _Generic((out_p),                                                               \
             const char** : get_value_char_p,                                                       \
             int*         : get_value_int,                                                          \
             size_t*      : get_value_uint,                                                         \
