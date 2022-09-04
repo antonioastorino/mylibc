@@ -439,7 +439,7 @@ void JsonObj_destroy(JsonObj* json_obj_p)
         if (item == NULL)                                                                          \
         {                                                                                          \
             *out_value = NULL;                                                                     \
-            LOG_ERROR("Input item is NULL");                                                       \
+            LOG_ERROR("Input item is NULL - key `%s`.", key);                                      \
             return ERR_JSON_MISSING_ENTRY;                                                         \
         }                                                                                          \
         if (!strcmp(item->key_p, key))                                                             \
@@ -473,7 +473,7 @@ void JsonObj_destroy(JsonObj* json_obj_p)
     {                                                                                              \
         if (item == NULL)                                                                          \
         {                                                                                          \
-            LOG_ERROR("Input item is NULL");                                                       \
+            LOG_ERROR("Input item is NULL - key: `%s`.", key);                                     \
             return ERR_NULL;                                                                       \
         }                                                                                          \
         if (!strcmp(item->key_p, key))                                                             \
@@ -681,7 +681,7 @@ void test_class_json()
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(&json_obj, "key", &value_str);
         ASSERT_EQ("value string", value_str, "Key for root found with correct value STRING");
-        Json_get(&json_obj, "missing key", &value_str);
+        ASSERT_ERR(Json_get(&json_obj, "missing key", &value_str), "Missing key detected.");
         ASSERT_EQ(value_str == NULL, true, "Returned null due to missing key.");
         JsonObj_destroy(&json_obj);
     }
