@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_NUM_LEN (30)
+
 typedef enum
 {
     EMPTY,
@@ -180,13 +182,12 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         case NUMBER:
         {
             // 23 digits should be sufficient.
-            const size_t max_num_len = 23;
-            char num_buff[max_num_len];
+            char num_buff[MAX_NUM_LEN];
             // Try to convert into an integer or a float, depending on the presence of a dot ('.').
             bool dot_found = false;
             size_t i       = 0;
             // Create a substring containing the number.
-            for (; (i < max_num_len - 1) && (*curr_pos_p != ',') && (*curr_pos_p != '}')
+            for (; (i < MAX_NUM_LEN - 1) && (*curr_pos_p != ',') && (*curr_pos_p != '}')
                    && (*curr_pos_p != ']');
                  i++)
             {
