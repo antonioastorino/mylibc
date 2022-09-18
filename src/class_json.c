@@ -6,6 +6,12 @@
 
 #define MAX_NUM_LEN (30)
 
+// Used only for returning data in a convenient way. Not used for storage.
+typedef struct JsonArray
+{
+    struct JsonItem* element;
+} JsonArray;
+
 typedef enum
 {
     EMPTY,

@@ -15,10 +15,9 @@ extern "C"
     }                                                                                              \
     LOG_TRACE("%s", success_string);
 
-    // A air `key` `value`, plus a `parent` to make a double-linked list, and a `sibling`.
     typedef struct JsonItem JsonItem;
-    // Any possible value, including another `JsonItem`.
     typedef struct JsonValue JsonValue;
+    typedef struct JsonArray JsonArray;
 
     typedef enum
     {
@@ -33,32 +32,6 @@ extern "C"
         VALUE_ITEM,
         VALUE_INVALID,
     } ValueType;
-
-    /**
-     *
-     * JSON operators (if found outside a string):
-     *     {"  => create an item and its key is starting
-     *             :[  => create value
-     *                  ,   => creates a sibling value (in array) of the same type the previous item
-     *         ":  => create a single value
-     *         ,"  => create a sibling key
-     *     ]," => create sibling key
-     *     },"  => create sibling item
-     *     }   => go to the parent
-     * Invalid sequences (outside strings):
-     *     { not followed by "
-     *     [[
-     *     ,,
-     *     ::
-     *     :,
-     *     ] not followed by , or }
-     */
-
-    // Used only for returning data in a convenient way. Not used for storage.
-    typedef struct JsonArray
-    {
-        struct JsonItem* element;
-    } JsonArray;
 
     typedef struct JsonValue
     {
@@ -98,12 +71,14 @@ extern "C"
     // Created to have a symmetry between GET_VALUE and GET_ARRAY_VALUE
     Error invalid_request(const JsonArray*, size_t, const JsonArray**);
 
-#define OBJ_GET_VALUE_h(suffix, out_type) Error obj_get_##suffix(const JsonObj*, const char*, out_type);
+#define OBJ_GET_VALUE_h(suffix, out_type)                                                          \
+    Error obj_get_##suffix(const JsonObj*, const char*, out_type);
     OBJ_GET_VALUE_h(value_char_p, const char**);
     OBJ_GET_VALUE_h(value_child_p, JsonItem**);
     OBJ_GET_VALUE_h(value_array_p, JsonArray**);
 
-#define OBJ_GET_NUMBER_h(suffix, out_type) Error obj_get_##suffix(const JsonObj*, const char*, out_type);
+#define OBJ_GET_NUMBER_h(suffix, out_type)                                                         \
+    Error obj_get_##suffix(const JsonObj*, const char*, out_type);
     OBJ_GET_VALUE_h(value_int, int*);
     OBJ_GET_VALUE_h(value_uint, size_t*);
     OBJ_GET_VALUE_h(value_float, float*);
