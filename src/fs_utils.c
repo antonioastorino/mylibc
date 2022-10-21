@@ -2,7 +2,6 @@
 #include "fs_utils.h"
 #include "my_memory.h"
 #include <dirent.h>
-#include <errno.h>
 #include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,8 +53,7 @@ Error fs_utils_mkdir(const char* dir_path_char_p, mode_t permission)
         LOG_TRACE("Trying to create `%s`.", dir_path_char_p);
         if (mkdir(dir_path_char_p, permission) == -1)
         {
-            LOG_PERROR(
-                "mkdir returned with errno `%d` while creating `%s`.", errno, dir_path_char_p);
+            LOG_PERROR("mkdir failed while creating `%s`.", dir_path_char_p);
             ret_res = ERR_FS_INTERNAL;
         }
         else
@@ -129,7 +127,7 @@ Error fs_utils_rmdir(const char* dir_path_char_p)
     }
     if (rmdir(dir_path_char_p))
     {
-        LOG_PERROR("Failed to delete `%s`. errno: `%d`", dir_path_char_p, errno)
+        LOG_PERROR("Failed to delete `%s`.", dir_path_char_p)
         return ERR_FS_INTERNAL;
     }
 
@@ -142,12 +140,12 @@ Error fs_utils_rm_from_path_as_char_p(const char* file_path_char_p)
 {
     if (!fs_utils_is_file(file_path_char_p))
     {
-        LOG_ERROR("Failed to remove `%s` file.", file_path_char_p);
+        LOG_ERROR("`%s` is not a file.", file_path_char_p);
         return ERR_FS_INTERNAL;
     }
     if (unlink(file_path_char_p))
     {
-        LOG_TRACE("Removal failed with errno: %d.", errno);
+        LOG_PERROR("Failed to remove `%s` file.", file_path_char_p);
         return ERR_FS_INTERNAL;
     }
     LOG_TRACE("`%s` successfully deleted.", file_path_char_p);
@@ -258,7 +256,7 @@ Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
         LOG_TRACE("Trying to delete file `%s`", dir_path_char_p);
         if (unlink(dir_path_char_p))
         {
-            LOG_PERROR("Removal failed with errno: %d.", errno);
+            LOG_PERROR("Failed to remove `%s` dir.", dir_path_char_p);
             ret_res = ERR_FS_INTERNAL;
         }
         break;
@@ -284,7 +282,7 @@ Error fs_utils_rm_r(const char* dir_path_char_p)
     FTS* fts_p = fts_open(paths, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
     if (fts_p == NULL)
     {
-        LOG_ERROR("Failed to initialize fts. errno `%d`.", errno);
+        LOG_PERROR("Failed to initialize fts.");
         fts_close(fts_p);
         return ERR_FS_INTERNAL;
     }
