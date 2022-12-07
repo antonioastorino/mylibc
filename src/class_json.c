@@ -208,11 +208,12 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         if (curr_pos_p[0] == '[')
         {
             LOG_TRACE("Found beginning of array.");
-            JsonItem* new_item     = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
-            new_item->index        = 0;
-            new_item->key_p        = NULL;
-            new_item->parent       = curr_item_p;
-            new_item->next_sibling = NULL;
+            JsonItem* new_item         = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
+            new_item->index            = 0;
+            new_item->key_p            = NULL;
+            new_item->parent           = curr_item_p;
+            new_item->next_sibling     = NULL;
+            new_item->value.value_type = VALUE_UNDEFINED;
             curr_item_p->value.value_type    = VALUE_ARRAY;
             curr_item_p->value.value_child_p = new_item;
             curr_pos_p++;
@@ -225,12 +226,13 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         {
             // This is a sibling of an array.
             LOG_TRACE("Found sibling in array.");
-            JsonItem* new_item        = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
-            new_item->index           = curr_item_p->index + 1;
-            new_item->key_p           = NULL;
-            new_item->parent          = curr_item_p->parent;
-            new_item->next_sibling    = NULL;
-            curr_item_p->next_sibling = new_item;
+            JsonItem* new_item         = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
+            new_item->index            = curr_item_p->index + 1;
+            new_item->key_p            = NULL;
+            new_item->parent           = curr_item_p->parent;
+            new_item->next_sibling     = NULL;
+            new_item->value.value_type = VALUE_UNDEFINED;
+            curr_item_p->next_sibling  = new_item;
             curr_pos_p++;
             curr_item_p = new_item;
             continue;
@@ -316,6 +318,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
                     JsonItem* new_item = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
                     new_item->next_sibling           = NULL;
                     new_item->parent                 = curr_item_p;
+                    new_item->value.value_type       = VALUE_UNDEFINED;
                     curr_item_p->value.value_type    = VALUE_ITEM;
                     curr_item_p->value.value_child_p = new_item;
                     curr_item_p                      = new_item;
@@ -330,6 +333,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
                 // It's a sibling - the parent must be in common.
                 JsonItem* new_item     = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
                 new_item->next_sibling = NULL;
+                new_item->value.value_type = VALUE_UNDEFINED;
                 curr_item_p->next_sibling = new_item;
                 new_item->parent          = curr_item_p->parent;
                 curr_item_p               = new_item;
