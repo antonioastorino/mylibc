@@ -134,6 +134,61 @@ String generate_tokens(String* json_string_p)
     return String_new(ret_tokens_char_p);
 }
 
+Error validate_tokens(char* json_char_p)
+{
+    Error ret_res        = ERR_ALL_GOOD;
+    uint32_t obj_counter = 0;
+    uint32_t arr_counter = 0;
+    char curr_char;
+    for (size_t index = 0; json_char_p[index] != 0; index++)
+    {
+        curr_char = json_char_p[index];
+        if (curr_char == '[')
+        {
+            arr_counter++;
+        }
+        else if (curr_char == ']')
+        {
+            if (arr_counter > 0)
+            {
+                arr_counter--;
+            }
+            else
+            {
+                LOG_ERROR("Extra `]` detected");
+                return ERR_JSON_INVALID;
+            }
+        }
+        if (curr_char == '{')
+        {
+            obj_counter++;
+        }
+        else if (curr_char == '}')
+        {
+            if (obj_counter > 0)
+            {
+                obj_counter--;
+            }
+            else
+            {
+                LOG_ERROR("Extra `}` detected");
+                return ERR_JSON_INVALID;
+            }
+        }
+    }
+    if (arr_counter)
+    {
+        LOG_ERROR("Missing `]` detected");
+        return ERR_JSON_INVALID;
+    }
+    if (obj_counter)
+    {
+        LOG_ERROR("Missing `}` detected");
+        return ERR_JSON_INVALID;
+    }
+    return ret_res;
+}
+
 Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char** start_pos_p)
 {
     char* curr_pos_p = *start_pos_p;
@@ -364,6 +419,16 @@ Error JsonObj_new_from_string_p(
         LOG_ERROR("Invalid JSON string.");
         return ERR_JSON_INVALID;
     }
+    String tokens_string = generate_tokens(&trimmed_json_string);
+    Error valid_json_res = validate_tokens(tokens_string.str);
+    String_destroy(&tokens_string);
+    if (is_err(valid_json_res))
+    {
+        String_destroy(&trimmed_json_string);
+        LOG_ERROR("Invalid JSON string detected.");
+        return valid_json_res;
+    }
+    String_destroy(&tokens_string);
     out_json_obj_p->json_string = trimmed_json_string;
 
     char* curr_pos_p = out_json_obj_p->json_string.str; // position analyzed (iterator)
@@ -657,6 +722,41 @@ String load_file(char* filename)
 void test_class_json()
 {
     PRINT_BANNER();
+    PRINT_TEST_TITLE("Validate tokens")
+    {
+        { // TODO: this should fail
+            char json_char_p[] = "{[}]";
+            ASSERT_OK(validate_tokens(json_char_p), "Valid JSON");
+        }
+        {
+            char json_char_p[] = "{[][[]]{}{{}}}";
+            ASSERT_OK(validate_tokens(json_char_p), "Valid JSON");
+        }
+        {
+            char json_char_p[] = "{";
+            ASSERT_ERR(validate_tokens(json_char_p), "Missing }.");
+        }
+        {
+            char json_char_p[] = "}";
+            ASSERT_ERR(validate_tokens(json_char_p), "Extra }.");
+        }
+        {
+            char json_char_p[] = "[}";
+            ASSERT_ERR(validate_tokens(json_char_p), "Extra }.");
+        }
+        {
+            char json_char_p[] = "[";
+            ASSERT_ERR(validate_tokens(json_char_p), "Missing ].");
+        }
+        {
+            char json_char_p[] = "]";
+            ASSERT_ERR(validate_tokens(json_char_p), "Extra ].");
+        }
+        {
+            char json_char_p[] = "{]";
+            ASSERT_ERR(validate_tokens(json_char_p), "Extra ].");
+        }
+    }
     PRINT_TEST_TITLE("Empty object")
     {
         JsonObj json_obj;

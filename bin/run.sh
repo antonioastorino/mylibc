@@ -41,7 +41,7 @@ echo "Closing running instance"
 set +e
 echo "${BD}/test/artifacts"
 /bin/rm -rf "${BD}/test/artifacts"
-/bin/rm -rf /tmp/pointers/*
+/bin/rm -rf /tmp/pointers
 /bin/rm -rf ${ARTIFACT_FOLDER}
 
 PID=$(pgrep ${APP_NAME})
