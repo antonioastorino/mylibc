@@ -23,6 +23,17 @@ typedef enum
     INVALID,
 } ElementType;
 
+JsonItem* _JsonItem_new(const char* file, const int line)
+{
+    JsonItem* new_item         = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
+    new_item->key_p            = NULL;
+    new_item->index            = 0;
+    new_item->value.value_type = VALUE_UNDEFINED;
+    new_item->parent           = NULL;
+    new_item->next_sibling     = NULL;
+    return new_item;
+}
+
 bool is_token(const char c)
 {
     char* token_list = "{}[],:\"";
@@ -208,12 +219,8 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         if (curr_pos_p[0] == '[')
         {
             LOG_TRACE("Found beginning of array.");
-            JsonItem* new_item         = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
-            new_item->index            = 0;
-            new_item->key_p            = NULL;
-            new_item->parent           = curr_item_p;
-            new_item->next_sibling     = NULL;
-            new_item->value.value_type = VALUE_UNDEFINED;
+            JsonItem* new_item               = _JsonItem_new(file, line);
+            new_item->parent                 = curr_item_p;
             curr_item_p->value.value_type    = VALUE_ARRAY;
             curr_item_p->value.value_child_p = new_item;
             curr_pos_p++;
@@ -226,13 +233,10 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         {
             // This is a sibling of an array.
             LOG_TRACE("Found sibling in array.");
-            JsonItem* new_item         = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
-            new_item->index            = curr_item_p->index + 1;
-            new_item->key_p            = NULL;
-            new_item->parent           = curr_item_p->parent;
-            new_item->next_sibling     = NULL;
-            new_item->value.value_type = VALUE_UNDEFINED;
-            curr_item_p->next_sibling  = new_item;
+            JsonItem* new_item        = _JsonItem_new(file, line);
+            new_item->index           = curr_item_p->index + 1;
+            new_item->parent          = curr_item_p->parent;
+            curr_item_p->next_sibling = new_item;
             curr_pos_p++;
             curr_item_p = new_item;
             continue;
@@ -315,10 +319,8 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
                 {
                     // It's a child
                     LOG_TRACE("Found new object");
-                    JsonItem* new_item = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
-                    new_item->next_sibling           = NULL;
+                    JsonItem* new_item               = _JsonItem_new(file, line);
                     new_item->parent                 = curr_item_p;
-                    new_item->value.value_type       = VALUE_UNDEFINED;
                     curr_item_p->value.value_type    = VALUE_ITEM;
                     curr_item_p->value.value_child_p = new_item;
                     curr_item_p                      = new_item;
@@ -331,9 +333,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
             else if (*curr_pos_p == ',')
             {
                 // It's a sibling - the parent must be in common.
-                JsonItem* new_item     = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
-                new_item->next_sibling = NULL;
-                new_item->value.value_type = VALUE_UNDEFINED;
+                JsonItem* new_item        = _JsonItem_new(file, line);
                 curr_item_p->next_sibling = new_item;
                 new_item->parent          = curr_item_p->parent;
                 curr_item_p               = new_item;
@@ -442,9 +442,7 @@ Error JsonObj_new_from_string_p(
     out_json_obj_p->root.value.value_type = VALUE_ROOT;
     out_json_obj_p->root.parent
         = &out_json_obj_p->root; // Set the parent to itself to recognize 'root'.
-    JsonItem* new_item                = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
-    new_item->value.value_type        = VALUE_UNDEFINED;
-    new_item->next_sibling            = NULL;
+    JsonItem* new_item                = _JsonItem_new(file, line);
     out_json_obj_p->root.next_sibling = new_item;
     new_item->parent                  = out_json_obj_p->root.parent;
 
@@ -460,7 +458,7 @@ Error JsonObj_new_from_string_p(
     return ERR_ALL_GOOD;
 }
 
-void JsonItem_destroy(JsonItem* json_item)
+void _JsonItem_destroy(JsonItem* json_item)
 {
     if (json_item == NULL)
     {
@@ -470,16 +468,16 @@ void JsonItem_destroy(JsonItem* json_item)
     {
         if (json_item->value.value_type == VALUE_ITEM)
         {
-            JsonItem_destroy(json_item->value.value_child_p);
+            _JsonItem_destroy(json_item->value.value_child_p);
         }
         if (json_item->value.value_type == VALUE_ARRAY)
         {
-            JsonItem_destroy(json_item->value.value_child_p);
+            _JsonItem_destroy(json_item->value.value_child_p);
         }
     }
     if (json_item->next_sibling != NULL)
     {
-        JsonItem_destroy(json_item->next_sibling);
+        _JsonItem_destroy(json_item->next_sibling);
     }
     json_item->value.value_type = VALUE_UNDEFINED;
     if (json_item != json_item->parent)
@@ -497,7 +495,7 @@ void JsonObj_destroy(JsonObj* json_obj_p)
     }
     if (json_obj_p->root.value.value_type != VALUE_UNDEFINED)
     {
-        JsonItem_destroy(&json_obj_p->root);
+        _JsonItem_destroy(&json_obj_p->root);
     }
     String_destroy(&json_obj_p->json_string);
     json_obj_p = NULL;

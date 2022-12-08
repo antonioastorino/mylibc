@@ -20,7 +20,7 @@ if [ "${MODE}" = "DEBUG" ]; then
     OPT_LEVEL=0 # force no optimization in debug mode
 fi
 
-function analyze_mem() {
+function f_analyze_mem() {
     echo "Memory report analysis started."
     echo
     if [ $(ls /tmp/pointers | wc -l) -ne 0 ]; then
@@ -34,6 +34,20 @@ function analyze_mem() {
     set -e
     echo
     echo "Memory report analysis completed."
+}
+
+function f_setup_for_testing() {
+    [ $(grep -c '^#define TEST 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define TEST 0/#define TEST 1/g' "${BD}/${COMMON_HEADER}"
+    [ $(grep -c '^#define MEMORY_CHECK 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define MEMORY_CHECK 0/#define MEMORY_CHECK 1/g' "${BD}/${COMMON_HEADER}"
+}
+
+function f_setup_for_running() {
+    [ $(grep -c '^#define TEST 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define TEST 1/#define TEST 0/g' "${BD}/${COMMON_HEADER}"
+    [ $(grep -c '^#define MEMORY_CHECK 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
+        sed -i.bak 's/^#define MEMORY_CHECK 1/#define MEMORY_CHECK 0/g' "${BD}/${COMMON_HEADER}"
 }
 
 pushd "${BD}"
@@ -61,11 +75,7 @@ fi
 
 echo "Running"
 if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
-    [ $(grep -c '^#define TEST 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define TEST 0/#define TEST 1/g' "${BD}/${COMMON_HEADER}"
-    [ $(grep -c '^#define MEMORY_CHECK 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define MEMORY_CHECK 0/#define MEMORY_CHECK 1/g' "${BD}/${COMMON_HEADER}"
-
+    f_setup_for_testing
     mkdir -p /tmp/pointers
     # Set up dir entries for testing.
     mkdir -p "${ARTIFACT_FOLDER}/empty/" \
@@ -99,17 +109,14 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
             echo -e "\n\n\e[31mApplication not run.\e[0m\n\n"
         fi
         echo "================================================================================"
-        analyze_mem
+        f_analyze_mem
         echo
     else
         lldb ./"${BUILD_DIR}/${APP_NAME}"
     fi
+    f_setup_for_running
 elif [ "${MODE}" = "BUILD" ]; then
-    [ $(grep -c '^#define TEST 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define TEST 1/#define TEST 0/g' "${BD}/${COMMON_HEADER}"
-    [ $(grep -c '^#define MEMORY_CHECK 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define MEMORY_CHECK 1/#define MEMORY_CHECK 0/g' "${BD}/${COMMON_HEADER}"
-
+    f_setup_for_running
     make OPT=${OPT_LEVEL} 2>&1
 else
     echo "Error: accpepted mode is 'test', 'debug', or 'build'"
