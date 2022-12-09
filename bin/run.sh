@@ -38,16 +38,20 @@ function f_analyze_mem() {
 
 function f_setup_for_testing() {
     [ $(grep -c '^#define TEST 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define TEST 0/#define TEST 1/g' "${BD}/${COMMON_HEADER}"
+        sed -i.bak 's/^#define TEST 0/#define TEST 1/g' "${BD}/${COMMON_HEADER}" ||
+        :
     [ $(grep -c '^#define MEMORY_CHECK 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define MEMORY_CHECK 0/#define MEMORY_CHECK 1/g' "${BD}/${COMMON_HEADER}"
+        sed -i.bak 's/^#define MEMORY_CHECK 0/#define MEMORY_CHECK 1/g' "${BD}/${COMMON_HEADER}" ||
+        :
 }
 
 function f_setup_for_running() {
     [ $(grep -c '^#define TEST 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define TEST 1/#define TEST 0/g' "${BD}/${COMMON_HEADER}"
+        sed -i.bak 's/^#define TEST 1/#define TEST 0/g' "${BD}/${COMMON_HEADER}" ||
+        :
     [ $(grep -c '^#define MEMORY_CHECK 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define MEMORY_CHECK 1/#define MEMORY_CHECK 0/g' "${BD}/${COMMON_HEADER}"
+        sed -i.bak 's/^#define MEMORY_CHECK 1/#define MEMORY_CHECK 0/g' "${BD}/${COMMON_HEADER}" ||
+        :
 }
 
 pushd "${BD}"
