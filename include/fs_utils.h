@@ -23,6 +23,7 @@ extern "C"
     bool fs_utils_does_exist(const char*);
     Error fs_utils_rm_r(const char*);
     bool fs_utils_is_file(const char*);
+    bool fs_utils_is_folder(const char*);
     Error fs_utils_get_file_size(const char*, off_t*);
 
 // clang-format off

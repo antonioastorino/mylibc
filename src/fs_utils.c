@@ -9,9 +9,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-Error _fs_utils_recursive_rm_r(FTS*, const char*);
+static Error _fs_utils_recursive_rm_r(FTS*, const char*);
 
-Error _fs_utils_create_or_append(
+static Error _fs_utils_create_or_append(
     const char* file_path_char_p,
     const char* new_content_char_p,
     const char* flags_char_p)
