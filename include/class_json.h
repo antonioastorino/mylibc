@@ -108,21 +108,21 @@ extern "C"
 #define JsonObj_new(in_json, out_json)                                                             \
     _Generic(in_json,                                                                              \
         const char*  : JsonObj_new_from_char_p,                                                    \
-        String*     : JsonObj_new_from_string_p                                                   \
+        String*      : JsonObj_new_from_string_p                                                   \
         )(__FILE__, __LINE__,in_json, out_json)
 
 #define Json_get(json_stuff, needle, out_p)                                                        \
     _Generic ((json_stuff),                                                                        \
-        JsonObj*: _Generic((out_p),                                                               \
-            const char** : obj_get_value_char_p,                                                       \
-            int*         : obj_get_value_int,                                                          \
-            size_t*      : obj_get_value_uint,                                                         \
-            float*       : obj_get_value_float,                                                        \
-            bool*        : obj_get_value_bool,                                                         \
-            JsonItem**   : obj_get_value_child_p,                                                      \
-            JsonArray**  : obj_get_value_array_p                                                       \
+        JsonObj*: _Generic((out_p),                                                                \
+            const char** : obj_get_value_char_p,                                                   \
+            int*         : obj_get_value_int,                                                      \
+            size_t*      : obj_get_value_uint,                                                     \
+            float*       : obj_get_value_float,                                                    \
+            bool*        : obj_get_value_bool,                                                     \
+            JsonItem**   : obj_get_value_child_p,                                                  \
+            JsonArray**  : obj_get_value_array_p                                                   \
             ),                                                                                     \
-         JsonItem*: _Generic((out_p),                                                               \
+         JsonItem*: _Generic((out_p),                                                              \
             const char** : get_value_char_p,                                                       \
             int*         : get_value_int,                                                          \
             size_t*      : get_value_uint,                                                         \
@@ -141,7 +141,8 @@ extern "C"
             JsonArray**  : invalid_request                                                         \
             )                                                                                      \
         )(json_stuff, needle, out_p)
-// clang-format on
+    // clang-format on
+
 #if TEST == 1
     void test_class_json(void);
 #endif

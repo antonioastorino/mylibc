@@ -23,7 +23,7 @@ typedef enum
     INVALID,
 } ElementType;
 
-JsonItem* _JsonItem_new(const char* file, const int line)
+static JsonItem* _JsonItem_new(const char* file, const int line)
 {
     JsonItem* new_item         = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
     new_item->key_p            = NULL;
@@ -34,7 +34,7 @@ JsonItem* _JsonItem_new(const char* file, const int line)
     return new_item;
 }
 
-bool is_token(const char c)
+static bool _is_token(const char c)
 {
     char* token_list = "{}[],:\"";
     for (size_t i = 0; i < strlen(token_list); i++)
@@ -45,7 +45,7 @@ bool is_token(const char c)
     return false;
 }
 
-ElementType get_value_type(char* initial_char_p)
+static ElementType _get_value_type(char* initial_char_p)
 {
     if (strncmp(initial_char_p, "{\"", 2) == 0 || strncmp(initial_char_p, ",\"", 2) == 0)
     {
@@ -73,7 +73,7 @@ ElementType get_value_type(char* initial_char_p)
     }
 }
 
-String strip_whitespace(const String* json_string_p)
+static String _strip_whitespace(const String* json_string_p)
 {
     // The returned string cannot be longer than the input string (plus an termination char).
     char ret_cleaned_char_p[json_string_p->length + 1];
@@ -98,7 +98,7 @@ String strip_whitespace(const String* json_string_p)
     return String_new(ret_cleaned_char_p);
 }
 
-char* terminate_str(char* char_p)
+static char* _terminate_str(char* char_p)
 {
     while ((char_p != NULL) && (char_p + 1 != NULL))
     {
@@ -120,10 +120,9 @@ char* terminate_str(char* char_p)
     return NULL;
 }
 
-String generate_tokens(String* json_string_p)
+static String _generate_tokens(String* json_string_p)
 {
     char ret_tokens_char_p[json_string_p->length];
-
     size_t pos_out     = 0;
     bool inside_string = false;
     for (size_t pos_in = 0; pos_in < json_string_p->length; pos_in++)
@@ -135,7 +134,7 @@ String generate_tokens(String* json_string_p)
             inside_string = !inside_string;
         }
         // Ignore tokens found inside a string unless it's the '\"", hence end of the string.
-        if ((is_token(curr_char) && !inside_string) || curr_char == '"')
+        if ((_is_token(curr_char) && !inside_string) || curr_char == '"')
         {
             ret_tokens_char_p[pos_out++] = json_string_p->str[pos_in];
         }
@@ -145,7 +144,7 @@ String generate_tokens(String* json_string_p)
     return String_new(ret_tokens_char_p);
 }
 
-Error validate_tokens(char* json_char_p)
+static Error _validate_tokens(char* json_char_p)
 {
     Error ret_res        = ERR_ALL_GOOD;
     uint32_t obj_counter = 0;
@@ -200,14 +199,14 @@ Error validate_tokens(char* json_char_p)
     return ret_res;
 }
 
-Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char** start_pos_p)
+static Error
+_deserialize(const char* file, const int line, JsonItem* curr_item_p, char** start_pos_p)
 {
     char* curr_pos_p = *start_pos_p;
     bool parent_set  = false;
     Error ret_result = ERR_ALL_GOOD;
     while ((curr_pos_p[0] != '\0') && (curr_pos_p[1] != '\0'))
     {
-
         if ((curr_pos_p[0] == '}') || (curr_pos_p[0] == ']'))
         {
             // Use continue to make sure the next 2 chars are checked.
@@ -215,7 +214,6 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
             curr_item_p = curr_item_p->parent;
             continue;
         }
-
         if (curr_pos_p[0] == '[')
         {
             LOG_TRACE("Found beginning of array.");
@@ -228,7 +226,6 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
             curr_item_p = new_item;
             continue;
         }
-
         if ((curr_item_p->parent->value.value_type == VALUE_ARRAY) && (*curr_pos_p == ','))
         {
             // This is a sibling of an array.
@@ -241,10 +238,9 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
             curr_item_p = new_item;
             continue;
         }
-
         // If we are here, it's an item. If its parent is of type VALUE_ARRAY, we need to increment
         // the index, somehow.
-        switch (get_value_type(curr_pos_p))
+        switch (_get_value_type(curr_pos_p))
         {
         case NUMBER:
         {
@@ -307,7 +303,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
         {
             curr_item_p->value.value_type   = VALUE_STR;
             curr_item_p->value.value_char_p = curr_pos_p + 1; // Point after the quote
-            curr_pos_p                      = terminate_str(curr_pos_p);
+            curr_pos_p                      = _terminate_str(curr_pos_p);
             LOG_TRACE("Found value \"%s\"", curr_item_p->value.value_char_p);
             break;
         }
@@ -341,7 +337,7 @@ Error deserialize(const char* file, const int line, JsonItem* curr_item_p, char*
             // Extract the key for the new item.
             curr_pos_p         = curr_pos_p + 2; // That's where the key starts
             curr_item_p->key_p = curr_pos_p;
-            curr_pos_p         = terminate_str(curr_pos_p); // We should be at ':' now.
+            curr_pos_p         = _terminate_str(curr_pos_p); // We should be at ':' now.
             LOG_TRACE("Found key: \"%s\"", curr_item_p->key_p);
             if (*curr_pos_p != ':')
             {
@@ -415,7 +411,7 @@ Error JsonObj_new_from_string_p(
         LOG_ERROR("Empty JSON string detected");
         return ERR_EMPTY_STRING;
     }
-    String trimmed_json_string = strip_whitespace(json_string_p);
+    String trimmed_json_string = _strip_whitespace(json_string_p);
     if ((trimmed_json_string.str[0] != '{') /*&& (*out_json_obj_pp->json_string.str[0] != '[')*/)
     {
         // TODO: Handle case in which the JSON string starts with [{ (array of objects).
@@ -423,8 +419,8 @@ Error JsonObj_new_from_string_p(
         LOG_ERROR("Invalid JSON string.");
         return ERR_JSON_INVALID;
     }
-    String tokens_string = generate_tokens(&trimmed_json_string);
-    Error valid_json_res = validate_tokens(tokens_string.str);
+    String tokens_string = _generate_tokens(&trimmed_json_string);
+    Error valid_json_res = _validate_tokens(tokens_string.str);
     String_destroy(&tokens_string);
     if (is_err(valid_json_res))
     {
@@ -447,7 +443,7 @@ Error JsonObj_new_from_string_p(
     new_item->parent                  = out_json_obj_p->root.parent;
 
     LOG_DEBUG("JSON deserialization started.");
-    if (is_err(deserialize(file, line, out_json_obj_p->root.next_sibling, &curr_pos_p)))
+    if (is_err(_deserialize(file, line, out_json_obj_p->root.next_sibling, &curr_pos_p)))
     {
         JsonObj_destroy(out_json_obj_p);
         LOG_ERROR("Failed to deserialize JSON");
@@ -458,7 +454,7 @@ Error JsonObj_new_from_string_p(
     return ERR_ALL_GOOD;
 }
 
-void _JsonItem_destroy(JsonItem* json_item)
+static void _JsonItem_destroy(JsonItem* json_item)
 {
     if (json_item == NULL)
     {
@@ -682,7 +678,7 @@ GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**);
 
 #if TEST == 1
 
-String load_file(char* filename)
+static String load_file(char* filename)
 {
     FILE* json_file = fopen(filename, "r");
     if (json_file == NULL)
@@ -728,35 +724,35 @@ void test_class_json()
     {
         { // TODO: this should fail
             char json_char_p[] = "{[}]";
-            ASSERT_OK(validate_tokens(json_char_p), "Valid JSON");
+            ASSERT_OK(_validate_tokens(json_char_p), "Valid JSON");
         }
         {
             char json_char_p[] = "{[][[]]{}{{}}}";
-            ASSERT_OK(validate_tokens(json_char_p), "Valid JSON");
+            ASSERT_OK(_validate_tokens(json_char_p), "Valid JSON");
         }
         {
             char json_char_p[] = "{";
-            ASSERT_ERR(validate_tokens(json_char_p), "Missing }.");
+            ASSERT_ERR(_validate_tokens(json_char_p), "Missing }.");
         }
         {
             char json_char_p[] = "}";
-            ASSERT_ERR(validate_tokens(json_char_p), "Extra }.");
+            ASSERT_ERR(_validate_tokens(json_char_p), "Extra }.");
         }
         {
             char json_char_p[] = "[}";
-            ASSERT_ERR(validate_tokens(json_char_p), "Extra }.");
+            ASSERT_ERR(_validate_tokens(json_char_p), "Extra }.");
         }
         {
             char json_char_p[] = "[";
-            ASSERT_ERR(validate_tokens(json_char_p), "Missing ].");
+            ASSERT_ERR(_validate_tokens(json_char_p), "Missing ].");
         }
         {
             char json_char_p[] = "]";
-            ASSERT_ERR(validate_tokens(json_char_p), "Extra ].");
+            ASSERT_ERR(_validate_tokens(json_char_p), "Extra ].");
         }
         {
             char json_char_p[] = "{]";
-            ASSERT_ERR(validate_tokens(json_char_p), "Extra ].");
+            ASSERT_ERR(_validate_tokens(json_char_p), "Extra ].");
         }
     }
     PRINT_TEST_TITLE("Empty object")
