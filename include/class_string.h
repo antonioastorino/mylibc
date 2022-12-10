@@ -9,7 +9,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-    typedef struct
+    typedef struct String
     {
         // Length that would be returned by `strlen(str)`.
         size_t length;
