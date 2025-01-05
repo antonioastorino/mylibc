@@ -72,7 +72,7 @@ extern "C"
 #if TEST == 1
 #define log_out stdout
 #define log_err stdout
-    void test_logger();
+    void test_logger(void);
 #else /* TEST == 1 */
 #define log_out get_log_out_file()
 #define log_err get_log_err_file()
@@ -91,11 +91,11 @@ extern "C"
 #if LOG_LEVEL > LEVEL_NO_LOGS
 #define DATE_TIME_STR_LEN 26
     void logger_init(const char*, const char*);
-    pthread_mutex_t* logger_get_out_mut_p();
-    pthread_mutex_t* logger_get_err_mut_p();
+    pthread_mutex_t* logger_get_out_mut_p(void);
+    pthread_mutex_t* logger_get_err_mut_p(void);
 
-    FILE* get_log_out_file();
-    FILE* get_log_err_file();
+    FILE* get_log_out_file(void);
+    FILE* get_log_err_file(void);
 
     void get_date_time(char* date_time_str);
 

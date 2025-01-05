@@ -71,40 +71,40 @@ extern "C"
     // Created to have a symmetry between GET_VALUE and GET_ARRAY_VALUE
     Error invalid_request(const JsonArray*, size_t, const JsonArray**);
 
+// clang-format off
 #define OBJ_GET_VALUE_h(suffix, out_type)                                                          \
     Error obj_get_##suffix(const JsonObj*, const char*, out_type);
-    OBJ_GET_VALUE_h(value_char_p, const char**);
-    OBJ_GET_VALUE_h(value_child_p, JsonItem**);
-    OBJ_GET_VALUE_h(value_array_p, JsonArray**);
+    OBJ_GET_VALUE_h(value_char_p, const char**)
+    OBJ_GET_VALUE_h(value_child_p, JsonItem**)
+    OBJ_GET_VALUE_h(value_array_p, JsonArray**)
 
 #define OBJ_GET_NUMBER_h(suffix, out_type)                                                         \
     Error obj_get_##suffix(const JsonObj*, const char*, out_type);
-    OBJ_GET_VALUE_h(value_int, int*);
-    OBJ_GET_VALUE_h(value_uint, size_t*);
-    OBJ_GET_VALUE_h(value_float, float*);
-    OBJ_GET_VALUE_h(value_bool, bool*);
+    OBJ_GET_VALUE_h(value_int, int*)
+    OBJ_GET_VALUE_h(value_uint, size_t*)
+    OBJ_GET_VALUE_h(value_float, float*)
+    OBJ_GET_VALUE_h(value_bool, bool*)
 
 #define GET_VALUE_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
-    GET_VALUE_h(value_char_p, const char**);
-    GET_VALUE_h(value_child_p, JsonItem**);
-    GET_VALUE_h(value_array_p, JsonArray**);
+    GET_VALUE_h(value_char_p, const char**)
+    GET_VALUE_h(value_child_p, JsonItem**)
+    GET_VALUE_h(value_array_p, JsonArray**)
 
 #define GET_NUMBER_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
-    GET_VALUE_h(value_int, int*);
-    GET_VALUE_h(value_uint, size_t*);
-    GET_VALUE_h(value_float, float*);
-    GET_VALUE_h(value_bool, bool*);
+    GET_VALUE_h(value_int, int*)
+    GET_VALUE_h(value_uint, size_t*)
+    GET_VALUE_h(value_float, float*)
+    GET_VALUE_h(value_bool, bool*)
 
 #define GET_ARRAY_VALUE_h(suffix, out_type)                                                        \
     Error get_array_##suffix(const JsonArray*, size_t, out_type);
-    GET_ARRAY_VALUE_h(value_char_p, const char**);
-    GET_ARRAY_VALUE_h(value_int, int*);
-    GET_ARRAY_VALUE_h(value_uint, size_t*);
-    GET_ARRAY_VALUE_h(value_float, float*);
-    GET_ARRAY_VALUE_h(value_bool, bool*);
-    GET_ARRAY_VALUE_h(value_child_p, JsonItem**);
+    GET_ARRAY_VALUE_h(value_char_p, const char**)
+    GET_ARRAY_VALUE_h(value_int, int*)
+    GET_ARRAY_VALUE_h(value_uint, size_t*)
+    GET_ARRAY_VALUE_h(value_float, float*)
+    GET_ARRAY_VALUE_h(value_bool, bool*)
+    GET_ARRAY_VALUE_h(value_child_p, JsonItem**)
 
-// clang-format off
 #define JsonObj_new(in_json, out_json)                                                             \
     _Generic(in_json,                                                                              \
         const char*  : JsonObj_new_from_char_p,                                                    \

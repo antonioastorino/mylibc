@@ -182,7 +182,7 @@ float rounder(float to_be_rounded, float step, size_t num_of_decimals)
 }
 
 #if TEST == 1
-void test_converter()
+void test_converter(void)
 {
     PRINT_BANNER();
 

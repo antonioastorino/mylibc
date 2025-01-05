@@ -11,11 +11,11 @@ static FILE* log_err_file_p = NULL;
 static pthread_mutex_t log_out_mutex;
 static pthread_mutex_t log_err_mutex;
 
-FILE* get_log_out_file() { return log_out_file_p == NULL ? stdout : log_out_file_p; }
-FILE* get_log_err_file() { return log_err_file_p == NULL ? stderr : log_err_file_p; }
+FILE* get_log_out_file(void) { return log_out_file_p == NULL ? stdout : log_out_file_p; }
+FILE* get_log_err_file(void) { return log_err_file_p == NULL ? stderr : log_err_file_p; }
 
-pthread_mutex_t* logger_get_out_mut_p() { return &log_out_mutex; }
-pthread_mutex_t* logger_get_err_mut_p() { return &log_err_mutex; }
+pthread_mutex_t* logger_get_out_mut_p(void) { return &log_out_mutex; }
+pthread_mutex_t* logger_get_err_mut_p(void) { return &log_err_mutex; }
 
 void _logger_open_out_file(const char* log_out_file_path_str)
 {
@@ -100,7 +100,7 @@ void get_date_time(char* date_time_str)
 
 #endif /* LOG_LEVEL > LEVEL_NO_LOGS */
 #if TEST == 1
-void test_logger()
+void test_logger(void)
 {
     PRINT_BANNER()
     PRINT_TEST_TITLE("Logging all levels");

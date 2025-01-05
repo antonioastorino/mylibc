@@ -643,42 +643,44 @@ void JsonObj_destroy(JsonObj* json_obj_p)
         return ERR_ALL_GOOD;                                                                       \
     }
 
-OBJ_GET_VALUE_c(value_char_p, VALUE_STR, const char**, );
-OBJ_GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, );
+// clang-format off
+OBJ_GET_VALUE_c(value_char_p, VALUE_STR, const char**, )
+OBJ_GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, )
 OBJ_GET_VALUE_c(
     value_array_p,
     VALUE_ARRAY,
     JsonArray**,
-    (*out_value)->element = item->value.value_child_p);
+    (*out_value)->element = item->value.value_child_p)
 
-OBJ_GET_NUMBER_c(value_int, VALUE_INT, int*, );
-OBJ_GET_NUMBER_c(value_uint, VALUE_UINT, size_t*, );
-OBJ_GET_NUMBER_c(value_float, VALUE_FLOAT, float*, );
-OBJ_GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, );
+OBJ_GET_NUMBER_c(value_int, VALUE_INT, int*, )
+OBJ_GET_NUMBER_c(value_uint, VALUE_UINT, size_t*, )
+OBJ_GET_NUMBER_c(value_float, VALUE_FLOAT, float*, )
+OBJ_GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, )
 
-GET_VALUE_c(value_char_p, VALUE_STR, const char**, );
-GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, );
+GET_VALUE_c(value_char_p, VALUE_STR, const char**, )
+GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, )
 GET_VALUE_c(
     value_array_p,
     VALUE_ARRAY,
     JsonArray**,
-    (*out_value)->element = item->value.value_child_p);
+    (*out_value)->element = item->value.value_child_p)
 
-GET_NUMBER_c(value_int, VALUE_INT, int*, );
-GET_NUMBER_c(value_uint, VALUE_UINT, size_t*, );
-GET_NUMBER_c(value_float, VALUE_FLOAT, float*, );
-GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, );
+GET_NUMBER_c(value_int, VALUE_INT, int*, )
+GET_NUMBER_c(value_uint, VALUE_UINT, size_t*, )
+GET_NUMBER_c(value_float, VALUE_FLOAT, float*, )
+GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, )
 
-GET_ARRAY_VALUE_c(value_char_p, VALUE_STR, const char**);
-GET_ARRAY_VALUE_c(value_int, VALUE_INT, int*);
-GET_ARRAY_VALUE_c(value_uint, VALUE_UINT, size_t*);
-GET_ARRAY_VALUE_c(value_float, VALUE_FLOAT, float*);
-GET_ARRAY_VALUE_c(value_bool, VALUE_BOOL, bool*);
-GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**);
+GET_ARRAY_VALUE_c(value_char_p, VALUE_STR, const char**)
+GET_ARRAY_VALUE_c(value_int, VALUE_INT, int*)
+GET_ARRAY_VALUE_c(value_uint, VALUE_UINT, size_t*)
+GET_ARRAY_VALUE_c(value_float, VALUE_FLOAT, float*)
+GET_ARRAY_VALUE_c(value_bool, VALUE_BOOL, bool*)
+GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
+// clang-format on
 
 #if TEST == 1
 
-static String load_file(char* filename)
+                                                            static String load_file(char* filename)
 {
     FILE* json_file = fopen(filename, "r");
     if (json_file == NULL)
@@ -717,7 +719,7 @@ static String load_file(char* filename)
     return json_string;
 }
 
-void test_class_json()
+void test_class_json(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("Validate tokens")

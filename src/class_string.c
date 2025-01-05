@@ -193,9 +193,9 @@ Error String_replace_char(
         return res_replace;                                                                            \
     }
 
-String_replace_pattern_c(size_t);
-String_replace_pattern_c(float);
-String_replace_pattern_c(int);
+String_replace_pattern_c(size_t)
+String_replace_pattern_c(float)
+String_replace_pattern_c(int)
 
 Error _String_replace_pattern(
     const char* file,
@@ -335,7 +335,7 @@ Error _String_between_patterns_in_string_p(
 }
 
 #if TEST == 1
-void test_class_string()
+void test_class_string(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("Destroy empty string without failure")

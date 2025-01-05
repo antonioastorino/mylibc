@@ -16,7 +16,7 @@ extern "C"
     void my_memory_free(void*);
 
 #if TEST == 1
-    void test_my_memory();
+    void test_my_memory(void);
 #endif /* TEST == 1 */
 
 #ifdef __cplusplus

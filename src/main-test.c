@@ -7,7 +7,7 @@
 #include "my_memory.h"
 #include "tcp_utils.h"
 
-int main()
+int main(void)
 {
 #if TEST == 1
     logger_init(NULL, NULL);

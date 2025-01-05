@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-StringArray StringArray_empty()
+StringArray StringArray_empty(void)
 {
     StringArray ret_string_array
         = {.num_of_elements = 0, .str_char_p = NULL, .str_array_char_p = NULL};
@@ -98,7 +98,7 @@ void StringArray_destroy(StringArray* string_array_p)
 }
 
 #if TEST == 1
-void test_class_string_array()
+void test_class_string_array(void)
 {
     StringArray test_string_array = StringArray_empty();
     PRINT_BANNER();

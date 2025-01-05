@@ -73,7 +73,7 @@ int my_memory_vasprintf(
     va_list args)
 {
     int ret_val = vasprintf(ptr_p, format, args);
-    create_file(*ptr_p, file, line);
+    create_file((void*)*ptr_p, file, line);
     return ret_val;
 }
 
@@ -91,7 +91,7 @@ void my_memory_free(void* ptr)
 }
 
 #if TEST == 1
-void test_my_memory()
+void test_my_memory(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("my_memory_asprintf");

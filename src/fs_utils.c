@@ -340,7 +340,7 @@ Error fs_utils_get_file_size(const char* path_to_file_char_p, off_t* out_file_si
 }
 
 #if TEST == 1
-void test_fs_utils()
+void test_fs_utils(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("mkdir")

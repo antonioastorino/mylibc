@@ -67,7 +67,7 @@ Error tcp_utils_server_init(uint16_t port)
     return ERR_ALL_GOOD;
 }
 
-Error tcp_utils_accept()
+Error tcp_utils_accept(void)
 {
     if (!g_initialized)
     {
@@ -88,16 +88,16 @@ Error tcp_utils_accept()
     return ERR_ALL_GOOD;
 }
 
-int tcp_utils_get_client_socket() { return g_client_socket; }
+int tcp_utils_get_client_socket(void) { return g_client_socket; }
 
-void tcp_utils_close_server_socket()
+void tcp_utils_close_server_socket(void)
 {
     LOG_INFO("Closing server socket Nr. `%d`.", g_server_socket);
     close(g_server_socket);
     shutdown(g_server_socket, SHUT_RDWR);
 }
 
-void tcp_utils_close_client_socket()
+void tcp_utils_close_client_socket(void)
 {
     LOG_INFO("Closing client socket Nr. `%d`", g_client_socket);
     close(g_client_socket);
@@ -158,5 +158,5 @@ Error tcp_utils_send_file(char* file_path, long file_size)
 }
 
 #if TEST == 1
-void test_tcp_utils() {}
+void test_tcp_utils(void) {}
 #endif

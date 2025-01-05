@@ -13,13 +13,13 @@ extern "C"
         char** str_array_char_p;
     } StringArray;
 
-    StringArray StringArray_empty();
+    StringArray StringArray_empty(void);
     StringArray _StringArray_new(const char* file, const int line, const char*, const char*);
     void StringArray_destroy(StringArray*);
 
 #define StringArray_new(str, separator) _StringArray_new(__FILE__, __LINE__, str, separator)
 #if TEST == 1
-    void test_class_string_array();
+    void test_class_string_array(void);
 #endif
 
 #ifdef __cplusplus
