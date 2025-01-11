@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #ifdef __linux__
 #include <sys/sendfile.h>
@@ -12,6 +13,24 @@
 static bool g_initialized = false;
 static int g_server_socket;
 static int g_client_socket;
+
+void __flush(int sock)
+{
+    char* buff[4096];
+    while (1)
+    {
+        int res = read(sock, buff, 4096);
+        if (res < 0)
+        {
+            perror("Failed to flush socket");
+            exit(1);
+        }
+        if (res == 0)
+        {
+            break;
+        }
+    }
+}
 
 Error tcp_utils_server_init(uint16_t port)
 {
@@ -93,15 +112,17 @@ int tcp_utils_get_client_socket(void) { return g_client_socket; }
 void tcp_utils_close_server_socket(void)
 {
     LOG_INFO("Closing server socket Nr. `%d`.", g_server_socket);
+    shutdown(g_server_socket, SHUT_WR);
+    __flush(g_server_socket);
     close(g_server_socket);
-    shutdown(g_server_socket, SHUT_RDWR);
 }
 
 void tcp_utils_close_client_socket(void)
 {
     LOG_INFO("Closing client socket Nr. `%d`", g_client_socket);
+    shutdown(g_client_socket, SHUT_WR);
+    __flush(g_server_socket);
     close(g_client_socket);
-    shutdown(g_client_socket, SHUT_RDWR);
 }
 
 Error tcp_utils_read(char* in_buff)
@@ -143,8 +164,8 @@ Error tcp_utils_send_file(char* file_path, long file_size)
     LOG_INFO("Sent `%ld` bytes.", bytes_sent);
     if (bytes_sent == -1)
 #else
-    off_t len                      = file_size; // set to 0 will send all the origin file
-    int res                        = sendfile(resource_file, g_client_socket, 0, &len, NULL, 0);
+    off_t len = file_size; // set to 0 will send all the origin file
+    int res   = sendfile(resource_file, g_client_socket, 0, &len, NULL, 0);
     LOG_INFO("Sent `%lld` bytes.", len);
     if (res == -1)
 #endif
