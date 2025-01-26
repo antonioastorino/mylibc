@@ -57,9 +57,6 @@ for LIB_FOUND in ${ALL_LIBS[@]}; do
     zlib.h)
         LIB="$LIB -lz"
         ;;
-    Cocoa/Cocoa.h)
-        FRAMEWORKS="Cocoa ${FRAMEWORKS}"
-        ;;
     esac
 done
 
@@ -68,7 +65,6 @@ pf "\nBD=${BD}"
 pf "\nOPT ?= 0"
 
 [ "$LIB" != "" ] && pf "\nLIB=$LIB"                                 # LIB added if not empty
-[ "$FRAMEWORKS" != "" ] && pf "\nFRAMEWORKS=-framework $FRAMEWORKS" # LIB added if not empty
 pf "\nINC="
 while read -r folder; do # created -I list
     pf " -I$folder \\"
@@ -94,7 +90,7 @@ while read -r FILE_NAME; do
     pf "\\"
     pf "\n\t${BUILD_DIR}/${FILE_NAME}.o "
 done <src-name.list
-pf "\n\t${COMPILER} \$(LIB) \$(FLAGS) -O\$(OPT) \$(INC) \$(FRAMEWORKS) \$^ -o \$@"
+pf "\n\t${COMPILER} \$(LIB) \$(FLAGS) -O\$(OPT) \$(INC) \$^ -o \$@"
 pf "\n"
 
 echo "Adding dependency list"
