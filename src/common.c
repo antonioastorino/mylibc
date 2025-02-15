@@ -222,6 +222,25 @@ void ASSERT_EQ_uint16(
     }
 }
 
+void ASSERT_EQ_uint32(
+    uint32_t value_1,
+    uint32_t value_2,
+    const char* message,
+    const char* filename,
+    int line_number)
+{
+    if (value_1 == value_2)
+    {
+        PRINT_PASS_MESSAGE(message);
+    }
+    else
+    {
+        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
+        fprintf(stderr, "Left : `%hu`\nRight: `%hu`\n", value_1, value_2);
+    }
+}
+
+
 void ASSERT_EQ_uint(
     size_t value_1,
     size_t value_2,
