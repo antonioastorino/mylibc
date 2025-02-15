@@ -218,6 +218,7 @@ extern "C"
     void ASSERT_EQ_int(int, int, const char*, const char*, int);
     void ASSERT_EQ_uint8(uint8_t, uint8_t, const char*, const char*, int);
     void ASSERT_EQ_uint16(uint16_t, uint16_t, const char*, const char*, int);
+    void ASSERT_EQ_uint32(uint32_t, uint32_t, const char*, const char*, int);
     void ASSERT_EQ_uint(size_t, size_t, const char*, const char*, int);
     void ASSERT_EQ_bool(bool v1, bool v2, const char*, const char*, int);
     void ASSERT_EQ_float(float, float, const char*, const char*, int);
@@ -257,6 +258,7 @@ extern "C"
         int16_t       : ASSERT_EQ_int,            \
         uint8_t       : ASSERT_EQ_uint8,          \
         uint16_t      : ASSERT_EQ_uint16,         \
+        uint32_t      : ASSERT_EQ_uint32,         \
         size_t        : ASSERT_EQ_uint,           \
         bool          : ASSERT_EQ_bool,           \
         float         : ASSERT_EQ_float,          \
