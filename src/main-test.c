@@ -22,6 +22,7 @@ int main(void)
     test_tcp_utils();
     test_my_memory();
     test_common();
+    test_hash_table();
 }
 #endif /* _MODULE */
 #endif /* _TEST */
