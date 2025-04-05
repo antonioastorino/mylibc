@@ -9,8 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#define TEST 0
-#define MEMORY_CHECK 0
+#define TEST 1
+#define MEMORY_CHECK 1
 
 #define UNUSED(x) (void)(x)
 

@@ -6,8 +6,8 @@
 #if MEMORY_CHECK == 1
 #define create_file(pointer, file, line)                                                           \
     {                                                                                              \
-        char file_name[256];                                                                       \
-        sprintf(file_name, "/tmp/pointers/%p", pointer);                                           \
+        char file_name[PATH_MAX];                                                                  \
+        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer);                                \
         FILE* fh = fopen(file_name, "wx");                                                         \
         if (!fh)                                                                                   \
         {                                                                                          \
@@ -20,8 +20,8 @@
 
 #define remove_file(pointer)                                                                       \
     {                                                                                              \
-        char file_name[256];                                                                       \
-        sprintf(file_name, "/tmp/pointers/%p", pointer);                                           \
+        char file_name[PATH_MAX];                                                                  \
+        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer);                                \
         if (remove(file_name))                                                                     \
         {                                                                                          \
             LOG_PERROR("Cannot remove %p file.", pointer);                                         \
