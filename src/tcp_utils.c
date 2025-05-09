@@ -12,7 +12,6 @@
 
 static bool g_initialized = false;
 static int g_server_socket;
-static int g_client_socket;
 
 void __flush(int sock)
 {
@@ -86,7 +85,7 @@ Error tcp_utils_server_init(uint16_t port)
     return ERR_ALL_GOOD;
 }
 
-Error tcp_utils_accept(void)
+Error tcp_utils_accept(int * out_client_socket)
 {
     if (!g_initialized)
     {
@@ -96,18 +95,16 @@ Error tcp_utils_accept(void)
     struct sockaddr_in client;
     socklen_t client_size;
 
-    g_client_socket = accept(g_server_socket, (struct sockaddr*)&client, &client_size);
-    if (g_client_socket == -1)
+    *out_client_socket = accept(g_server_socket, (struct sockaddr*)&client, &client_size);
+    if (*out_client_socket == -1)
     {
         LOG_PERROR("Problem with client connecting");
         return ERR_TCP_INTERNAL;
     }
 
-    LOG_INFO("Connection to socket nr. %d accepted.", g_client_socket);
+    LOG_INFO("Connection to socket nr. %d accepted.", *out_client_socket);
     return ERR_ALL_GOOD;
 }
-
-int tcp_utils_get_client_socket(void) { return g_client_socket; }
 
 void tcp_utils_close_server_socket(void)
 {
@@ -117,29 +114,29 @@ void tcp_utils_close_server_socket(void)
     close(g_server_socket);
 }
 
-void tcp_utils_close_client_socket(void)
+void tcp_utils_close_client_socket(int client_socket)
 {
-    LOG_INFO("Closing client socket Nr. `%d`", g_client_socket);
-    close(g_client_socket);
+    LOG_INFO("Closing client socket Nr. `%d`", client_socket);
+    close(client_socket);
 }
 
-Error tcp_utils_read(char* in_buff)
+Error tcp_utils_read(char* in_buff, int client_socket)
 {
     LOG_TRACE("Trying to receive data.");
-    int bytes_recv = read(g_client_socket, in_buff, TCP_MAX_MSG_LEN);
+    int bytes_recv = read(client_socket, in_buff, TCP_MAX_MSG_LEN);
     if (bytes_recv == -1)
     {
         LOG_PERROR("Socket error");
         return ERR_TCP_INTERNAL;
     }
-    LOG_TRACE("Client socket: `%d` - bytes `%d`", g_client_socket, bytes_recv);
+    LOG_TRACE("Client socket: `%d` - bytes `%d`", client_socket, bytes_recv);
     return ERR_ALL_GOOD;
 }
 
-Error tcp_utils_write(char* out_buff_char_p)
+Error tcp_utils_write(char* out_buff_char_p, int client_socket)
 {
     LOG_TRACE("Trying to send data.");
-    if (write(g_client_socket, out_buff_char_p, strlen(out_buff_char_p)) == -1)
+    if (write(client_socket, out_buff_char_p, strlen(out_buff_char_p)) == -1)
     {
         LOG_PERROR("Failed to send data.");
         return ERR_TCP_INTERNAL;
@@ -148,7 +145,7 @@ Error tcp_utils_write(char* out_buff_char_p)
     return ERR_ALL_GOOD;
 }
 
-Error tcp_utils_send_file(char* file_path, long file_size)
+Error tcp_utils_send_file(char* file_path, long file_size, int client_socket)
 {
     int resource_file = open(file_path, O_RDONLY);
     if (resource_file == -1)
@@ -157,13 +154,13 @@ Error tcp_utils_send_file(char* file_path, long file_size)
         return ERR_UNEXPECTED;
     }
 #ifdef __linux__
-    ssize_t bytes_sent = sendfile(g_client_socket, resource_file, NULL, file_size);
+    ssize_t bytes_sent = sendfile(client_socket, resource_file, NULL, file_size);
     LOG_INFO("Size `%ld` bytes.", file_size);
     LOG_INFO("Sent `%ld` bytes.", bytes_sent);
     if (bytes_sent == -1)
 #else
     off_t len = file_size; // set to 0 will send all the origin file
-    int res   = sendfile(resource_file, g_client_socket, 0, &len, NULL, 0);
+    int res   = sendfile(resource_file, client_socket, 0, &len, NULL, 0);
     LOG_INFO("Sent `%lld` bytes.", len);
     if (res == -1)
 #endif

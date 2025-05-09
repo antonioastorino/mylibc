@@ -9,13 +9,12 @@ extern "C"
 #define TCP_MAX_MSG_LEN 65535 
 
     Error tcp_utils_server_init(uint16_t port);
-    Error tcp_utils_accept(void);
-    int tcp_utils_get_client_socket(void);
+    Error tcp_utils_accept(int*);
     void tcp_utils_close_server_socket(void);
-    void tcp_utils_close_client_socket(void);
-    Error tcp_utils_read(char*);
-    Error tcp_utils_write(char*);
-    Error tcp_utils_send_file(char*, long);
+    void tcp_utils_close_client_socket(int);
+    Error tcp_utils_read(char*, int);
+    Error tcp_utils_write(char*, int);
+    Error tcp_utils_send_file(char*, long, int);
 
 #if TEST == 1
     void test_tcp_utils(void);
