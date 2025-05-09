@@ -22,8 +22,8 @@ void __flush(int sock)
         int res = read(sock, buff, 4096);
         if (res < 0)
         {
-            perror("Failed to flush socket");
-            exit(1);
+            LOG_WARNING("Failed to flush socket - `%s`", strerror(errno));
+            break;
         }
         if (res == 0)
         {
@@ -120,8 +120,6 @@ void tcp_utils_close_server_socket(void)
 void tcp_utils_close_client_socket(void)
 {
     LOG_INFO("Closing client socket Nr. `%d`", g_client_socket);
-    shutdown(g_client_socket, SHUT_WR);
-    __flush(g_server_socket);
     close(g_client_socket);
 }
 
