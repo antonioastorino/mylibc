@@ -6,7 +6,8 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define TCP_MAX_MSG_LEN 65535 
+#define TCP_MAX_MSG_LEN 65535
+#define TCP_MAX_CONNECTIONS 1023
 
     Error tcp_utils_server_init(uint16_t port);
     Error tcp_utils_accept(int*);

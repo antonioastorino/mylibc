@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/select.h>
 
 #ifdef __linux__
 #include <sys/sendfile.h>
@@ -85,7 +86,7 @@ Error tcp_utils_server_init(uint16_t port)
     return ERR_ALL_GOOD;
 }
 
-Error tcp_utils_accept(int * out_client_socket)
+Error tcp_utils_accept(int* out_client_socket)
 {
     if (!g_initialized)
     {
@@ -123,25 +124,47 @@ void tcp_utils_close_client_socket(int client_socket)
 Error tcp_utils_read(char* in_buff, int client_socket)
 {
     LOG_TRACE("Trying to receive data.");
+    fd_set set;
+    struct timeval timeout;
+    int rv;
+    FD_ZERO(&set);               /* clear the set */
+    FD_SET(client_socket, &set); /* add our file descriptor to the set */
+    timeout.tv_sec  = 1;
+    timeout.tv_usec = 0;
+
+    rv = select(TCP_MAX_CONNECTIONS + 1, &set, NULL, NULL, &timeout);
+    if (rv == -1)
+    {
+        perror("select"); /* an error accured */
+        FD_CLR(client_socket, &set);
+        return ERR_TCP_INTERNAL;
+    }
+    else if (rv == 0)
+    {
+        LOG_ERROR("[SOCKET `%d`] timeout", client_socket); /* a timeout occured */
+        FD_CLR(client_socket, &set);
+        return ERR_TCP_INTERNAL;
+    }
+    FD_CLR(client_socket, &set);
     int bytes_recv = read(client_socket, in_buff, TCP_MAX_MSG_LEN);
     if (bytes_recv == -1)
     {
-        LOG_PERROR("Socket error");
+        LOG_PERROR("[SOCKET `%d`] read error", client_socket);
         return ERR_TCP_INTERNAL;
     }
-    LOG_TRACE("Client socket: `%d` - bytes `%d`", client_socket, bytes_recv);
+    LOG_TRACE("[SOCKET `%d`] - bytes `%d`", client_socket, bytes_recv);
     return ERR_ALL_GOOD;
 }
 
 Error tcp_utils_write(char* out_buff_char_p, int client_socket)
 {
-    LOG_TRACE("Trying to send data.");
+    LOG_TRACE("[SOCKET `%d`] Trying to send data.", client_socket);
     if (write(client_socket, out_buff_char_p, strlen(out_buff_char_p)) == -1)
     {
-        LOG_PERROR("Failed to send data.");
+        LOG_PERROR("[SOCKET `%d`] Failed to send data.", client_socket);
         return ERR_TCP_INTERNAL;
     }
-    LOG_TRACE("Data successfully sent.");
+    LOG_TRACE("[SOCKET `%d`] Data successfully sent.", client_socket);
     return ERR_ALL_GOOD;
 }
 
@@ -159,8 +182,8 @@ Error tcp_utils_send_file(char* file_path, long file_size, int client_socket)
     LOG_INFO("Sent `%ld` bytes.", bytes_sent);
     if (bytes_sent == -1)
 #else
-    off_t len = file_size; // set to 0 will send all the origin file
-    int res   = sendfile(resource_file, client_socket, 0, &len, NULL, 0);
+    off_t len                      = file_size; // set to 0 will send all the origin file
+    int res                        = sendfile(resource_file, client_socket, 0, &len, NULL, 0);
     LOG_INFO("Sent `%lld` bytes.", len);
     if (res == -1)
 #endif
