@@ -122,7 +122,7 @@ static char* _terminate_str(char* char_p)
 
 static String _generate_tokens(String* json_string_p)
 {
-    char ret_tokens_char_p[json_string_p->length];
+    char ret_tokens_char_p[json_string_p->length + 1];
     size_t pos_out     = 0;
     bool inside_string = false;
     for (size_t pos_in = 0; pos_in < json_string_p->length; pos_in++)

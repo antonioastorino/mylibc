@@ -40,8 +40,13 @@ String _String_new(const char* file, const int line, ...)
     size_t allocated_size = (size_t)(actual_size * SIZE_FACTOR);
     if (allocated_size)
     {
-        // Linux will return a NULL pointer if allocated_size == 0
-        tmp_str_p = (char*)my_memory_realloc(file, line, tmp_str_p, allocated_size);
+        // Add 1 byte to account for the trailing '\n'
+        tmp_str_p = (char*)my_memory_realloc(file, line, tmp_str_p, allocated_size + 1);
+    }
+    if (tmp_str_p == NULL)
+    {
+        LOG_ERROR("Fatal: cannot allocate memory");
+        exit(ERR_UNEXPECTED);
     }
     LOG_TRACE("Created string.")
     va_end(args);
