@@ -193,9 +193,15 @@ Error String_replace_char(
         return res_replace;                                                                            \
     }
 
-String_replace_pattern_c(size_t)
-String_replace_pattern_c(float)
-String_replace_pattern_c(int)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wextra-semi"
+// I ma forced to add a semi-colon at the end of each of the following lines otherwise the formatter
+// will make a mess. However, the compiler is complaining about those, and hence I disabled the
+// warning.
+String_replace_pattern_c(size_t);
+String_replace_pattern_c(float);
+String_replace_pattern_c(int);
+#pragma GCC diagnostic pop
 
 Error _String_replace_pattern(
     const char* file,
