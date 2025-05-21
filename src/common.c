@@ -304,14 +304,18 @@ void ASSERT_EQ_char_p(
     const char* filename,
     int line_number)
 {
-    if (!strcmp(value_1, value_2))
+    if (value_1 == value_2)
     {
         PRINT_PASS_MESSAGE(message);
     }
+    else if (value_1 == NULL || value_2 == NULL || strcmp(value_1, value_2))
+    {
+        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
+        fprintf(stderr, "Left : `%s`\nRight: `%s`\n", value_1, value_2);
+    }
     else
     {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
-        fprintf(stderr, "Left : `%s`\nRight: `%s`\n", value_1, value_2);
+        PRINT_PASS_MESSAGE(message);
     }
 }
 
@@ -433,7 +437,7 @@ void ASSERT_NE_char_p(
     const char* filename,
     int line_number)
 {
-    if (!strcmp(value_1, value_2))
+    if (value_1 != value_2 || value_1 == NULL || value_2 == NULL || strcmp(value_1, value_2))
     {
         PRINT_PASS_MESSAGE(message);
     }
@@ -443,3 +447,21 @@ void ASSERT_NE_char_p(
         fprintf(stderr, "Left : `%s`\nRight: `%s`\n", value_1, value_2);
     }
 }
+
+#if TEST == 1
+void test_common(void)
+{
+    PRINT_BANNER();
+    PRINT_TEST_TITLE("Assert works with char NULL pointers");
+    char* a_null      = NULL;
+    char* b_null      = NULL;
+    char* a_valid     = "valid";
+    char* b_valid     = "valid";
+    char* c_different = "different";
+    ASSERT_EQ(a_null, b_null, "Both null");
+    ASSERT_EQ(a_valid, b_valid, "Both valid");
+    ASSERT_NE(a_null, b_valid, "First null");
+    ASSERT_NE(a_valid, b_null, "Second null");
+    ASSERT_NE(a_valid, c_different, "Different");
+}
+#endif /* TEST == 1 */

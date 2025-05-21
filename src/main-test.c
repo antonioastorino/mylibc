@@ -19,5 +19,6 @@ int main(void)
     test_fs_utils();
     test_tcp_utils();
     test_my_memory();
+    test_common();
 #endif /* TEST == 1 */
 }

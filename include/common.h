@@ -49,8 +49,8 @@ extern "C"
         __APP_DEFINED__
     } Error;
 
-#define is_err(_expr) (_expr != ERR_ALL_GOOD)
-#define is_ok(_expr) (_expr == ERR_ALL_GOOD)
+#define is_err(_expr) ((_expr) != ERR_ALL_GOOD)
+#define is_ok(_expr) ((_expr) == ERR_ALL_GOOD)
 
     // ---------- LOGGER ----------
 
@@ -250,7 +250,7 @@ extern "C"
 #define ASSERT(value, message) ASSERT_(value, message, __FILE__, __LINE__)
 #define ASSERT_OK(value, message) ASSERT_OK_(value, message, __FILE__, __LINE__)
 #define ASSERT_ERR(value, message) ASSERT_ERR_(value, message, __FILE__, __LINE__)
-// clang-format off
+    // clang-format off
 #define ASSERT_EQ(value_1, value_2, message)      \
     _Generic((value_1),                           \
         int           : ASSERT_EQ_int,            \
@@ -283,6 +283,9 @@ extern "C"
 #define PRINT_TEST_TITLE(title) printf("\n------- T:%lu < %s > -------\n", ++test_counter_, title);
 #endif
 
+#if TEST == 1
+    void test_common(void);
+#endif /* TEST == 1 */
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
