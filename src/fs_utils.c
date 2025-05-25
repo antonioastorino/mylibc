@@ -1,13 +1,4 @@
-#include "class_string.h"
-#include "fs_utils.h"
-#include "my_memory.h"
-#include <dirent.h>
-#include <fts.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "mylibc.h"
 
 static Error _fs_utils_recursive_rm_r(FTS*, const char*);
 
@@ -339,7 +330,7 @@ Error fs_utils_get_file_size(const char* path_to_file_char_p, off_t* out_file_si
     return ERR_INVALID;
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_fs_utils(void)
 {
     PRINT_BANNER();
@@ -450,4 +441,4 @@ void test_fs_utils(void)
     }
     /**/
 }
-#endif
+#endif /* _TEST */

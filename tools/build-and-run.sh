@@ -1,24 +1,25 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 set -eu
 setopt +o nomatch
-
 BD="$(pwd)/$(dirname $0)/.."
-source "${BD}/bin/variables.sh"
+APP_NAME="mylibc"
+ARTIFACT_FOLDER="test/artifacts"
+LOG_FILE_ERR="${ARTIFACT_FOLDER}/err.log"
+FLAGS="-Wall -Wextra -std=c2x -pedantic -fsanitize=address"
+DEBUG_FLAGS="-O0 -g -D_TEST -D_MEMORY_CHECK"
+RELEASE_FLAGS=""
+BUILD_DIR="build"
+DIST_DIR="dist"
+DEGUGGER="lldb"
 
-OPT_LEVEL=0
-while getopts o: flag; do
-    case "${flag}" in
-    o) OPT_LEVEL=${OPTARG} ;;
-    esac
-done
+if [ "$(uname -s)" = "Linux" ]; then
+    FLAGS="${FLAGS} -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_GNU_SOURCE"
+    DEBUGGER="gdb"
+fi
 
 # Accept case-insensitive mode by converting to uppercase
 MODE=${@:$OPTIND:1}
 MODE=${MODE:u}
-
-if [ "${MODE}" = "DEBUG" ]; then
-    OPT_LEVEL=0 # force no optimization in debug mode
-fi
 
 function f_analyze_mem() {
     echo "Memory report analysis started."
@@ -34,24 +35,6 @@ function f_analyze_mem() {
     set -e
     echo
     echo "Memory report analysis completed."
-}
-
-function f_setup_for_testing() {
-    [ $(grep -c '^#define TEST 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define TEST 0/#define TEST 1/g' "${BD}/${COMMON_HEADER}" ||
-        :
-    [ $(grep -c '^#define MEMORY_CHECK 0' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define MEMORY_CHECK 0/#define MEMORY_CHECK 1/g' "${BD}/${COMMON_HEADER}" ||
-        :
-}
-
-function f_setup_for_running() {
-    [ $(grep -c '^#define TEST 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define TEST 1/#define TEST 0/g' "${BD}/${COMMON_HEADER}" ||
-        :
-    [ $(grep -c '^#define MEMORY_CHECK 1' "${BD}/${COMMON_HEADER}") -eq 1 ] &&
-        sed -i.bak 's/^#define MEMORY_CHECK 1/#define MEMORY_CHECK 0/g' "${BD}/${COMMON_HEADER}" ||
-        :
 }
 
 pushd "${BD}"
@@ -71,15 +54,9 @@ else
     echo "No process was running."
 fi
 
-if ! [ -f "${MAKE_FILE}" ]; then
-    echo "No makefile found."
-    echo "Calling bin/makeMakefile.sh"
-    ./bin/makeMakefile.sh
-fi
-
 echo "Running"
 if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
-    f_setup_for_testing
+    clang src/main-test.c `echo ${FLAGS} ${DEBUG_FLAGS}` -o ${BUILD_DIR}/${APP_NAME}
     mkdir -p /tmp/pointers
     # Set up dir entries for testing.
     mkdir -p "${ARTIFACT_FOLDER}/empty/" \
@@ -92,7 +69,6 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
     touch "${ARTIFACT_FOLDER}/delete_me.txt"
     touch "${ARTIFACT_FOLDER}/delete_me_2.txt"
 
-    make MODE=TEST OPT=${OPT_LEVEL} 2>&1
     if [ "${MODE}" = "TEST" ]; then
         # Remove previous logs.
         ./"${BUILD_DIR}/${APP_NAME}" 2>"${LOG_FILE_ERR}"
@@ -116,14 +92,19 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
         f_analyze_mem
         echo
     else
-        lldb ./"${BUILD_DIR}/${APP_NAME}"
+        ${DEBUGGER} ./"${BUILD_DIR}/${APP_NAME}"
     fi
-    f_setup_for_running
-elif [ "${MODE}" = "BUILD" ]; then
-    f_setup_for_running
-    make OPT=${OPT_LEVEL} 2>&1
+elif [ "${MODE}" = "RELEASE" ]; then
+    rm -rf ${DIST_DIR} 
+    mkdir ${DIST_DIR}
+    clang -c src/main-test.c `echo ${RELEASE_FLAGS}` -o "${BUILD_DIR}/${APP_NAME}.o"
+    ar rcs "${BUILD_DIR}/lib${APP_NAME}.a" "${BUILD_DIR}/${APP_NAME}.o"
+    cp -v src/mylibc.h "${BUILD_DIR}/lib${APP_NAME}.a" "${DIST_DIR}"
+    echo "- Add ${APP_NAME}.h to your projects."
+    echo "- Compile your projects using:"
+    echo " \$ clang main.c -L<path-to-lib${APP_NAME}> -l${APP_NAME} -o my_program"
 else
-    echo "Error: accpepted mode is 'test', 'debug', or 'build'"
+    echo "Error: accpepted mode is 'test', 'debug', or 'release'"
     exit 1
 fi
 popd

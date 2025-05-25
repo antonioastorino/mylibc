@@ -1,15 +1,4 @@
-#include "tcp_utils.h"
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/select.h>
-
-#ifdef __linux__
-#include <sys/sendfile.h>
-#endif /* __linux__ */
+#include "mylibc.h"
 
 static bool g_initialized = false;
 static int g_server_socket;
@@ -196,6 +185,6 @@ Error tcp_utils_send_file(char* file_path, long file_size, int client_socket)
     return ERR_ALL_GOOD;
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_tcp_utils(void) {}
-#endif
+#endif /* _TEST */

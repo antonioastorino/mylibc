@@ -1,9 +1,5 @@
-#include "common.h"
-#include <stdlib.h>
+#include "mylibc.h"
 
-// ---------- ERROR ----------
-
-// ---------- LOGGER ----------
 #if LOG_LEVEL > LEVEL_NO_LOGS
 
 static FILE* log_out_file_p = NULL;
@@ -99,7 +95,7 @@ void get_date_time(char* date_time_str)
 }
 
 #endif /* LOG_LEVEL > LEVEL_NO_LOGS */
-#if TEST == 1
+#ifdef _TEST
 void test_logger(void)
 {
     PRINT_BANNER()
@@ -111,7 +107,7 @@ void test_logger(void)
     LOG_WARNING("Log warning.");
     LOG_ERROR("Log error.");
 }
-#endif /* TEST == 1 */
+#endif /* _TEST */
 
 // ---------- ASSERT ----------
 
@@ -448,7 +444,7 @@ void ASSERT_NE_char_p(
     }
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_common(void)
 {
     PRINT_BANNER();
@@ -464,4 +460,4 @@ void test_common(void)
     ASSERT_NE(a_valid, b_null, "Second null");
     ASSERT_NE(a_valid, c_different, "Different");
 }
-#endif /* TEST == 1 */
+#endif /* _TEST */

@@ -1,6 +1,7 @@
 lfs
 lib
 build
+dist
 *.swp
 *.swo
 *.bak

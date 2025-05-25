@@ -1,9 +1,4 @@
-#include "class_json.h"
-#include "converter.h"
-#include "my_memory.h"
-#include <stdio.h>
-#include <string.h>
-
+#include "mylibc.h"
 #define MAX_NUM_LEN (30)
 
 // Used only for returning data in a convenient way. Not used for storage.
@@ -678,7 +673,7 @@ GET_ARRAY_VALUE_c(value_bool, VALUE_BOOL, bool*)
 GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
 // clang-format on
 
-#if TEST == 1
+#ifdef _TEST
 
                                                             static String load_file(char* filename)
 {
@@ -1071,4 +1066,4 @@ void test_class_json(void)
     }
     /**/
 }
-#endif
+#endif /* _TEST */

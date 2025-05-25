@@ -1,10 +1,4 @@
-#include "class_string.h"
-#include "my_memory.h"
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "mylibc.h"
 
 #define SIZE_FACTOR 1.5
 
@@ -345,7 +339,7 @@ Error _String_between_patterns_in_string_p(
         file, line, in_string_p->str, prefix, suffix, out_string_obj_p);
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_class_string(void)
 {
     PRINT_BANNER();
@@ -615,4 +609,4 @@ void test_class_string(void)
     }
     /**/
 }
-#endif
+#endif /* _TEST */

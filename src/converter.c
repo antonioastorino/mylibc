@@ -1,6 +1,4 @@
-#include "converter.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "mylibc.h"
 
 Error str_to_int(const char* str, int* out_int)
 {
@@ -181,7 +179,7 @@ float rounder(float to_be_rounded, float step, size_t num_of_decimals)
     return quotient_float;
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_converter(void)
 {
     PRINT_BANNER();
@@ -303,4 +301,4 @@ void test_converter(void)
     }
     /**/
 }
-#endif
+#endif /* _TEST */

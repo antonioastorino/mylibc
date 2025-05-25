@@ -1,9 +1,6 @@
-#include "my_memory.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/errno.h>
+#include "mylibc.h"
 
-#if MEMORY_CHECK == 1
+#ifdef _MEMORY_CHECK
 #define create_file(pointer, file, line)                                                           \
     {                                                                                              \
         char file_name[256] = {0};                                                                 \
@@ -29,7 +26,7 @@
         }                                                                                          \
     }
 
-#else /* MEMORY_CHECK == 1 */
+#else /* _MEMORY_CHECK not defined */
 
 #define create_file(pointer, file, line)                                                           \
     {                                                                                              \
@@ -43,7 +40,7 @@
         UNUSED(pointer);                                                                           \
     }
 
-#endif /* MEMORY_CHECK == 1 */
+#endif /* _MEMORY_CHECK */
 
 void* my_memory_malloc(const char* file, const int line, size_t size)
 {
@@ -90,7 +87,7 @@ void my_memory_free(void* ptr)
     free(ptr);
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_my_memory(void)
 {
     PRINT_BANNER();
@@ -103,4 +100,4 @@ void test_my_memory(void)
         my_memory_free(char_p);
     }
 }
-#endif /* TEST == 1 */
+#endif /* _TEST */
