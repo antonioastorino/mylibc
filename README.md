@@ -1,15 +1,34 @@
 # mylibc
 
-Add to your project using
+## Test and build
 
-```
-$ git submodule add git@github.com:antonioastorino/mylibc.git
-```
-
-To run the unit tests
-```
-$ cd mylibc
-$ bin/run.sh test
+### Run unit tests
+```bash
+./tools/build-and-run.sh test
 ```
 
-The main function is in `test.c`. Don't compile it while using this repository as a submodule. See [CWS project](https://github.com/antonioastorino/CWS) as an example of how this submodule is used.
+### Debug 
+```bash
+./tools/build-and-run.sh debug 
+```
+
+### Release
+```bash
+./tools/build-and-run.sh release 
+```
+
+## Add to your project
+
+### Add as a static library
+- Compile in release mode as described above.
+- Copy the contents of the `dist` folder to your project directory, say `mylibc-folder`.
+- Add `mylibc.h` to your projects.
+- Add `mylibc-folder` to the library search path a and link the library itself when compiling. For example:
+
+```bash
+clang main.c -Lmylibc-folder -lmylibc -o my_program"
+./my_program
+```
+
+### Add the source code
+All the source code is contained in the `src` folder, including the single header file `mylibc.h`.
