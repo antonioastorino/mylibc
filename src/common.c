@@ -83,15 +83,12 @@ void logger_init(const char* log_out_file_path_str, const char* log_err_file_pat
 
 void get_date_time(char* date_time_str)
 {
-    time_t ltime;
     struct tm result;
-    ltime = time(NULL);
-    localtime_r(&ltime, &result);
-    // The string must be at least 26 character long. The returned value contains a \n\0 at
-    // the end.
-    asctime_r(&result, date_time_str);
-    // Overwrite the \n to avoid a new line.
-    date_time_str[24] = 0;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    localtime_r(&tv.tv_sec, &result);
+    strftime(date_time_str, 25, "%a %b %d %Y %H:%M:%S.", &result);
+    snprintf(&date_time_str[25], 7, "%06d", tv.tv_usec);
 }
 
 #endif /* LOG_LEVEL > LEVEL_NO_LOGS */

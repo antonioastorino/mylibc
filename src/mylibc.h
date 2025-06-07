@@ -2,6 +2,7 @@
 #define HEADER_H
 #include <stdbool.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <limits.h>
 #include <pthread.h>
@@ -399,7 +400,7 @@ Error invalid_request(const JsonArray*, size_t, const JsonArray**);
     }
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
-#define DATE_TIME_STR_LEN 26
+#define DATE_TIME_STR_LEN 32
                                                         void logger_init(const char*, const char*);
 pthread_mutex_t* logger_get_out_mut_p(void);
 pthread_mutex_t* logger_get_err_mut_p(void);
