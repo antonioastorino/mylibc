@@ -7,10 +7,10 @@ ARTIFACT_FOLDER="test/artifacts"
 LOG_FILE_ERR="${ARTIFACT_FOLDER}/err.log"
 FLAGS="-Wall -Wextra -std=c2x -pedantic -fsanitize=address"
 DEBUG_FLAGS="-O0 -g -D_TEST -D_MEMORY_CHECK"
-RELEASE_FLAGS=""
+RELEASE_FLAGS="-O3"
 BUILD_DIR="build"
 DIST_DIR="dist"
-DEGUGGER="lldb"
+DEBUGGER="lldb"
 
 if [ "$(uname -s)" = "Linux" ]; then
     FLAGS="${FLAGS} -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_GNU_SOURCE"
@@ -37,10 +37,9 @@ function f_analyze_mem() {
     echo "Memory report analysis completed."
 }
 
-pushd "${BD}"
+pushd "${BD}" >/dev/null
 echo "Closing running instance"
 set +e
-echo "${BD}/test/artifacts"
 /bin/rm -rf "${BD}/test/artifacts"
 /bin/rm -rf /tmp/pointers
 /bin/rm -rf ${ARTIFACT_FOLDER}
@@ -54,7 +53,6 @@ else
     echo "No process was running."
 fi
 
-echo "Running"
 if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
     clang src/main-test.c `echo ${FLAGS} ${DEBUG_FLAGS}` -o ${BUILD_DIR}/${APP_NAME}
     mkdir -p /tmp/pointers
@@ -99,12 +97,14 @@ elif [ "${MODE}" = "RELEASE" ]; then
     mkdir ${DIST_DIR}
     clang -c src/main-test.c `echo ${RELEASE_FLAGS}` -o "${BUILD_DIR}/${APP_NAME}.o"
     ar rcs "${BUILD_DIR}/lib${APP_NAME}.a" "${BUILD_DIR}/${APP_NAME}.o"
-    cp -v src/mylibc.h "${BUILD_DIR}/lib${APP_NAME}.a" "${DIST_DIR}"
+    cp src/mylibc.h "${BUILD_DIR}/lib${APP_NAME}.a" "${DIST_DIR}"
+    echo "----- Dist folder -----"
+    ls -hl "${DIST_DIR}"
+    echo "-----    Usage    -----"
     echo "- Add ${APP_NAME}.h to your projects."
-    echo "- Compile your projects using:"
-    echo " \$ clang main.c -L<path-to-lib${APP_NAME}> -l${APP_NAME} -o my_program"
+    echo "- Compile your projects using \`\$ clang main.c -L<path-to-lib${APP_NAME}> -l${APP_NAME} -o my_program\`"
 else
-    echo "Error: accpepted mode is 'test', 'debug', or 'release'"
+    echo "Error: accepted mode is 'test', 'debug', or 'release'"
     exit 1
 fi
 popd
