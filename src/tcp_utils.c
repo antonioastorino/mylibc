@@ -1,5 +1,3 @@
-#include "mylibc.h"
-
 static bool g_initialized = false;
 static int g_server_socket;
 

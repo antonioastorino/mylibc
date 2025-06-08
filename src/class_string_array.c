@@ -1,5 +1,3 @@
-#include "mylibc.h"
-
 StringArray StringArray_empty(void)
 {
     StringArray ret_string_array

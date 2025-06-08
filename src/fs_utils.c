@@ -1,5 +1,3 @@
-#include "mylibc.h"
-
 static Error _fs_utils_recursive_rm_r(FTS*, const char*);
 
 static Error _fs_utils_create_or_append(

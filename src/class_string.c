@@ -1,5 +1,3 @@
-#include "mylibc.h"
-
 #define SIZE_FACTOR 1.5
 
 bool String_is_null(const String* string_obj_p)

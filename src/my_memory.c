@@ -1,5 +1,3 @@
-#include "mylibc.h"
-
 #ifdef _MEMORY_CHECK
 #define create_file(pointer, file, line)                                                           \
     {                                                                                              \

@@ -1,5 +1,5 @@
-#ifndef HEADER_H
-#define HEADER_H
+#ifndef MYLIBC_H
+#define MYLIBC_H
 #include <stdbool.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -570,4 +570,4 @@ Error tcp_utils_read(char*, int);
 Error tcp_utils_write(char*, int);
 Error tcp_utils_send_file(char*, long, int);
 
-#endif /* HEADER_H */
+#endif /* MYLIBC_H */

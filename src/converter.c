@@ -1,5 +1,3 @@
-#include "mylibc.h"
-
 Error str_to_int(const char* str, int* out_int)
 {
     int ret_int = 0;

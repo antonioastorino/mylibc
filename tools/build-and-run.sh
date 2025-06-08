@@ -54,7 +54,7 @@ else
 fi
 
 if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
-    clang src/main-test.c `echo ${FLAGS} ${DEBUG_FLAGS}` -o ${BUILD_DIR}/${APP_NAME}
+    clang src/main-test.c $(echo ${FLAGS} ${DEBUG_FLAGS}) -o ${BUILD_DIR}/${APP_NAME}
     mkdir -p /tmp/pointers
     # Set up dir entries for testing.
     mkdir -p "${ARTIFACT_FOLDER}/empty/" \
@@ -92,19 +92,29 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
     else
         ${DEBUGGER} ./"${BUILD_DIR}/${APP_NAME}"
     fi
-elif [ "${MODE}" = "RELEASE" ]; then
-    rm -rf ${DIST_DIR} 
+elif [ "${MODE}" = "LIB" ]; then
+    rm -rf ${DIST_DIR}
     mkdir ${DIST_DIR}
-    clang -c src/main-test.c `echo ${RELEASE_FLAGS}` -o "${BUILD_DIR}/${APP_NAME}.o"
+    clang -c src/main-test.c $(echo ${RELEASE_FLAGS}) -o "${BUILD_DIR}/${APP_NAME}.o"
     ar rcs "${BUILD_DIR}/lib${APP_NAME}.a" "${BUILD_DIR}/${APP_NAME}.o"
     cp src/mylibc.h "${BUILD_DIR}/lib${APP_NAME}.a" "${DIST_DIR}"
     echo "----- Dist folder -----"
-    ls -hl "${DIST_DIR}"
+    ls -1 "${DIST_DIR}"
     echo "-----    Usage    -----"
     echo "- Add ${APP_NAME}.h to your projects."
-    echo "- Compile your projects using \`\$ clang main.c -L<path-to-lib${APP_NAME}> -l${APP_NAME} -o my_program\`"
+    echo "- Compile your projects using \n\t\$ clang <your-translation-units> -L<path-to-lib${APP_NAME}> -l${APP_NAME} -o my_program"
+elif [ "${MODE}" = "RELEASE" ]; then
+    rm -rf ${DIST_DIR}
+    mkdir ${DIST_DIR}
+    clang -c src/main-test.c $(echo ${RELEASE_FLAGS}) -o "${BUILD_DIR}/${APP_NAME}.o"
+    cp src/mylibc.h "${BUILD_DIR}/${APP_NAME}.o" "${DIST_DIR}"
+    echo "----- Dist folder -----"
+    ls -1 "${DIST_DIR}"
+    echo "-----    Usage    -----"
+    echo "- Add ${APP_NAME}.h to your projects."
+    echo "- Compile your projects using \n\t\$ clang <your-translation-units> <path-to-'${APP_NAME}.o'> -o my_program"
 else
-    echo "Error: accepted mode is 'test', 'debug', or 'release'"
+    echo "Error: accepted modes are:\n\t- 'test'\n\t- 'debug'\n\t- 'release'\n\t- lib"
     exit 1
 fi
 popd

@@ -1,5 +1,3 @@
-#include "mylibc.h"
-
 #if LOG_LEVEL > LEVEL_NO_LOGS
 
 static FILE* log_out_file_p = NULL;
