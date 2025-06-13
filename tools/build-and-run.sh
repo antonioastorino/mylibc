@@ -11,6 +11,7 @@ RELEASE_FLAGS="-O3"
 BUILD_DIR="build"
 DIST_DIR="dist"
 DEBUGGER="lldb"
+POINTER_DIR="/tmp/pointers"
 
 if [ "$(uname -s)" = "Linux" ]; then
     FLAGS="${FLAGS} -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_GNU_SOURCE"
@@ -24,10 +25,10 @@ MODE=${MODE:u}
 function f_analyze_mem() {
     echo "Memory report analysis started."
     echo
-    if [ $(ls /tmp/pointers | wc -l) -ne 0 ]; then
+    if [ $(ls "${POINTER_DIR}" | wc -l) -ne 0 ]; then
         echo "\e[33mFAIL:\e[0m Memory leak detected."
-        for f in $(ls /tmp/pointers); do
-            echo "$f - $(cat /tmp/pointers/$f)"
+        for f in $(ls "${POINTER_DIR}"); do
+            echo "$f - $(cat ${POINTER_DIR}/$f)"
         done
     else
         echo "\e[32mSUCCESS:\e[0m No memory leak detected."
@@ -40,9 +41,10 @@ function f_analyze_mem() {
 pushd "${BD}" >/dev/null
 echo "Closing running instance"
 set +e
-/bin/rm -rf "${BD}/test/artifacts"
-/bin/rm -rf /tmp/pointers
-/bin/rm -rf ${ARTIFACT_FOLDER}
+rm -rf "${BUILD_DIR}"
+rm -rf "${POINTER_DIR}"
+rm -rf "${ARTIFACT_FOLDER}"
+rm -rf "${DIST_DIR}"
 
 PID=$(pgrep ${APP_NAME})
 set -e
@@ -53,9 +55,11 @@ else
     echo "No process was running."
 fi
 
+mkdir -p "${BUILD_DIR}"
+
 if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
     clang src/main-test.c $(echo ${FLAGS} ${DEBUG_FLAGS}) -o ${BUILD_DIR}/${APP_NAME}
-    mkdir -p /tmp/pointers
+    mkdir -p "${POINTER_DIR}"
     # Set up dir entries for testing.
     mkdir -p "${ARTIFACT_FOLDER}/empty/" \
         "${ARTIFACT_FOLDER}/non-empty/inner/inner_l2" \
@@ -93,7 +97,6 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
         ${DEBUGGER} ./"${BUILD_DIR}/${APP_NAME}"
     fi
 elif [ "${MODE}" = "LIB" ]; then
-    rm -rf ${DIST_DIR}
     mkdir ${DIST_DIR}
     clang -c src/main-test.c $(echo ${RELEASE_FLAGS}) -o "${BUILD_DIR}/${APP_NAME}.o"
     ar rcs "${BUILD_DIR}/lib${APP_NAME}.a" "${BUILD_DIR}/${APP_NAME}.o"
