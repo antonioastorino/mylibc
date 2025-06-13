@@ -15,6 +15,7 @@ This will compile the unit test and start the debugger (lldb or gdb).
 ```
 
 ### Release
+> NOTE: do NOT use this mode if your projects is using the `_TEST` and `_MEMORY_CHECK` flags to run unit tests
 This will compile the project as an object file with
 - no entry point
 - optimization level 3
@@ -22,8 +23,18 @@ This will compile the project as an object file with
 ```bash
 ./tools/build-and-run.sh release 
 ```
+Compile your project using, for example
+```
+clang src/<your-main-file>.c \
+    mylibc/dist/mylibc.o \
+    -Imylibc/dist \
+    -Wall -Wextra '-std=c2x' -pedantic '-fsanitize=address' -O3 \
+    -o <your-executable-name>
+```
+
 
 ### Static library 
+> NOTE: do NOT use this mode if your projects is using the `_TEST` and `_MEMORY_CHECK` flags to run unit tests
 This will compile the project as an archive file with
 - no entry point
 - optimization level 3
@@ -31,6 +42,24 @@ This will compile the project as an archive file with
 ```bash
 ./tools/build-and-run.sh lib
 ```
+
+### Module
+> NOTE: use this mode if your projects is using the `_TEST` and `_MEMORY_CHECK` flags to run unit tests
+This will compile the project as an object file with
+- no entry point
+- optimization level 0
+- unit test present
+```bash
+./tools/build-and-run.sh module
+```
+Compile your project as follows.
+```
+clang src/<your-main-file>.c \
+    mylibc/dist/mylibc.o \
+    -Imylibc/dist \
+    -Wall -Wextra '-std=c2x' -pedantic '-fsanitize=address' -O0 \
+    -g -D_TEST -D_MEMORY_CHECK \
+    -o <your-executable-name>
 
 ## Add to your project
 
