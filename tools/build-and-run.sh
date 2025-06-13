@@ -57,8 +57,12 @@ fi
 
 mkdir -p "${BUILD_DIR}"
 
-if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
-    clang src/main-test.c $(echo ${FLAGS} ${DEBUG_FLAGS}) -o ${BUILD_DIR}/${APP_NAME}
+if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ] || [ "${MODE}" = "MODULE" ]; then
+    if [ "${MODE}" = "MODULE" ]; then
+        clang -c src/main-test.c $(echo ${FLAGS} ${DEBUG_FLAGS}) -D_MODULE -o ${BUILD_DIR}/${APP_NAME}.o
+    else
+        clang src/main-test.c $(echo ${FLAGS} ${DEBUG_FLAGS}) -o ${BUILD_DIR}/${APP_NAME}
+    fi
     mkdir -p "${POINTER_DIR}"
     # Set up dir entries for testing.
     mkdir -p "${ARTIFACT_FOLDER}/empty/" \
@@ -72,7 +76,6 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
     touch "${ARTIFACT_FOLDER}/delete_me_2.txt"
 
     if [ "${MODE}" = "TEST" ]; then
-        # Remove previous logs.
         ./"${BUILD_DIR}/${APP_NAME}" 2>"${LOG_FILE_ERR}"
         RET_VAL=$?
         echo "================================================================================"
@@ -93,8 +96,14 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ]; then
         echo "================================================================================"
         f_analyze_mem
         echo
-    else
+    elif [ "${MODE}" = "DEBUG" ]; then
         ${DEBUGGER} ./"${BUILD_DIR}/${APP_NAME}"
+    else
+        mkdir ${DIST_DIR}
+        cp src/mylibc.h "${BUILD_DIR}/${APP_NAME}.o" "${DIST_DIR}"
+        echo "----------------------------------------"
+        echo "------- Compiled in MODULE mode --------"
+        echo "----------------------------------------"
     fi
 elif [ "${MODE}" = "LIB" ]; then
     mkdir ${DIST_DIR}

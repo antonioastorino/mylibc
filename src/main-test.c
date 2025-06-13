@@ -9,6 +9,7 @@
 #include "tcp_utils.c"
 
 #ifdef _TEST
+#ifndef _MODULE
 int main(void)
 {
     logger_init(NULL, NULL);
@@ -22,4 +23,5 @@ int main(void)
     test_my_memory();
     test_common();
 }
+#endif /* _MODULE */
 #endif /* _TEST */
