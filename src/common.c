@@ -85,8 +85,12 @@ void get_date_time(char* date_time_str)
     struct timeval tv;
     gettimeofday(&tv, NULL);
     localtime_r(&tv.tv_sec, &result);
-    strftime(date_time_str, 25, "%a %b %d %Y %H:%M:%S.", &result);
+    strftime(date_time_str, 26, "%a %b %d %Y %H:%M:%S.", &result);
+#ifdef __linux__
+    snprintf(&date_time_str[25], 7, "%06ld", tv.tv_usec);
+#else
     snprintf(&date_time_str[25], 7, "%06d", tv.tv_usec);
+#endif /* __linux__ */
 }
 
 #endif /* LOG_LEVEL > LEVEL_NO_LOGS */
