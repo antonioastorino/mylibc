@@ -107,7 +107,7 @@ if [ "${MODE}" = "TEST" ] || [ "${MODE}" = "DEBUG" ] || [ "${MODE}" = "MODULE" ]
     fi
 elif [ "${MODE}" = "LIB" ]; then
     mkdir ${DIST_DIR}
-    clang -c src/main-test.c $(echo ${RELEASE_FLAGS}) -o "${BUILD_DIR}/${APP_NAME}.o"
+    clang -c src/main-test.c $(echo ${FLAGS} ${RELEASE_FLAGS}) -o "${BUILD_DIR}/${APP_NAME}.o"
     ar rcs "${BUILD_DIR}/lib${APP_NAME}.a" "${BUILD_DIR}/${APP_NAME}.o"
     cp src/mylibc.h "${BUILD_DIR}/lib${APP_NAME}.a" "${DIST_DIR}"
     echo "----- Dist folder -----"
@@ -118,7 +118,7 @@ elif [ "${MODE}" = "LIB" ]; then
 elif [ "${MODE}" = "RELEASE" ]; then
     rm -rf ${DIST_DIR}
     mkdir ${DIST_DIR}
-    clang -c src/main-test.c $(echo ${RELEASE_FLAGS}) -o "${BUILD_DIR}/${APP_NAME}.o"
+    clang -c src/main-test.c $(echo ${FLAGS} ${RELEASE_FLAGS}) -o "${BUILD_DIR}/${APP_NAME}.o"
     cp src/mylibc.h "${BUILD_DIR}/${APP_NAME}.o" "${DIST_DIR}"
     echo "----- Dist folder -----"
     ls -1 "${DIST_DIR}"
