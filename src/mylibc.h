@@ -167,19 +167,15 @@ void ASSERT_(bool, const char*, const char*, int);
 void ASSERT_OK_(Error, const char*, const char*, int);
 void ASSERT_ERR_(Error, const char*, const char*, int);
 
-void ASSERT_EQ_int(int, int, const char*, const char*, int);
-void ASSERT_EQ_uint8(uint8_t, uint8_t, const char*, const char*, int);
-void ASSERT_EQ_uint16(uint16_t, uint16_t, const char*, const char*, int);
-void ASSERT_EQ_uint(size_t, size_t, const char*, const char*, int);
+void ASSERT_EQ_int64_t(long long, long long, const char*, const char*, int);
+void ASSERT_EQ_uint64_t(unsigned long long, unsigned long long, const char*, const char*, int);
 void ASSERT_EQ_bool(bool v1, bool v2, const char*, const char*, int);
 void ASSERT_EQ_float(float, float, const char*, const char*, int);
 void ASSERT_EQ_double(double, double, const char*, const char*, int);
 void ASSERT_EQ_char_p(const char*, const char*, const char*, const char*, int);
 
-void ASSERT_NE_int(int, int, const char*, const char*, int);
-void ASSERT_NE_uint8(uint8_t, uint8_t, const char*, const char*, int);
-void ASSERT_NE_uint16(uint16_t, uint16_t, const char*, const char*, int);
-void ASSERT_NE_uint(size_t, size_t, const char*, const char*, int);
+void ASSERT_NE_int64_t(long long, long long, const char*, const char*, int);
+void ASSERT_NE_uint64_t(unsigned long long, unsigned long long, const char*, const char*, int);
 void ASSERT_NE_bool(bool v1, bool v2, const char*, const char*, int);
 void ASSERT_NE_float(float, float, const char*, const char*, int);
 void ASSERT_NE_double(double, double, const char*, const char*, int);
@@ -206,29 +202,40 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 // clang-format off
 #define ASSERT_EQ(value_1, value_2, message)      \
     _Generic((value_1),                           \
-        int           : ASSERT_EQ_int,            \
-        int16_t       : ASSERT_EQ_int,            \
-        uint8_t       : ASSERT_EQ_uint8,          \
-        uint16_t      : ASSERT_EQ_uint16,         \
-        size_t        : ASSERT_EQ_uint,           \
-        bool          : ASSERT_EQ_bool,           \
-        float         : ASSERT_EQ_float,          \
-        double        : ASSERT_EQ_double,         \
-        char*         : ASSERT_EQ_char_p,         \
-        const char*   : ASSERT_EQ_char_p          \
+        signed char        : ASSERT_EQ_int64_t,   \
+        short              : ASSERT_EQ_int64_t,   \
+        int                : ASSERT_EQ_int64_t,   \
+        long               : ASSERT_EQ_int64_t,   \
+        long long          : ASSERT_EQ_int64_t,   \
+        unsigned char      : ASSERT_EQ_uint64_t,  \
+        unsigned short     : ASSERT_EQ_uint64_t,  \
+        unsigned int       : ASSERT_EQ_uint64_t,  \
+        unsigned long      : ASSERT_EQ_uint64_t,  \
+        unsigned long long : ASSERT_EQ_uint64_t,  \
+        bool               : ASSERT_EQ_bool,      \
+        float              : ASSERT_EQ_float,     \
+        double             : ASSERT_EQ_double,    \
+        char*              : ASSERT_EQ_char_p,    \
+        const char*        : ASSERT_EQ_char_p     \
     )(value_1, value_2, message, __FILE__, __LINE__)
 
 #define ASSERT_NE(value_1, value_2, message)      \
     _Generic((value_1),                           \
-        int           : ASSERT_NE_int,            \
-        uint8_t       : ASSERT_NE_uint8,          \
-        uint16_t      : ASSERT_NE_uint16,         \
-        size_t        : ASSERT_NE_uint,           \
-        bool          : ASSERT_NE_bool,           \
-        float         : ASSERT_NE_float,          \
-        double        : ASSERT_NE_double,         \
-        char*         : ASSERT_NE_char_p,         \
-        const char*   : ASSERT_NE_char_p          \
+        signed char        : ASSERT_NE_int64_t,   \
+        short              : ASSERT_NE_int64_t,   \
+        int                : ASSERT_NE_int64_t,   \
+        long               : ASSERT_NE_int64_t,   \
+        long long          : ASSERT_NE_int64_t,   \
+        unsigned char      : ASSERT_NE_uint64_t,  \
+        unsigned short     : ASSERT_NE_uint64_t,  \
+        unsigned int       : ASSERT_NE_uint64_t,  \
+        unsigned long      : ASSERT_NE_uint64_t,  \
+        unsigned long long : ASSERT_NE_uint64_t,  \
+        bool               : ASSERT_NE_bool,      \
+        float              : ASSERT_NE_float,     \
+        double             : ASSERT_NE_double,    \
+        char*              : ASSERT_NE_char_p,    \
+        const char*        : ASSERT_NE_char_p     \
     )(value_1, value_2, message, __FILE__, __LINE__)
 
 // clang-format on

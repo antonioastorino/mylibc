@@ -163,9 +163,9 @@ void ASSERT_ERR_(Error result, const char* message, const char* filename, int li
     }
 }
 
-void ASSERT_EQ_int(
-    int value_1,
-    int value_2,
+void ASSERT_EQ_int64_t(
+    long long value_1,
+    long long value_2,
     const char* message,
     const char* filename,
     int line_number)
@@ -177,13 +177,13 @@ void ASSERT_EQ_int(
     else
     {
         PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
-        fprintf(stderr, "Left : `%d`\nRight: `%d`\n", value_1, value_2);
+        fprintf(stderr, "Left : `%lld`\nRight: `%lld`\n", value_1, value_2);
     }
 }
 
-void ASSERT_EQ_uint8(
-    uint8_t value_1,
-    uint8_t value_2,
+void ASSERT_EQ_uint64_t(
+    unsigned long long value_1,
+    unsigned long long value_2,
     const char* message,
     const char* filename,
     int line_number)
@@ -195,43 +195,7 @@ void ASSERT_EQ_uint8(
     else
     {
         PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
-        fprintf(stderr, "Left : `%u`\nRight: `%u`\n", value_1, value_2);
-    }
-}
-
-void ASSERT_EQ_uint16(
-    uint16_t value_1,
-    uint16_t value_2,
-    const char* message,
-    const char* filename,
-    int line_number)
-{
-    if (value_1 == value_2)
-    {
-        PRINT_PASS_MESSAGE(message);
-    }
-    else
-    {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
-        fprintf(stderr, "Left : `%hu`\nRight: `%hu`\n", value_1, value_2);
-    }
-}
-
-void ASSERT_EQ_uint(
-    size_t value_1,
-    size_t value_2,
-    const char* message,
-    const char* filename,
-    int line_number)
-{
-    if (value_1 == value_2)
-    {
-        PRINT_PASS_MESSAGE(message);
-    }
-    else
-    {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
-        fprintf(stderr, "Left : `%lu`\nRight: `%lu`\n", value_1, value_2);
+        fprintf(stderr, "Left : `%llu`\nRight: `%llu`\n", value_1, value_2);
     }
 }
 
@@ -314,9 +278,9 @@ void ASSERT_EQ_char_p(
     }
 }
 
-void ASSERT_NE_int(
-    int value_1,
-    int value_2,
+void ASSERT_NE_int64_t(
+    long long value_1,
+    long long value_2,
     const char* message,
     const char* filename,
     int line_number)
@@ -328,13 +292,13 @@ void ASSERT_NE_int(
     else
     {
         PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
-        fprintf(stderr, "Left : `%d`\nRight: `%d`\n", value_1, value_2);
+        fprintf(stderr, "Left : `%lld`\nRight: `%lld`\n", value_1, value_2);
     }
 }
 
-void ASSERT_NE_uchar(
-    uint8_t value_1,
-    uint8_t value_2,
+void ASSERT_NE_uint64_t(
+    unsigned long long value_1,
+    unsigned long long value_2,
     const char* message,
     const char* filename,
     int line_number)
@@ -346,25 +310,7 @@ void ASSERT_NE_uchar(
     else
     {
         PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
-        fprintf(stderr, "Left : `%d`\nRight: `%d`\n", value_1, value_2);
-    }
-}
-
-void ASSERT_NE_uint(
-    size_t value_1,
-    size_t value_2,
-    const char* message,
-    const char* filename,
-    int line_number)
-{
-    if (value_1 != value_2)
-    {
-        PRINT_PASS_MESSAGE(message);
-    }
-    else
-    {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
-        fprintf(stderr, "Left : `%lu`\nRight: `%lu`\n", value_1, value_2);
+        fprintf(stderr, "Left : `%llu`\nRight: `%llu`\n", value_1, value_2);
     }
 }
 
@@ -448,11 +394,35 @@ void test_common(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("Assert works with char NULL pointers");
-    char* a_null      = NULL;
-    char* b_null      = NULL;
-    char* a_valid     = "valid";
-    char* b_valid     = "valid";
-    char* c_different = "different";
+    int a_int                               = 0;
+    int b_int                               = -1;
+    long int a_long_int                     = 456;
+    long int b_long_int                     = -456841;
+    long long int a_long_long_int           = 0;
+    long long int b_long_long_int           = 1;
+    unsigned int a_uint                     = 0;
+    unsigned int b_uint                     = 1;
+    unsigned long int a_long_uint           = 0;
+    unsigned long int b_long_uint           = 1;
+    unsigned long long int a_long_long_uint = 0;
+    unsigned long long int b_long_long_uint = 1;
+    char* a_null                            = NULL;
+    char* b_null                            = NULL;
+    char* a_valid                           = "valid";
+    char* b_valid                           = "valid";
+    char* c_different                       = "different";
+    ASSERT_EQ(a_int, a_int, "Both int");
+    ASSERT_NE(a_int, b_int, "Both int");
+    ASSERT_EQ(a_long_int, a_long_int, "Both long int");
+    ASSERT_NE(a_long_int, b_long_int, "Both long int");
+    ASSERT_EQ(a_long_long_int, a_long_long_int, "Both long long int");
+    ASSERT_NE(a_long_long_int, b_long_long_int, "Both long long int");
+    ASSERT_EQ(a_uint, a_uint, "Both uint");
+    ASSERT_NE(a_uint, b_uint, "Both uint");
+    ASSERT_EQ(a_long_uint, a_long_uint, "Both long uint");
+    ASSERT_NE(a_long_uint, b_long_uint, "Both long uint");
+    ASSERT_EQ(a_long_long_uint, a_long_long_uint, "Both long long uint");
+    ASSERT_NE(a_long_long_uint, b_long_long_uint, "Both long long uint");
     ASSERT_EQ(a_null, b_null, "Both null");
     ASSERT_EQ(a_valid, b_valid, "Both valid");
     ASSERT_NE(a_null, b_valid, "First null");
