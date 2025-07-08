@@ -157,29 +157,31 @@ Error tcp_utils_write(char* out_buff_char_p, int client_socket)
 
 Error tcp_utils_send_file(char* file_path, long file_size, int client_socket)
 {
-    int resource_file = open(file_path, O_RDONLY);
-    if (resource_file == -1)
+    int resource_fd = open(file_path, O_RDONLY);
+    if (resource_fd == -1)
     {
         LOG_PERROR("Error opening file");
         return ERR_UNEXPECTED;
     }
+    flock(resource_fd, LOCK_SH);
 #ifdef __linux__
-    ssize_t bytes_sent = sendfile(client_socket, resource_file, NULL, file_size);
+    ssize_t bytes_sent = sendfile(client_socket, resource_fd, NULL, file_size);
     LOG_INFO("Size `%ld` bytes.", file_size);
     LOG_INFO("Sent `%ld` bytes.", bytes_sent);
     if (bytes_sent == -1)
 #else
-    off_t len                      = file_size; // set to 0 will send all the origin file
-    int res                        = sendfile(resource_file, client_socket, 0, &len, NULL, 0);
+    off_t len = file_size; // set to 0 will send all the origin file
+    int res   = sendfile(resource_fd, client_socket, 0, &len, NULL, 0);
+    flock(resource_fd, LOCK_UN);
     LOG_INFO("Sent `%lld` bytes.", len);
     if (res == -1)
 #endif
     {
         LOG_PERROR("Failed to send file");
-        close(resource_file);
+        close(resource_fd);
         return ERR_TCP_INTERNAL;
     }
-    close(resource_file);
+    close(resource_fd);
     return ERR_ALL_GOOD;
 }
 
