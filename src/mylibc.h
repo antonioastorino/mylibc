@@ -24,6 +24,7 @@
 #include <sys/select.h>
 #ifdef __linux__
 #include <sys/sendfile.h>
+#include <sys/file.h>
 #endif /* __linux__ */
 
 #define UNUSED(x) (void)(x)
