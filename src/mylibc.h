@@ -49,6 +49,9 @@
 #define __APP_DEFINED__
 #endif /* __APP_DEFINED__ */
 
+typedef unsigned long long llu_t;
+typedef long long int lld_t;
+
 typedef enum
 {
     ERR_ALL_GOOD,
@@ -61,9 +64,9 @@ typedef enum
     ERR_PERMISSION_DENIED,
     ERR_INTERRUPTION,
     ERR_NULL,
-    ERR_PARSE_STRING_TO_INT,
-    ERR_PARSE_STRING_TO_LONG_INT,
-    ERR_PARSE_STRING_TO_FLOAT,
+    ERR_PARSE_STRING_TO_LLD,
+    ERR_PARSE_STRING_TO_LLU,
+    ERR_PARSE_STRING_TO_DOUBLE,
     ERR_EMPTY_STRING,
     ERR_JSON_INVALID,
     ERR_JSON_MISSING_ENTRY,
@@ -81,9 +84,9 @@ typedef enum
 typedef struct String
 {
     // Length that would be returned by `strlen(str)`.
-    size_t length;
+    llu_t length;
     // Allocated memory in number of chars.
-    size_t size;
+    llu_t size;
     // Array of chars whose allocated length >= `len`.
     char* str;
 } String;
@@ -122,9 +125,10 @@ Error _String_replace_pattern(
     const char*,
     const char*,
     size_t*);
-Error String_replace_pattern_size_t(String*, const char*, const char*, const size_t, size_t*);
-Error String_replace_pattern_float(String*, const char*, const char*, const float, size_t*);
-Error String_replace_pattern_int(String*, const char*, const char*, const int, size_t*);
+
+Error String_replace_pattern_llu_t(String*, const char*, const char*, const llu_t, size_t*);
+Error String_replace_pattern_lld_t(String*, const char*, const char*, const lld_t, size_t*);
+Error String_replace_pattern_double(String*, const char*, const char*, const double, size_t*);
 
 #define String_new(...) _String_new(__FILE__, __LINE__, __VA_ARGS__)
 #define String_replace_pattern(haystack, needle, replacement, out_count) \
@@ -140,17 +144,24 @@ Error String_replace_pattern_int(String*, const char*, const char*, const int, s
      )(__FILE__, __LINE__, in_value, prefix, suffix, out_string)
 
 #define String_replace_pattern_with_format(haystack, needle, format, replacement, out_count) \
-    _Generic((replacement), \
-    size_t: String_replace_pattern_size_t, \
-    float: String_replace_pattern_float, \
-    int: String_replace_pattern_int \
+    _Generic((replacement),                            \
+    unsigned short:     String_replace_pattern_llu_t,  \
+    unsigned int:       String_replace_pattern_llu_t,  \
+    unsigned long:      String_replace_pattern_llu_t,  \
+    unsigned long long: String_replace_pattern_llu_t,  \
+    short int:          String_replace_pattern_lld_t,  \
+    int:                String_replace_pattern_lld_t,  \
+    long int:           String_replace_pattern_lld_t,  \
+    long long int:      String_replace_pattern_lld_t,  \
+    float:              String_replace_pattern_double, \
+    double:             String_replace_pattern_double  \
     )(haystack, needle, format, replacement, out_count)
 // clang-format on
 
 /* ------- String Array ------- */
 typedef struct
 {
-    size_t num_of_elements;
+    llu_t num_of_elements;
     char* str_char_p;
     char** str_array_char_p;
 } StringArray;
@@ -169,33 +180,31 @@ void ASSERT_(bool, const char*, const char*, int);
 void ASSERT_OK_(Error, const char*, const char*, int);
 void ASSERT_ERR_(Error, const char*, const char*, int);
 
-void ASSERT_EQ_int(long long, long long, const char*, const char*, int);
-void ASSERT_EQ_uint(unsigned long long, unsigned long long, const char*, const char*, int);
+void ASSERT_EQ_lld(lld_t, lld_t, const char*, const char*, int);
+void ASSERT_EQ_llu(llu_t, llu_t, const char*, const char*, int);
 void ASSERT_EQ_bool(bool v1, bool v2, const char*, const char*, int);
-void ASSERT_EQ_float(float, float, const char*, const char*, int);
 void ASSERT_EQ_double(double, double, const char*, const char*, int);
 void ASSERT_EQ_char_p(const char*, const char*, const char*, const char*, int);
 
-void ASSERT_NE_int(long long, long long, const char*, const char*, int);
-void ASSERT_NE_uint(unsigned long long, unsigned long long, const char*, const char*, int);
+void ASSERT_NE_lld(lld_t, lld_t, const char*, const char*, int);
+void ASSERT_NE_llu(llu_t, llu_t, const char*, const char*, int);
 void ASSERT_NE_bool(bool v1, bool v2, const char*, const char*, int);
-void ASSERT_NE_float(float, float, const char*, const char*, int);
 void ASSERT_NE_double(double, double, const char*, const char*, int);
 void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 
-#define PRINT_BANNER()                                     \
-    printf("\n");                                          \
-    for (size_t i = 0; i < strlen(__FUNCTION__) + 12; i++) \
-    {                                                      \
-        printf("=");                                       \
-    }                                                      \
-    printf("\n-- TEST: %s --\n", __FUNCTION__);            \
-    for (size_t i = 0; i < strlen(__FUNCTION__) + 12; i++) \
-    {                                                      \
-        printf("=");                                       \
-    }                                                      \
-    printf("\n");                                          \
-    size_t test_counter_ = 0;
+#define PRINT_BANNER()                                    \
+    printf("\n");                                         \
+    for (llu_t i = 0; i < strlen(__FUNCTION__) + 12; i++) \
+    {                                                     \
+        printf("=");                                      \
+    }                                                     \
+    printf("\n-- TEST: %s --\n", __FUNCTION__);           \
+    for (llu_t i = 0; i < strlen(__FUNCTION__) + 12; i++) \
+    {                                                     \
+        printf("=");                                      \
+    }                                                     \
+    printf("\n");                                         \
+    llu_t test_counter_ = 0;
 
 #define ASSERT(value, message) ASSERT_(value, message, __FILE__, __LINE__)
 #define ASSERT_OK(value, message) ASSERT_OK_(value, message, __FILE__, __LINE__)
@@ -204,18 +213,18 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 // clang-format off
 #define ASSERT_EQ(value_1, value_2, message)      \
     _Generic((value_1),                           \
-        signed char        : ASSERT_EQ_int,   \
-        short              : ASSERT_EQ_int,   \
-        int                : ASSERT_EQ_int,   \
-        long               : ASSERT_EQ_int,   \
-        long long          : ASSERT_EQ_int,   \
-        unsigned char      : ASSERT_EQ_uint,  \
-        unsigned short     : ASSERT_EQ_uint,  \
-        unsigned int       : ASSERT_EQ_uint,  \
-        unsigned long      : ASSERT_EQ_uint,  \
-        unsigned long long : ASSERT_EQ_uint,  \
+        signed char        : ASSERT_EQ_lld,   \
+        short              : ASSERT_EQ_lld,   \
+        int                : ASSERT_EQ_lld,   \
+        long               : ASSERT_EQ_lld,   \
+        long long          : ASSERT_EQ_lld,   \
+        unsigned char      : ASSERT_EQ_llu,  \
+        unsigned short     : ASSERT_EQ_llu,  \
+        unsigned int       : ASSERT_EQ_llu,  \
+        unsigned long      : ASSERT_EQ_llu,  \
+        unsigned long long : ASSERT_EQ_llu,  \
         bool               : ASSERT_EQ_bool,      \
-        float              : ASSERT_EQ_float,     \
+        float              : ASSERT_EQ_double,     \
         double             : ASSERT_EQ_double,    \
         char*              : ASSERT_EQ_char_p,    \
         const char*        : ASSERT_EQ_char_p     \
@@ -223,18 +232,18 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 
 #define ASSERT_NE(value_1, value_2, message)      \
     _Generic((value_1),                           \
-        signed char        : ASSERT_NE_int,   \
-        short              : ASSERT_NE_int,   \
-        int                : ASSERT_NE_int,   \
-        long               : ASSERT_NE_int,   \
-        long long          : ASSERT_NE_int,   \
-        unsigned char      : ASSERT_NE_uint,  \
-        unsigned short     : ASSERT_NE_uint,  \
-        unsigned int       : ASSERT_NE_uint,  \
-        unsigned long      : ASSERT_NE_uint,  \
-        unsigned long long : ASSERT_NE_uint,  \
+        signed char        : ASSERT_NE_lld,   \
+        short              : ASSERT_NE_lld,   \
+        int                : ASSERT_NE_lld,   \
+        long               : ASSERT_NE_lld,   \
+        long long          : ASSERT_NE_lld,   \
+        unsigned char      : ASSERT_NE_llu,  \
+        unsigned short     : ASSERT_NE_llu,  \
+        unsigned int       : ASSERT_NE_llu,  \
+        unsigned long      : ASSERT_NE_llu,  \
+        unsigned long long : ASSERT_NE_llu,  \
         bool               : ASSERT_NE_bool,      \
-        float              : ASSERT_NE_float,     \
+        float              : ASSERT_NE_double,     \
         double             : ASSERT_NE_double,    \
         char*              : ASSERT_NE_char_p,    \
         const char*        : ASSERT_NE_char_p     \
@@ -242,16 +251,16 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 
 // clang-format on
 
-#define PRINT_TEST_TITLE(title) printf("\n------- T:%lu < %s > -------\n", ++test_counter_, title);
+#define PRINT_TEST_TITLE(title) printf("\n------- T:%llu < %s > -------\n", ++test_counter_, title);
 void test_class_string(void);
 void test_class_json(void);
 void test_class_string_array(void);
 void test_tcp_utils(void);
 void test_logger(void);
 void test_my_memory(void);
-void test_fs_utils(void);
+void test_fs(void);
 void test_common(void);
-void test_converter(void);
+void test_numparser(void);
 #else /* _TEST not defined */
 #define log_out (log_out_file_p == NULL ? stdout : log_out_file_p)
 #define log_err (log_err_file_p == NULL ? stderr : log_err_file_p)
@@ -274,10 +283,10 @@ typedef enum
 {
     VALUE_ROOT,
     VALUE_UNDEFINED,
-    VALUE_INT,
+    VALUE_LLD,
     VALUE_BOOL,
-    VALUE_UINT,
-    VALUE_FLOAT,
+    VALUE_LLU,
+    VALUE_DOUBLE,
     VALUE_STR,
     VALUE_ARRAY,
     VALUE_ITEM,
@@ -289,9 +298,9 @@ typedef struct JsonValue
     ValueType value_type;
     union
     {
-        int value_int;                   // leaf int
-        size_t value_uint;               // leaf size_t
-        float value_float;               // leaf float
+        lld_t value_lld;                 // leaf lld_t
+        llu_t value_llu;                 // leaf llu_t
+        double value_double;             // leaf double
         bool value_bool;                 // leaf bool
         const char* value_char_p;        // leaf c-string
         struct JsonItem* value_child_p;  // another item
@@ -302,7 +311,7 @@ typedef struct JsonValue
 typedef struct JsonItem
 {
     const char* key_p;
-    size_t index; // For arrays only
+    llu_t index; // For arrays only
     JsonValue value;
     struct JsonItem* parent;
     struct JsonItem* next_sibling;
@@ -320,7 +329,7 @@ void JsonObj_destroy(JsonObj*);
 void JsonObj_get_tokens(String*);
 
 // Created to have a symmetry between GET_VALUE and GET_ARRAY_VALUE
-Error invalid_request(const JsonArray*, size_t, const JsonArray**);
+Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
 
 // clang-format off
 #define OBJ_GET_VALUE_h(suffix, out_type)                                                          \
@@ -331,9 +340,9 @@ Error invalid_request(const JsonArray*, size_t, const JsonArray**);
 
 #define OBJ_GET_NUMBER_h(suffix, out_type)                                                         \
     Error obj_get_##suffix(const JsonObj*, const char*, out_type);
-    OBJ_GET_VALUE_h(value_int, int*)
-    OBJ_GET_VALUE_h(value_uint, size_t*)
-    OBJ_GET_VALUE_h(value_float, float*)
+    OBJ_GET_VALUE_h(value_lld, lld_t*)
+    OBJ_GET_VALUE_h(value_llu, llu_t*)
+    OBJ_GET_VALUE_h(value_double, double*)
     OBJ_GET_VALUE_h(value_bool, bool*)
 
 #define GET_VALUE_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
@@ -342,17 +351,17 @@ Error invalid_request(const JsonArray*, size_t, const JsonArray**);
     GET_VALUE_h(value_array_p, JsonArray**)
 
 #define GET_NUMBER_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
-    GET_VALUE_h(value_int, int*)
-    GET_VALUE_h(value_uint, size_t*)
-    GET_VALUE_h(value_float, float*)
+    GET_VALUE_h(value_lld, lld_t*)
+    GET_VALUE_h(value_llu, llu_t*)
+    GET_VALUE_h(value_double, double*)
     GET_VALUE_h(value_bool, bool*)
 
 #define GET_ARRAY_VALUE_h(suffix, out_type)                                                        \
-    Error get_array_##suffix(const JsonArray*, size_t, out_type);
+    Error get_array_##suffix(const JsonArray*, llu_t, out_type);
     GET_ARRAY_VALUE_h(value_char_p, const char**)
-    GET_ARRAY_VALUE_h(value_int, int*)
-    GET_ARRAY_VALUE_h(value_uint, size_t*)
-    GET_ARRAY_VALUE_h(value_float, float*)
+    GET_ARRAY_VALUE_h(value_lld, lld_t*)
+    GET_ARRAY_VALUE_h(value_llu, llu_t*)
+    GET_ARRAY_VALUE_h(value_double, double*)
     GET_ARRAY_VALUE_h(value_bool, bool*)
     GET_ARRAY_VALUE_h(value_child_p, JsonItem**)
 
@@ -366,27 +375,27 @@ Error invalid_request(const JsonArray*, size_t, const JsonArray**);
     _Generic ((json_stuff),                                                                        \
         JsonObj*: _Generic((out_p),                                                                \
             const char** : obj_get_value_char_p,                                                   \
-            int*         : obj_get_value_int,                                                      \
-            size_t*      : obj_get_value_uint,                                                     \
-            float*       : obj_get_value_float,                                                    \
+            lld_t*         : obj_get_value_lld,                                                      \
+            llu_t*      : obj_get_value_llu,                                                     \
+            double*       : obj_get_value_double,                                                    \
             bool*        : obj_get_value_bool,                                                     \
             JsonItem**   : obj_get_value_child_p,                                                  \
             JsonArray**  : obj_get_value_array_p                                                   \
             ),                                                                                     \
          JsonItem*: _Generic((out_p),                                                              \
             const char** : get_value_char_p,                                                       \
-            int*         : get_value_int,                                                          \
-            size_t*      : get_value_uint,                                                         \
-            float*       : get_value_float,                                                        \
+            lld_t*         : get_value_lld,                                                          \
+            llu_t*      : get_value_llu,                                                         \
+            double*       : get_value_double,                                                        \
             bool*        : get_value_bool,                                                         \
             JsonItem**   : get_value_child_p,                                                      \
             JsonArray**  : get_value_array_p                                                       \
             ),                                                                                     \
         JsonArray*: _Generic((out_p),                                                              \
             const char** : get_array_value_char_p,                                                 \
-            int*         : get_array_value_int,                                                    \
-            size_t*      : get_array_value_uint,                                                   \
-            float*       : get_array_value_float,                                                  \
+            lld_t*         : get_array_value_lld,                                                    \
+            llu_t*      : get_array_value_llu,                                                   \
+            double*       : get_array_value_double,                                                  \
             bool*        : get_array_value_bool,                                                   \
             JsonItem**   : get_array_value_child_p,                                                \
             JsonArray**  : invalid_request                                                         \
@@ -486,39 +495,38 @@ void get_date_time(char* date_time_str);
 #define LOG_TRACE(...)
 #endif
 
-Error str_to_int(const char* str_p, int*);
-Error str_to_size_t(const char* str_p, size_t*);
-Error str_to_uint8_t(const char* str_p, uint8_t*);
-Error str_to_float(const char* str_p, float*);
-float rounder(float to_be_rounded, float step, size_t num_of_decimals);
+Error numparser_cstr_to_lld(const char* str_p, lld_t*);
+Error numparser_cstr_to_llu(const char* str_p, llu_t*);
+Error numparser_cstr_to_double(const char* str_p, double*);
+double numparser_rounder(double to_be_rounded, double step, llu_t num_of_decimals);
 
 // Folders only.
-Error fs_utils_mkdir(const char*, mode_t);
-Error fs_utils_mkdir_p(const char*, mode_t);
-Error fs_utils_rmdir(const char*);
-Error fs_utils_ls(const char*);
+Error fs_mkdir(const char*, mode_t);
+Error fs_mkdir_with_parents(const char*, mode_t);
+Error fs_rmdir(const char*);
+Error fs_ls(const char*);
 // Files only.
-Error fs_utils_rm_from_path_as_char_p(const char*);
-Error fs_utils_append(const char*, const char*);
-Error fs_utils_create_with_content(const char*, const char*);
+Error fs_rm_from_path_as_char_p(const char*);
+Error fs_append(const char*, const char*);
+Error fs_create_with_content(const char*, const char*);
 // Files and folders.
-bool fs_utils_does_exist(const char*);
-Error fs_utils_rm_r(const char*);
-bool fs_utils_is_file(const char*);
-bool fs_utils_is_folder(const char*);
-Error fs_utils_get_file_size(const char*, off_t*);
+bool fs_does_exist(const char*);
+Error fs_rm_r(const char*);
+bool fs_is_file(const char*);
+bool fs_is_folder(const char*);
+Error fs_get_file_size(const char*, off_t*);
 
 // clang-format off
-#define fs_utils_rm(file_path_p)                                        \
+#define fs_rm(file_path_p)                                        \
     _Generic((file_path_p),                                             \
-        const char*   : fs_utils_rm_from_path_as_char_p,                \
-        char*         : fs_utils_rm_from_path_as_char_p                 \
+        const char*   : fs_rm_from_path_as_char_p,                \
+        char*         : fs_rm_from_path_as_char_p                 \
     )(file_path_p)
 
-#define fs_utils_read_to_string(file_path_p, out_string)                \
+#define fs_read_to_string(file_path_p, out_string)                \
     _Generic((file_path_p),                                             \
-        const char* : _fs_utils_read_to_string,                         \
-        char* : _fs_utils_read_to_string                                \
+        const char* : _fs_read_to_string,                         \
+        char* : _fs_read_to_string                                \
     )(__FILE__, __LINE__,file_path_p, out_string)
 // clang-format on
 

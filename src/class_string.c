@@ -175,7 +175,7 @@ Error String_replace_char(
     return ERR_ALL_GOOD;
 }
 
-#define String_replace_pattern_c(suffix)                                                               \
+#define STRING_REPLACE_PATTERN_C(suffix)                                                               \
     Error String_replace_pattern_##suffix(                                                             \
         String* haystack_string_p,                                                                     \
         const char* needle,                                                                            \
@@ -195,9 +195,9 @@ Error String_replace_char(
 // I ma forced to add a semi-colon at the end of each of the following lines otherwise the formatter
 // will make a mess. However, the compiler is complaining about those, and hence I disabled the
 // warning.
-String_replace_pattern_c(size_t);
-String_replace_pattern_c(float);
-String_replace_pattern_c(int);
+STRING_REPLACE_PATTERN_C(llu_t);
+STRING_REPLACE_PATTERN_C(double);
+STRING_REPLACE_PATTERN_C(lld_t);
 #pragma GCC diagnostic pop
 
 Error _String_replace_pattern(

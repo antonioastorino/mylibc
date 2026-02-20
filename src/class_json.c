@@ -31,7 +31,7 @@ static JsonItem* _JsonItem_new(const char* file, const int line)
 static bool _is_token(const char c)
 {
     char* token_list = "{}[],:\"";
-    for (size_t i = 0; i < strlen(token_list); i++)
+    for (llu_t i = 0; i < strlen(token_list); i++)
     {
         if (c == token_list[i])
             return true;
@@ -72,9 +72,9 @@ static String _strip_whitespace(const String* json_string_p)
     // The returned string cannot be longer than the input string (plus an termination char).
     char ret_cleaned_char_p[json_string_p->length + 1];
 
-    size_t pos_out     = 0;
+    llu_t pos_out      = 0;
     bool inside_string = false;
-    for (size_t pos_in = 0; pos_in < json_string_p->length; pos_in++)
+    for (llu_t pos_in = 0; pos_in < json_string_p->length; pos_in++)
     {
         char curr_char = json_string_p->str[pos_in];
         // "Open/Close" a string.
@@ -117,9 +117,9 @@ static char* _terminate_str(char* char_p)
 static String _generate_tokens(String* json_string_p)
 {
     char ret_tokens_char_p[json_string_p->length + 1];
-    size_t pos_out     = 0;
+    llu_t pos_out      = 0;
     bool inside_string = false;
-    for (size_t pos_in = 0; pos_in < json_string_p->length; pos_in++)
+    for (llu_t pos_in = 0; pos_in < json_string_p->length; pos_in++)
     {
         char curr_char = json_string_p->str[pos_in];
         // "Open/Close" a string.
@@ -144,7 +144,7 @@ static Error _validate_tokens(char* json_char_p)
     uint32_t obj_counter = 0;
     uint32_t arr_counter = 0;
     char curr_char;
-    for (size_t index = 0; json_char_p[index] != 0; index++)
+    for (llu_t index = 0; json_char_p[index] != 0; index++)
     {
         curr_char = json_char_p[index];
         if (curr_char == '[')
@@ -240,9 +240,9 @@ _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** sta
         {
             // 23 digits should be sufficient.
             char num_buff[MAX_NUM_LEN];
-            // Try to convert into an integer or a float, depending on the presence of a dot ('.').
+            // Try to convert into an integer or a double, depending on the presence of a dot ('.').
             bool dot_found = false;
-            size_t i       = 0;
+            llu_t i        = 0;
             // Create a substring containing the number.
             for (; (i < MAX_NUM_LEN - 1) && (*curr_pos_p != ',') && (*curr_pos_p != '}')
                    && (*curr_pos_p != ']');
@@ -259,36 +259,36 @@ _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** sta
             num_buff[i] = '\0';
             if (dot_found)
             {
-                float parsed_float = 0.0f;
-                ret_result         = str_to_float(num_buff, &parsed_float);
+                double parsed_double = 0.0f;
+                ret_result           = numparser_cstr_to_double(num_buff, &parsed_double);
                 if (is_ok(ret_result))
                 {
-                    curr_item_p->value.value_type  = VALUE_FLOAT;
-                    curr_item_p->value.value_float = parsed_float;
-                    LOG_TRACE("Found value %f", curr_item_p->value.value_float);
+                    curr_item_p->value.value_type   = VALUE_DOUBLE;
+                    curr_item_p->value.value_double = parsed_double;
+                    LOG_TRACE("Found value %f", curr_item_p->value.value_double);
                 }
             }
             else if (num_buff[0] == '-')
             { // Convert into an integer if it is negative.
-                int parsed_int = 0;
-                ret_result     = str_to_int(num_buff, &parsed_int);
+                lld_t parsed_lld = 0;
+                ret_result       = numparser_cstr_to_lld(num_buff, &parsed_lld);
                 if (is_ok(ret_result))
                 {
-                    curr_item_p->value.value_type = VALUE_INT;
-                    curr_item_p->value.value_int  = parsed_int;
-                    LOG_TRACE("Found value %d", curr_item_p->value.value_int);
+                    curr_item_p->value.value_type = VALUE_LLD;
+                    curr_item_p->value.value_lld  = parsed_lld;
+                    LOG_TRACE("Found value %lld", curr_item_p->value.value_lld);
                 }
             }
             else
             {
-                // Convert any positive value into a size_t.
-                size_t parsed_size_t = 0;
-                ret_result           = str_to_size_t(num_buff, &parsed_size_t);
+                // Convert any positive value into a llu_t.
+                llu_t parsed_llu = 0;
+                ret_result       = numparser_cstr_to_llu(num_buff, &parsed_llu);
                 if (is_ok(ret_result))
                 {
-                    curr_item_p->value.value_type = VALUE_UINT;
-                    curr_item_p->value.value_uint = parsed_size_t;
-                    LOG_TRACE("Found value %lu", curr_item_p->value.value_uint);
+                    curr_item_p->value.value_type = VALUE_LLU;
+                    curr_item_p->value.value_llu  = parsed_llu;
+                    LOG_TRACE("Found value %llu", curr_item_p->value.value_llu);
                 }
             }
             break;
@@ -491,190 +491,188 @@ void JsonObj_destroy(JsonObj* json_obj_p)
     json_obj_p = NULL;
 }
 
-#define OBJ_GET_VALUE_c(suffix, value_token, out_type, ACTION)                                     \
-    Error obj_get_##suffix(const JsonObj* obj, const char* key, out_type out_value)                \
-    {                                                                                              \
-        return get_##suffix(obj->root.next_sibling, key, out_value);                               \
+#define OBJ_GET_VALUE_c(suffix, value_token, out_type, ACTION)                      \
+    Error obj_get_##suffix(const JsonObj* obj, const char* key, out_type out_value) \
+    {                                                                               \
+        return get_##suffix(obj->root.next_sibling, key, out_value);                \
     }
 
-#define GET_VALUE_c(suffix, value_token, out_type, ACTION)                                         \
-    Error get_##suffix(const JsonItem* item, const char* key, out_type out_value)                  \
-    {                                                                                              \
-        if (item == NULL)                                                                          \
-        {                                                                                          \
-            *out_value = NULL;                                                                     \
-            LOG_ERROR("Input item is NULL - key `%s`.", key);                                      \
-            return ERR_JSON_MISSING_ENTRY;                                                         \
-        }                                                                                          \
-        if (!strcmp(item->key_p, key))                                                             \
-        {                                                                                          \
-            if (item->value.value_type == value_token)                                             \
-            {                                                                                      \
-                *out_value = item->value.suffix;                                                   \
-                ACTION;                                                                            \
-                return ERR_ALL_GOOD;                                                               \
-            }                                                                                      \
-            else                                                                                   \
-            {                                                                                      \
-                LOG_ERROR("Requested " #value_token " for a different value type.");               \
-                return ERR_TYPE_MISMATCH;                                                          \
-            }                                                                                      \
-        }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            return get_##suffix(item->next_sibling, key, out_value);                               \
-        }                                                                                          \
+#define GET_VALUE_c(suffix, value_token, out_type, ACTION)                           \
+    Error get_##suffix(const JsonItem* item, const char* key, out_type out_value)    \
+    {                                                                                \
+        if (item == NULL)                                                            \
+        {                                                                            \
+            *out_value = NULL;                                                       \
+            LOG_ERROR("Input item is NULL - key `%s`.", key);                        \
+            return ERR_JSON_MISSING_ENTRY;                                           \
+        }                                                                            \
+        if (!strcmp(item->key_p, key))                                               \
+        {                                                                            \
+            if (item->value.value_type == value_token)                               \
+            {                                                                        \
+                *out_value = item->value.suffix;                                     \
+                ACTION;                                                              \
+                return ERR_ALL_GOOD;                                                 \
+            }                                                                        \
+            else                                                                     \
+            {                                                                        \
+                LOG_ERROR("Requested " #value_token " for a different value type."); \
+                return ERR_TYPE_MISMATCH;                                            \
+            }                                                                        \
+        }                                                                            \
+        else                                                                         \
+        {                                                                            \
+            return get_##suffix(item->next_sibling, key, out_value);                 \
+        }                                                                            \
     }
 
-#define OBJ_GET_NUMBER_c(suffix, value_token, out_type, ACTION)                                    \
-    Error obj_get_##suffix(const JsonObj* obj, const char* key, out_type out_value)                \
-    {                                                                                              \
-        return get_##suffix(obj->root.next_sibling, key, out_value);                               \
+#define OBJ_GET_NUMBER_c(suffix, value_token, out_type, ACTION)                     \
+    Error obj_get_##suffix(const JsonObj* obj, const char* key, out_type out_value) \
+    {                                                                               \
+        return get_##suffix(obj->root.next_sibling, key, out_value);                \
     }
 
-#define GET_NUMBER_c(suffix, value_token, out_type, ACTION)                                        \
-    Error get_##suffix(const JsonItem* item, const char* key, out_type out_value)                  \
-    {                                                                                              \
-        if (item == NULL)                                                                          \
-        {                                                                                          \
-            LOG_ERROR("Input item is NULL - key: `%s`.", key);                                     \
-            return ERR_NULL;                                                                       \
-        }                                                                                          \
-        if (!strcmp(item->key_p, key))                                                             \
-        {                                                                                          \
-            if (item->value.value_type == value_token)                                             \
-            {                                                                                      \
-                *out_value = item->value.suffix;                                                   \
-                ACTION;                                                                            \
-                return ERR_ALL_GOOD;                                                               \
-            }                                                                                      \
-            else if ((item->value.value_type == VALUE_INT) && (value_token == VALUE_FLOAT))        \
-            {                                                                                      \
-                LOG_WARNING("Converting int to float");                                            \
-                *out_value = (float)(1.0f * item->value.value_int);                                \
-                ACTION;                                                                            \
-                return ERR_ALL_GOOD;                                                               \
-            }                                                                                      \
-            else if ((item->value.value_type == VALUE_UINT) && (value_token == VALUE_FLOAT))       \
-            {                                                                                      \
-                LOG_WARNING("Converting size_t to float");                                         \
-                *out_value = (float)(1.0f * item->value.value_uint);                               \
-                ACTION;                                                                            \
-                return ERR_ALL_GOOD;                                                               \
-            }                                                                                      \
-            else if ((item->value.value_type == VALUE_INT) && (value_token == VALUE_UINT))         \
-            {                                                                                      \
-                LOG_WARNING("Converting int to size_t");                                           \
-                if (item->value.value_int < 0)                                                     \
-                {                                                                                  \
-                    LOG_ERROR(                                                                     \
-                        "Impossible to convert negative int %d into size_t",                       \
-                        item->value.value_int);                                                    \
-                    LOG_ERROR("Failed to convert from INT to SIZE_T");                             \
-                    return ERR_INVALID;                                                            \
-                };                                                                                 \
-                *out_value = (size_t)item->value.value_int;                                        \
-                ACTION;                                                                            \
-                return ERR_ALL_GOOD;                                                               \
-            }                                                                                      \
-            else if ((item->value.value_type == VALUE_UINT) && (value_token == VALUE_INT))         \
-            {                                                                                      \
-                LOG_WARNING("Converting size_t to int");                                           \
-                *out_value = (int)item->value.value_uint;                                          \
-                /* check for overflow */                                                           \
-                if ((size_t)*out_value != item->value.value_uint)                                  \
-                {                                                                                  \
-                    LOG_ERROR(                                                                     \
-                        "Overflow while converting %lu into an int", item->value.value_uint);      \
-                    return ERR_INVALID;                                                            \
-                };                                                                                 \
-                ACTION;                                                                            \
-                return ERR_ALL_GOOD;                                                               \
-            }                                                                                      \
-            else                                                                                   \
-            {                                                                                      \
-                LOG_ERROR("Requested " #value_token " for a different value type.")                \
-                return ERR_TYPE_MISMATCH;                                                          \
-            }                                                                                      \
-        }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            return get_##suffix(item->next_sibling, key, out_value);                               \
-        }                                                                                          \
+#define GET_NUMBER_c(suffix, value_token, out_type, ACTION)                                   \
+    Error get_##suffix(const JsonItem* item, const char* key, out_type out_value)             \
+    {                                                                                         \
+        if (item == NULL)                                                                     \
+        {                                                                                     \
+            LOG_ERROR("Input item is NULL - key: `%s`.", key);                                \
+            return ERR_NULL;                                                                  \
+        }                                                                                     \
+        if (!strcmp(item->key_p, key))                                                        \
+        {                                                                                     \
+            if (item->value.value_type == value_token)                                        \
+            {                                                                                 \
+                *out_value = item->value.suffix;                                              \
+                ACTION;                                                                       \
+                return ERR_ALL_GOOD;                                                          \
+            }                                                                                 \
+            else if ((item->value.value_type == VALUE_LLD) && (value_token == VALUE_DOUBLE))  \
+            {                                                                                 \
+                LOG_WARNING("Converting int to double");                                      \
+                *out_value = (double)(1.0f * item->value.value_lld);                          \
+                ACTION;                                                                       \
+                return ERR_ALL_GOOD;                                                          \
+            }                                                                                 \
+            else if ((item->value.value_type == VALUE_LLU) && (value_token == VALUE_DOUBLE))  \
+            {                                                                                 \
+                LOG_WARNING("Converting llu_t to double");                                    \
+                *out_value = (double)(1.0f * item->value.value_llu);                          \
+                ACTION;                                                                       \
+                return ERR_ALL_GOOD;                                                          \
+            }                                                                                 \
+            else if ((item->value.value_type == VALUE_LLD) && (value_token == VALUE_LLU))     \
+            {                                                                                 \
+                LOG_WARNING("Converting int to llu_t");                                       \
+                if (item->value.value_lld < 0)                                                \
+                {                                                                             \
+                    LOG_ERROR(                                                                \
+                        "Impossible to convert negative int %lld into llu_t",                 \
+                        item->value.value_lld);                                               \
+                    LOG_ERROR("Failed to convert from INT to SIZE_T");                        \
+                    return ERR_INVALID;                                                       \
+                };                                                                            \
+                *out_value = (llu_t)item->value.value_lld;                                    \
+                ACTION;                                                                       \
+                return ERR_ALL_GOOD;                                                          \
+            }                                                                                 \
+            else if ((item->value.value_type == VALUE_LLU) && (value_token == VALUE_LLD))     \
+            {                                                                                 \
+                LOG_WARNING("Converting llu_t to lld_t");                                     \
+                *out_value = (lld_t)item->value.value_llu;                                    \
+                /* check for overflow */                                                      \
+                if (*out_value < 0)                                                           \
+                {                                                                             \
+                    LOG_ERROR(                                                                \
+                        "Overflow while converting %llu into an lld", item->value.value_llu); \
+                    return ERR_INVALID;                                                       \
+                };                                                                            \
+                ACTION;                                                                       \
+                return ERR_ALL_GOOD;                                                          \
+            }                                                                                 \
+            else                                                                              \
+            {                                                                                 \
+                LOG_ERROR("Requested " #value_token " for a different value type.")           \
+                return ERR_TYPE_MISMATCH;                                                     \
+            }                                                                                 \
+        }                                                                                     \
+        else                                                                                  \
+        {                                                                                     \
+            return get_##suffix(item->next_sibling, key, out_value);                          \
+        }                                                                                     \
     }
 
-#define GET_ARRAY_VALUE_c(suffix, value_token, out_type)                                           \
-    Error get_array_##suffix(const JsonArray* json_array, size_t index, out_type out_value)        \
-    {                                                                                              \
-        if (json_array == NULL)                                                                    \
-        {                                                                                          \
-            LOG_ERROR("Input item is NULL");                                                       \
-            return ERR_JSON_MISSING_ENTRY;                                                         \
-        }                                                                                          \
-        JsonItem* json_item = json_array->element;                                                 \
-        while (true)                                                                               \
-        {                                                                                          \
-            if (json_item->index == index)                                                         \
-            {                                                                                      \
-                break;                                                                             \
-            }                                                                                      \
-            else if (json_item->next_sibling == NULL)                                              \
-            {                                                                                      \
-                LOG_WARNING("Index %lu out of boundaries.", index);                                \
-                return ERR_NULL;                                                                   \
-            }                                                                                      \
-            json_item = json_item->next_sibling;                                                   \
-        }                                                                                          \
-        if (json_item->value.value_type != value_token)                                            \
-        {                                                                                          \
-            LOG_ERROR(                                                                             \
-                "Incompatible data type - found %d, requested %d",                                 \
-                json_item->value.value_type,                                                       \
-                value_token);                                                                      \
-            return ERR_TYPE_MISMATCH;                                                              \
-        }                                                                                          \
-        *out_value = json_item->value.suffix;                                                      \
-        return ERR_ALL_GOOD;                                                                       \
+#define GET_ARRAY_VALUE_c(suffix, value_token, out_type)                                   \
+    Error get_array_##suffix(const JsonArray* json_array, llu_t index, out_type out_value) \
+    {                                                                                      \
+        if (json_array == NULL)                                                            \
+        {                                                                                  \
+            LOG_ERROR("Input item is NULL");                                               \
+            return ERR_JSON_MISSING_ENTRY;                                                 \
+        }                                                                                  \
+        JsonItem* json_item = json_array->element;                                         \
+        while (true)                                                                       \
+        {                                                                                  \
+            if (json_item->index == index)                                                 \
+            {                                                                              \
+                break;                                                                     \
+            }                                                                              \
+            else if (json_item->next_sibling == NULL)                                      \
+            {                                                                              \
+                LOG_WARNING("Index %llu out of boundaries.", index);                       \
+                return ERR_NULL;                                                           \
+            }                                                                              \
+            json_item = json_item->next_sibling;                                           \
+        }                                                                                  \
+        if (json_item->value.value_type != value_token)                                    \
+        {                                                                                  \
+            LOG_ERROR(                                                                     \
+                "Incompatible data type - found %d, requested %d",                         \
+                json_item->value.value_type,                                               \
+                value_token);                                                              \
+            return ERR_TYPE_MISMATCH;                                                      \
+        }                                                                                  \
+        *out_value = json_item->value.suffix;                                              \
+        return ERR_ALL_GOOD;                                                               \
     }
 
 // clang-format off
 OBJ_GET_VALUE_c(value_char_p, VALUE_STR, const char**, )
 OBJ_GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, )
-OBJ_GET_VALUE_c(
-    value_array_p,
-    VALUE_ARRAY,
-    JsonArray**,
+OBJ_GET_VALUE_c( value_array_p, VALUE_ARRAY, JsonArray**,
     (*out_value)->element = item->value.value_child_p)
 
-OBJ_GET_NUMBER_c(value_int, VALUE_INT, int*, )
-OBJ_GET_NUMBER_c(value_uint, VALUE_UINT, size_t*, )
-OBJ_GET_NUMBER_c(value_float, VALUE_FLOAT, float*, )
+OBJ_GET_NUMBER_c(value_lld, VALUE_LLD, lld_t*, )
+OBJ_GET_NUMBER_c(value_llu, VALUE_LLU, llu_t*, )
+OBJ_GET_NUMBER_c(value_double, VALUE_DOUBLE, double*, )
 OBJ_GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, )
 
 GET_VALUE_c(value_char_p, VALUE_STR, const char**, )
 GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, )
-GET_VALUE_c(
-    value_array_p,
-    VALUE_ARRAY,
-    JsonArray**,
+GET_VALUE_c(value_array_p, VALUE_ARRAY, JsonArray**,
     (*out_value)->element = item->value.value_child_p)
 
-GET_NUMBER_c(value_int, VALUE_INT, int*, )
-GET_NUMBER_c(value_uint, VALUE_UINT, size_t*, )
-GET_NUMBER_c(value_float, VALUE_FLOAT, float*, )
+GET_NUMBER_c(value_lld, VALUE_LLD, lld_t*, )
+GET_NUMBER_c(value_llu, VALUE_LLU, llu_t*, )
+GET_NUMBER_c(value_double, VALUE_DOUBLE, double*, )
 GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, )
 
 GET_ARRAY_VALUE_c(value_char_p, VALUE_STR, const char**)
-GET_ARRAY_VALUE_c(value_int, VALUE_INT, int*)
-GET_ARRAY_VALUE_c(value_uint, VALUE_UINT, size_t*)
-GET_ARRAY_VALUE_c(value_float, VALUE_FLOAT, float*)
+GET_ARRAY_VALUE_c(value_lld, VALUE_LLD, lld_t*)
+GET_ARRAY_VALUE_c(value_llu, VALUE_LLU, llu_t*)
+GET_ARRAY_VALUE_c(value_double, VALUE_DOUBLE, double*)
 GET_ARRAY_VALUE_c(value_bool, VALUE_BOOL, bool*)
 GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wextra-semi"
+;
+#pragma GCC diagnostic pop
 // clang-format on
 
 #ifdef _TEST
 
-                                                            static String load_file(char* filename)
+static String load_file(char* filename)
 {
     FILE* json_file = fopen(filename, "r");
     if (json_file == NULL)
@@ -682,9 +680,9 @@ GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
         LOG_PERROR("Could not read file");
     }
     int c;
-    size_t chars_read = 0;
-    size_t size       = 4096;
-    char* buf         = my_memory_malloc(__FILE__, __LINE__, size);
+    llu_t chars_read = 0;
+    llu_t size       = 4096;
+    char* buf        = my_memory_malloc(__FILE__, __LINE__, size);
     if (buf == NULL)
     {
         LOG_PERROR("out of memory");
@@ -695,7 +693,7 @@ GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
         if (chars_read >= size - 1)
         {
             /* time to make it bigger */
-            size = (size_t)(size * 1.5);
+            size = (llu_t)(size * 1.5);
             buf  = my_memory_realloc(__FILE__, __LINE__, buf, size);
             if (buf == NULL)
             {
@@ -770,8 +768,7 @@ void test_class_json(void)
         const char* value_str;
         const char* json_char_p = "{\"key\":{}}";
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Empty nested JSON");
-        ASSERT_ERR(
-            Json_get(&json_obj, "key", &value_str), "Key found but value cannot be retrieved");
+        ASSERT_ERR(Json_get(&json_obj, "key", &value_str), "Key found but value cannot be retrieved");
         JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("Key-value pair");
@@ -790,20 +787,20 @@ void test_class_json(void)
     {
         JsonObj json_obj;
         const char* value_str;
-        size_t value_uint;
+        llu_t value_llu;
         const char* json_char_p = " {\"key\": \"value string\", \"sibling\": 56}";
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(&json_obj, "key", &value_str);
-        Json_get(&json_obj, "sibling", &value_uint);
+        Json_get(&json_obj, "sibling", &value_llu);
         ASSERT_EQ("value string", value_str, "Key for root value STRING");
-        ASSERT_EQ(56, value_uint, "Key for root found with correct value INT");
+        ASSERT_EQ(56, value_llu, "Key for root found with correct value INT");
         JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("Simple array");
     {
         JsonObj json_obj;
         const char* value_str;
-        size_t value_uint;
+        llu_t value_llu;
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [\"array value\", 56]}";
         printf("\n%s\n", json_char_p);
@@ -811,15 +808,15 @@ void test_class_json(void)
         Json_get(&json_obj, "key", &json_array);
         Json_get(json_array, 0, &value_str);
         ASSERT_EQ("array value", value_str, "Array STRING element retrieved.");
-        Json_get(json_array, 1, &value_uint);
-        ASSERT_EQ(56, value_uint, "Array SIZE_T element retrieved.");
+        Json_get(json_array, 1, &value_llu);
+        ASSERT_EQ(56, value_llu, "Array SIZE_T element retrieved.");
         JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("Array of objects");
     {
         JsonObj json_obj;
         JsonItem* json_item;
-        size_t value_uint;
+        llu_t value_llu;
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [ {\"array key\": 56}]}";
         printf("\n%s\n", json_char_p);
@@ -828,8 +825,8 @@ void test_class_json(void)
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item->key_p, "array key", "Array STRING element retrieved.");
         printf("%d\n", json_item->value.value_type);
-        Json_get(json_item, "array key", &value_uint);
-        ASSERT_EQ(value_uint, 56, "Value found an item that is also array element.");
+        Json_get(json_item, "array key", &value_llu);
+        ASSERT_EQ(value_llu, 56, "Value found an item that is also array element.");
         JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("object and array");
@@ -848,9 +845,9 @@ void test_class_json(void)
     {
         JsonObj json_obj;
         JsonItem* json_item;
-        size_t value_uint;
+        llu_t value_llu;
         const char* value_str;
-        float value_float;
+        double value_double;
         bool value_bool;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json_array_1.json");
@@ -859,17 +856,17 @@ void test_class_json(void)
         ASSERT_EQ(json_array != NULL, true, "Array found as root element.");
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item != NULL, true, "First array element is an item.");
-        Json_get(json_item, "object 1", &value_uint);
-        ASSERT_EQ(value_uint, 56, "Value SIZE_T found");
+        Json_get(json_item, "object 1", &value_llu);
+        ASSERT_EQ(value_llu, 56, "Value SIZE_T found");
         Json_get(json_array, 1, &json_item);
         ASSERT_EQ(json_item != NULL, true, "Second array element is an item.");
-        Json_get(json_item, "object 2", &value_float);
-        ASSERT_EQ(value_float, 404.5f, "Value FLOAT found");
+        Json_get(json_item, "object 2", &value_double);
+        ASSERT_EQ(value_double, 404.5f, "Value FLOAT found");
         Json_get(json_array, 2, &json_item);
         Json_get(json_item, "object 3", &value_str);
         ASSERT_EQ(value_str, "SOME STRING", "Array element STRING found.");
-        Json_get(json_array, 3, &value_uint);
-        ASSERT_EQ(value_uint, 32, "Array element INT found.");
+        Json_get(json_array, 3, &value_llu);
+        ASSERT_EQ(value_llu, 32, "Array element INT found.");
         Json_get(json_array, 4, &value_bool);
         ASSERT_EQ(value_bool, false, "Array element BOOL found.");
         JsonObj_destroy(&json_obj);
@@ -880,9 +877,9 @@ void test_class_json(void)
         String json_string = load_file("test/assets/test_json_array_2.json");
         JsonItem* json_item;
         JsonObj json_obj;
-        size_t value_uint;
+        llu_t value_llu;
         const char* value_str;
-        float value_float;
+        double value_double;
         bool value_bool;
         JsonArray* json_array;
         JsonArray* json_array_2;
@@ -892,17 +889,17 @@ void test_class_json(void)
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item != NULL, true, "First array element is an item.");
         Json_get(json_item, "inner array 1", &json_array_2);
-        Json_get(json_array_2, 0, &value_uint);
-        ASSERT_EQ(value_uint, 12314, "Value SIZE_T found");
-        Json_get(json_array_2, 1, &value_float);
-        ASSERT_EQ(value_float, -32.4f, "Value FLOAT found");
+        Json_get(json_array_2, 0, &value_llu);
+        ASSERT_EQ(value_llu, 12314, "Value SIZE_T found");
+        Json_get(json_array_2, 1, &value_double);
+        ASSERT_EQ(value_double, -32.4, "Value FLOAT found");
         Json_get(json_array_2, 2, &value_bool);
         ASSERT_EQ(value_bool, true, "Value TRUE found");
         Json_get(json_array, 1, &json_item);
         ASSERT_EQ(json_item != NULL, true, "Second array element is an item.");
         Json_get(json_item, "inner array 2", &json_array_2);
-        Json_get(json_array_2, 0, &value_float);
-        ASSERT_EQ(value_float, 1.4f, "Value FLOAT found");
+        Json_get(json_array_2, 0, &value_double);
+        ASSERT_EQ(value_double, 1.4000, "Value FLOAT found");
         Json_get(json_array_2, 1, &value_str);
         ASSERT_EQ(value_str, "hello", "Value STRING found");
         Json_get(json_array_2, 2, &value_bool);
@@ -915,12 +912,12 @@ void test_class_json(void)
         JsonObj json_obj;
         JsonItem* json_item;
         const char* value_str;
-        size_t value_uint;
+        llu_t value_llu;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json_array_3.json");
         ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
         ASSERT(Json_get(&json_obj, "Snapshot", &json_item) == ERR_ALL_GOOD, "Ok");
-        ASSERT(Json_get(json_item, "Value", &value_uint) == ERR_ALL_GOOD, "Ok");
+        ASSERT(Json_get(json_item, "Value", &value_llu) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_item, "Data", &json_array) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_array, 0, &json_item) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_item, "Time", &value_str) == ERR_ALL_GOOD, "Ok");
@@ -931,23 +928,23 @@ void test_class_json(void)
     PRINT_TEST_TITLE("test_json_array_4.json");
     {
         JsonObj json_obj;
-        size_t value_uint;
+        llu_t value_llu;
         JsonArray* json_array;
         bool value_bool;
         String json_string = load_file("test/assets/test_json_array_4.json");
         ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
         ASSERT_OK(Json_get(&json_obj, "array_key1", &json_array), "Ok");
-        ASSERT_OK(Json_get(json_array, 0, &value_uint), "Ok");
-        ASSERT_EQ(value_uint, 32, "Ok");
+        ASSERT_OK(Json_get(json_array, 0, &value_llu), "Ok");
+        ASSERT_EQ(value_llu, 32, "Ok");
         ASSERT_OK(Json_get(json_array, 1, &value_bool), "Ok");
         ASSERT_EQ(value_bool, false, "Ok");
         ASSERT_OK(Json_get(&json_obj, "array_key2", &json_array), "Ok");
-        ASSERT_OK(Json_get(json_array, 0, &value_uint), "Ok");
-        ASSERT_EQ(value_uint, 33, "Ok");
+        ASSERT_OK(Json_get(json_array, 0, &value_llu), "Ok");
+        ASSERT_EQ(value_llu, 33, "Ok");
         ASSERT_OK(Json_get(json_array, 1, &value_bool), "Ok");
         ASSERT_EQ(value_bool, true, "Ok");
-        ASSERT_OK(Json_get(&json_obj, "key", &value_uint), "Ok");
-        ASSERT_EQ(value_uint, 34, "Ok");
+        ASSERT_OK(Json_get(&json_obj, "key", &value_llu), "Ok");
+        ASSERT_EQ(value_llu, 34, "Ok");
         JsonObj_destroy(&json_obj);
         String_destroy(&json_string);
     }
@@ -956,8 +953,8 @@ void test_class_json(void)
         JsonObj json_obj;
         JsonItem* json_item;
         const char* value_str;
-        size_t value_uint;
-        float value_float;
+        llu_t value_llu;
+        double value_double;
         bool value_bool;
         JsonArray* json_array;
         String json_string = load_file("test/assets/test_json.json");
@@ -990,12 +987,12 @@ void test_class_json(void)
         ASSERT_EQ(value_str, "value_2.2.1", "Found nested sibling object value");
 
         PRINT_TEST_TITLE("Test integer");
-        Json_get(&json_obj, "test_integer", &value_uint);
-        ASSERT_EQ(value_uint, 435234, "Integer found and read correctly");
+        Json_get(&json_obj, "test_integer", &value_llu);
+        ASSERT_EQ(value_llu, 435234, "Integer found and read correctly");
 
-        PRINT_TEST_TITLE("Test float");
-        Json_get(&json_obj, "test_float", &value_float);
-        ASSERT_EQ(value_float, 435.234f, "Float found and read correctly");
+        PRINT_TEST_TITLE("Test double");
+        Json_get(&json_obj, "test_double", &value_double);
+        ASSERT_EQ(value_double, 435.234, "Float found and read correctly");
 
         PRINT_TEST_TITLE("Test bool true");
         Json_get(&json_obj, "test_bool_true", &value_bool);
@@ -1006,10 +1003,10 @@ void test_class_json(void)
         ASSERT_EQ(value_bool, false, "Boolean found and read correctly");
 
         Json_get(&json_obj, "test_array", &json_array);
-        Json_get(json_array, 0, &value_uint);
-        ASSERT_EQ(value_uint, 14352, "Array element of type INT read correctly");
-        Json_get(json_array, 1, &value_float);
-        ASSERT_EQ(value_float, 2.15f, "Array element of type FLOAT read correctly");
+        Json_get(json_array, 0, &value_llu);
+        ASSERT_EQ(value_llu, 14352, "Array element of type INT read correctly");
+        Json_get(json_array, 1, &value_double);
+        ASSERT_EQ(value_double, 2.15, "Array element of type FLOAT read correctly");
         Json_get(json_array, 2, &value_str);
         ASSERT_EQ(value_str, "string_element", "Array element of type C-string read correctly");
         JsonObj_destroy(&json_obj);
@@ -1047,19 +1044,20 @@ void test_class_json(void)
     PRINT_TEST_TITLE("Data conversion");
     {
         JsonObj json_obj;
-        size_t value_uint;
-        int value_int;
+        llu_t value_llu;
+        lld_t value_lld;
         Error ret_res;
         String json_string = load_file("test/assets/test_json_numbers.json");
         ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
-        Json_get(&json_obj, "value_int", &value_uint);
-        ASSERT_EQ((size_t)23, value_uint, "Conversion from INT to SIZE_T successfull");
-        Json_get(&json_obj, "value_small_uint", &value_int);
-        ASSERT_EQ((int)43, value_int, "Conversion from SIZE_T to INT successfull");
-        ret_res = Json_get(&json_obj, "value_negative_int", &value_uint);
+        Json_get(&json_obj, "value_positive_lld", &value_llu);
+        ASSERT_EQ((llu_t)23, value_llu, "Conversion from INT to SIZE_T successfull");
+        Json_get(&json_obj, "value_small_llu", &value_lld);
+        ASSERT_EQ((int)43, value_lld, "Conversion from SIZE_T to INT successfull");
+        ret_res = Json_get(&json_obj, "value_negative_lld", &value_llu);
         ASSERT(ret_res == ERR_INVALID, "Conversion from negative INT to SIZE_T failed");
-        ret_res = Json_get(&json_obj, "value_uint", &value_int);
+        ret_res = Json_get(&json_obj, "value_large_llu", &value_lld);
         ASSERT(ret_res == ERR_INVALID, "Conversion from large SIZE_T to INT failed");
+        printf("%lld\n", value_lld);
         JsonObj_destroy(&json_obj);
         String_destroy(&json_string);
     }

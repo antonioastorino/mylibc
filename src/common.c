@@ -152,7 +152,7 @@ void ASSERT_ERR_(Error result, const char* message, const char* filename, int li
     }
 }
 
-void ASSERT_EQ_int(
+void ASSERT_EQ_lld(
     long long value_1,
     long long value_2,
     const char* message,
@@ -170,7 +170,7 @@ void ASSERT_EQ_int(
     }
 }
 
-void ASSERT_EQ_uint(
+void ASSERT_EQ_llu(
     unsigned long long value_1,
     unsigned long long value_2,
     const char* message,
@@ -209,23 +209,6 @@ void ASSERT_EQ_bool(
             value_2 ? "true" : "false");
     }
 }
-void ASSERT_EQ_float(
-    float value_1,
-    float value_2,
-    const char* message,
-    const char* filename,
-    int line_number)
-{
-    if (value_1 == value_2)
-    {
-        PRINT_PASS_MESSAGE(message);
-    }
-    else
-    {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
-        fprintf(stderr, "Left : `%f`\nRight: `%f`\n", value_1, value_2);
-    }
-}
 
 void ASSERT_EQ_double(
     double value_1,
@@ -241,7 +224,7 @@ void ASSERT_EQ_double(
     else
     {
         PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
-        fprintf(stderr, "Left : `%lf`\nRight: `%lf`\n", value_1, value_2);
+        fprintf(stderr, "Left : `%.20lf`\nRight: `%.20lf`\n", value_1, value_2);
     }
 }
 
@@ -267,7 +250,7 @@ void ASSERT_EQ_char_p(
     }
 }
 
-void ASSERT_NE_int(
+void ASSERT_NE_lld(
     long long value_1,
     long long value_2,
     const char* message,
@@ -285,7 +268,7 @@ void ASSERT_NE_int(
     }
 }
 
-void ASSERT_NE_uint(
+void ASSERT_NE_llu(
     unsigned long long value_1,
     unsigned long long value_2,
     const char* message,

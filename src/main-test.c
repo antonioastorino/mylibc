@@ -3,8 +3,8 @@
 #include "class_string.c"
 #include "class_string_array.c"
 #include "common.c"
-#include "converter.c"
-#include "fs_utils.c"
+#include "numparser.c"
+#include "fs.c"
 #include "my_memory.c"
 #include "tcp_utils.c"
 
@@ -17,8 +17,8 @@ int main(void)
     test_class_string();
     test_class_string_array();
     test_class_json();
-    test_converter();
-    test_fs_utils();
+    test_numparser();
+    test_fs();
     test_tcp_utils();
     test_my_memory();
     test_common();

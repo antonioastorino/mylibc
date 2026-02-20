@@ -12,7 +12,7 @@
     }
   },
   "test_integer": 435234,
-  "test_float": 435.234,
+  "test_double": 435.234,
   "text_sibling": "sibling_value",
   "test_bool_true": true,
   "test_bool_false": false

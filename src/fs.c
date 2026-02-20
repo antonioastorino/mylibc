@@ -1,6 +1,6 @@
-static Error _fs_utils_recursive_rm_r(FTS*, const char*);
+static Error _fs_recursive_rm_r(FTS*, const char*);
 
-static Error _fs_utils_create_or_append(
+static Error _fs_create_or_append(
     const char* file_path_char_p,
     const char* new_content_char_p,
     const char* flags_char_p)
@@ -17,7 +17,7 @@ static Error _fs_utils_create_or_append(
 }
 
 /* ------------------------------------------ Folders ------------------------------------------- */
-bool fs_utils_is_folder(const char* path_to_folder_char_p)
+bool fs_is_folder(const char* path_to_folder_char_p)
 {
     struct stat st = {0};
     if (stat(path_to_folder_char_p, &st) == -1)
@@ -32,12 +32,12 @@ bool fs_utils_is_folder(const char* path_to_folder_char_p)
     return false;
 }
 
-Error fs_utils_mkdir(const char* dir_path_char_p, mode_t permission)
+Error fs_mkdir(const char* dir_path_char_p, mode_t permission)
 {
     Error ret_res = ERR_ALL_GOOD;
     // Save the current mode mask and reset the mask.
     mode_t old_mask = umask(0);
-    if (!fs_utils_does_exist(dir_path_char_p))
+    if (!fs_does_exist(dir_path_char_p))
     {
         LOG_TRACE("Trying to create `%s`.", dir_path_char_p);
         if (mkdir(dir_path_char_p, permission) == -1)
@@ -60,11 +60,11 @@ Error fs_utils_mkdir(const char* dir_path_char_p, mode_t permission)
     return ret_res;
 }
 
-Error fs_utils_mkdir_p(const char* dir_path_char_p, mode_t permission)
+Error fs_mkdir_with_parents(const char* dir_path_char_p, mode_t permission)
 {
     size_t path_length = strlen(dir_path_char_p);
     LOG_TRACE("Trying to create `%s`", dir_path_char_p);
-    if (fs_utils_does_exist(dir_path_char_p))
+    if (fs_does_exist(dir_path_char_p))
     {
         LOG_ERROR("The folder already exists.");
         return ERR_FORBIDDEN;
@@ -86,9 +86,9 @@ Error fs_utils_mkdir_p(const char* dir_path_char_p, mode_t permission)
             LOG_TRACE("Trying to create `%s`.", partial_path);
 
             // Check if this path exists or try to create it.
-            if (!fs_utils_does_exist(partial_path))
+            if (!fs_does_exist(partial_path))
             {
-                return_on_err(fs_utils_mkdir(partial_path, permission));
+                return_on_err(fs_mkdir(partial_path, permission));
             }
         }
         // Append path chars to partial_path
@@ -100,16 +100,16 @@ Error fs_utils_mkdir_p(const char* dir_path_char_p, mode_t permission)
     */
     if (dir_path_char_p[path_length - 1] != '/')
     {
-        return_on_err(fs_utils_mkdir(dir_path_char_p, permission));
+        return_on_err(fs_mkdir(dir_path_char_p, permission));
     }
     LOG_TRACE("`%s` successfully created.", dir_path_char_p);
     return ERR_ALL_GOOD;
 }
 
-Error fs_utils_rmdir(const char* dir_path_char_p)
+Error fs_rmdir(const char* dir_path_char_p)
 {
     LOG_INFO("Trying to remove `%s` folder.", dir_path_char_p);
-    if (!fs_utils_does_exist(dir_path_char_p))
+    if (!fs_does_exist(dir_path_char_p))
     {
         LOG_ERROR("Folder not found.");
         return ERR_INVALID;
@@ -125,9 +125,9 @@ Error fs_utils_rmdir(const char* dir_path_char_p)
 }
 
 /* ------------------------------------------- Files -------------------------------------------- */
-Error fs_utils_rm_from_path_as_char_p(const char* file_path_char_p)
+Error fs_rm_from_path_as_char_p(const char* file_path_char_p)
 {
-    if (!fs_utils_is_file(file_path_char_p))
+    if (!fs_is_file(file_path_char_p))
     {
         LOG_ERROR("`%s` is not a file.", file_path_char_p);
         return ERR_FS_INTERNAL;
@@ -141,17 +141,17 @@ Error fs_utils_rm_from_path_as_char_p(const char* file_path_char_p)
     return ERR_ALL_GOOD;
 }
 
-Error fs_utils_append(const char* file_path_char_p, const char* new_content_char_p)
+Error fs_append(const char* file_path_char_p, const char* new_content_char_p)
 {
-    return _fs_utils_create_or_append(file_path_char_p, new_content_char_p, "a");
+    return _fs_create_or_append(file_path_char_p, new_content_char_p, "a");
 }
 
-Error fs_utils_create_with_content(const char* file_path_char_p, const char* new_content_char_p)
+Error fs_create_with_content(const char* file_path_char_p, const char* new_content_char_p)
 {
-    return _fs_utils_create_or_append(file_path_char_p, new_content_char_p, "w");
+    return _fs_create_or_append(file_path_char_p, new_content_char_p, "w");
 }
 
-Error _fs_utils_read_to_string(
+Error _fs_read_to_string(
     const char* file,
     const int line,
     const char* file_path_char_p,
@@ -197,7 +197,7 @@ Error _fs_utils_read_to_string(
 }
 
 /* ------------------------------------- Files and folders -------------------------------------- */
-Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
+Error _fs_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
 {
     Error ret_res = ERR_ALL_GOOD;
     /*
@@ -220,7 +220,7 @@ Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
 
             LOG_TRACE("Trying: %s.", child_path_string.str);
             // Do your recursion thing.
-            ret_res = _fs_utils_recursive_rm_r(fts_p, child_path_string.str);
+            ret_res = _fs_recursive_rm_r(fts_p, child_path_string.str);
             String_destroy(&child_path_string);
             return_on_err(ret_res);
             // Go to the next entry.
@@ -238,7 +238,7 @@ Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
     {
     case S_IFDIR:
         LOG_TRACE("Trying to delete folder `%s`", dir_path_char_p);
-        ret_res = fs_utils_rmdir(dir_path_char_p);
+        ret_res = fs_rmdir(dir_path_char_p);
         return_on_err(ret_res);
         break;
     case S_IFREG:
@@ -258,10 +258,10 @@ Error _fs_utils_recursive_rm_r(FTS* fts_p, const char* dir_path_char_p)
     return ret_res;
 }
 
-Error fs_utils_rm_r(const char* dir_path_char_p)
+Error fs_rm_r(const char* dir_path_char_p)
 {
     LOG_INFO("Trying to remove `%s` recursively.", dir_path_char_p);
-    if (!fs_utils_does_exist(dir_path_char_p))
+    if (!fs_does_exist(dir_path_char_p))
     {
         LOG_ERROR("Folder `%s` not found.", dir_path_char_p);
         return ERR_INVALID;
@@ -276,14 +276,14 @@ Error fs_utils_rm_r(const char* dir_path_char_p)
         return ERR_FS_INTERNAL;
     }
     // Start deleting recursively.
-    Error ret_res = _fs_utils_recursive_rm_r(fts_p, dir_path_char_p);
+    Error ret_res = _fs_recursive_rm_r(fts_p, dir_path_char_p);
     fts_close(fts_p);
     return_on_err(ret_res);
     LOG_INFO("`%s` successfully deleted.", dir_path_char_p);
     return ret_res;
 }
 
-bool fs_utils_is_file(const char* path_to_file_char_p)
+bool fs_is_file(const char* path_to_file_char_p)
 {
     struct stat st = {0};
     if (stat(path_to_file_char_p, &st) == -1)
@@ -298,7 +298,7 @@ bool fs_utils_is_file(const char* path_to_file_char_p)
     return false;
 }
 
-bool fs_utils_does_exist(const char* p_path)
+bool fs_does_exist(const char* p_path)
 {
     struct stat st = {0};
     if (stat(p_path, &st) == -1)
@@ -311,7 +311,7 @@ bool fs_utils_does_exist(const char* p_path)
     }
 }
 
-Error fs_utils_get_file_size(const char* path_to_file_char_p, off_t* out_file_size)
+Error fs_get_file_size(const char* path_to_file_char_p, off_t* out_file_size)
 {
     struct stat st = {0};
     if (stat(path_to_file_char_p, &st) == -1)
@@ -329,77 +329,77 @@ Error fs_utils_get_file_size(const char* path_to_file_char_p, off_t* out_file_si
 }
 
 #ifdef _TEST
-void test_fs_utils(void)
+void test_fs(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("mkdir")
     {
         const char* path_string = "test/artifacts/test_folder_0";
-        ASSERT_OK(fs_utils_mkdir(path_string, 0666), "`fs_utils_mkdir` works fine.");
-        ASSERT(fs_utils_is_folder(path_string), "Folder detected.");
+        ASSERT_OK(fs_mkdir(path_string, 0666), "`fs_mkdir` works fine.");
+        ASSERT(fs_is_folder(path_string), "Folder detected.");
         ASSERT(
-            fs_utils_mkdir(path_string, 0666) == ERR_FORBIDDEN,
-            "`fs_utils_mkdir` should fail if the folder exists.");
+            fs_mkdir(path_string, 0666) == ERR_FORBIDDEN,
+            "`fs_mkdir` should fail if the folder exists.");
         ASSERT(
-            fs_utils_mkdir_p(path_string, 0666) == ERR_FORBIDDEN,
-            "`fs_utils_mkdir_p` should fail if the folder exists.");
+            fs_mkdir_with_parents(path_string, 0666) == ERR_FORBIDDEN,
+            "`fs_mkdir_with_parents` should fail if the folder exists.");
     }
     PRINT_TEST_TITLE("mkdir -p")
     {
         ASSERT_OK(
-            fs_utils_mkdir_p("test/artifacts/test_folder_1/new_inner_folder/", 0777),
-            "`fs_utils_mkdir_p` works fine when the path ends with '/'.");
+            fs_mkdir_with_parents("test/artifacts/test_folder_1/new_inner_folder/", 0777),
+            "`fs_mkdir_with_parents` works fine when the path ends with '/'.");
         ;
 
         ASSERT_OK(
-            fs_utils_mkdir_p("test/artifacts/test_folder_2/new_inner_folder", 0777),
-            "`fs_utils_mkdir_p` works fine when the path does not end with '/'.");
+            fs_mkdir_with_parents("test/artifacts/test_folder_2/new_inner_folder", 0777),
+            "`fs_mkdir_with_parents` works fine when the path does not end with '/'.");
     }
 
     PRINT_TEST_TITLE("rmdir")
     {
         ASSERT_OK(
-            fs_utils_rmdir("test/artifacts/empty-0"),
-            "`fs_utils_rmdir` works fine when the folder is empty.");
+            fs_rmdir("test/artifacts/empty-0"),
+            "`fs_rmdir` works fine when the folder is empty.");
         ASSERT(
-            fs_utils_rmdir("test/artifacts/non-empty-0") == ERR_FS_INTERNAL,
-            "`fs_utils_rmdir` should fail if the folder is not empty.");
+            fs_rmdir("test/artifacts/non-empty-0") == ERR_FS_INTERNAL,
+            "`fs_rmdir` should fail if the folder is not empty.");
     }
     PRINT_TEST_TITLE("rm -r")
     {
         ASSERT_OK(
-            fs_utils_rm_r("test/artifacts/empty"),
-            "`fs_utils_rm_r` works fine when the folder is empty.");
+            fs_rm_r("test/artifacts/empty"),
+            "`fs_rm_r` works fine when the folder is empty.");
         ASSERT_OK(
-            fs_utils_rm_r("test/artifacts/non-empty"),
-            "`fs_utils_rm_r` works fine when the folder is NOT empty.");
+            fs_rm_r("test/artifacts/non-empty"),
+            "`fs_rm_r` works fine when the folder is NOT empty.");
         ASSERT(
-            fs_utils_rm_r("test/artifacts/missing") == ERR_INVALID,
-            "`fs_utils_rm_r` should fail if the folder is missing.");
+            fs_rm_r("test/artifacts/missing") == ERR_INVALID,
+            "`fs_rm_r` should fail if the folder is missing.");
 
         ASSERT_OK(
-            fs_utils_rm_r("test/artifacts/delete_me.txt"),
-            "`fs_utils_rm_r` should NOT fail on a file.");
+            fs_rm_r("test/artifacts/delete_me.txt"),
+            "`fs_rm_r` should NOT fail on a file.");
     }
     PRINT_TEST_TITLE("rm")
     {
-        ASSERT_OK(fs_utils_rm("test/artifacts/delete_me_2.txt"), "`fs_utils_rm` works fine.");
+        ASSERT_OK(fs_rm("test/artifacts/delete_me_2.txt"), "`fs_rm` works fine.");
         ASSERT_ERR(
-            fs_utils_rm("test/artifacts/delete_me_2.txt"),
-            "`fs_utils_rm` fails if the file does not exist.");
+            fs_rm("test/artifacts/delete_me_2.txt"),
+            "`fs_rm` fails if the file does not exist.");
     }
     PRINT_TEST_TITLE("read to string");
     {
         String content_string;
-        fs_utils_read_to_string("test/assets/readme.txt", &content_string);
+        fs_read_to_string("test/assets/readme.txt", &content_string);
         ASSERT_EQ(content_string.str, "This is a very good string!", "File read correctly.");
         String_destroy(&content_string);
 
-        fs_utils_read_to_string("test/assets/readme.txt", &content_string);
+        fs_read_to_string("test/assets/readme.txt", &content_string);
         ASSERT_EQ(content_string.str, "This is a very good string!", "File read correctly.");
         String_destroy(&content_string);
 
-        fs_utils_read_to_string("test/assets/readme-long.txt", &content_string);
+        fs_read_to_string("test/assets/readme-long.txt", &content_string);
         ASSERT_EQ(content_string.length, 16599, "Read string size matches.");
         String_destroy(&content_string);
     }
@@ -408,9 +408,9 @@ void test_fs_utils(void)
         String content_string;
         const char* path_char_p    = "test/artifacts/new-file.txt";
         const char* content_char_p = "this is new\n";
-        fs_utils_append(path_char_p, content_char_p);
-        fs_utils_append(path_char_p, content_char_p);
-        fs_utils_read_to_string(path_char_p, &content_string);
+        fs_append(path_char_p, content_char_p);
+        fs_append(path_char_p, content_char_p);
+        fs_read_to_string(path_char_p, &content_string);
         ASSERT_EQ(
             content_string.str,
             "this is new\nthis is new\n",
@@ -423,18 +423,18 @@ void test_fs_utils(void)
         const char* path_char_p    = "test/artifacts/new-file-2.txt";
         const char* content_char_p = "this is new\n";
         // First time - create.
-        fs_utils_create_with_content(path_char_p, content_char_p);
+        fs_create_with_content(path_char_p, content_char_p);
         // Second time - overwrite.
-        fs_utils_create_with_content(path_char_p, content_char_p);
-        ASSERT(fs_utils_is_file(path_char_p), "Created file found.");
-        fs_utils_read_to_string(path_char_p, &content_string);
+        fs_create_with_content(path_char_p, content_char_p);
+        ASSERT(fs_is_file(path_char_p), "Created file found.");
+        fs_read_to_string(path_char_p, &content_string);
         ASSERT_EQ(content_string.str, "this is new\n", "File created and modified correctly");
         String_destroy(&content_string);
     }
     PRINT_TEST_TITLE("Get file size");
     {
         off_t file_size;
-        ASSERT_OK(fs_utils_get_file_size("test/assets/readme.txt", &file_size), "File found.");
+        ASSERT_OK(fs_get_file_size("test/assets/readme.txt", &file_size), "File found.");
         ASSERT(file_size == 27, "File size correct.");
     }
     /**/
