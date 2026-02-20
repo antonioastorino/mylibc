@@ -127,7 +127,7 @@ Error String_replace_pattern_float(String*, const char*, const char*, const floa
 Error String_replace_pattern_int(String*, const char*, const char*, const int, size_t*);
 
 #define String_new(...) _String_new(__FILE__, __LINE__, __VA_ARGS__)
-#define String_replace_pattern(haystack, needle, replacement, out_count)                           \
+#define String_replace_pattern(haystack, needle, replacement, out_count) \
     _String_replace_pattern(__FILE__, __LINE__, haystack, needle, replacement, out_count)
 #define String_empty(string_name) String string_name = {.length = 0, .size = 0, .str = NULL}
 #define String_full(string_name, ...) String string_name = String_new(__VA_ARGS__)
@@ -164,36 +164,37 @@ void StringArray_destroy(StringArray*);
 #ifdef _TEST
 #define log_out stdout
 #define log_err stdout
+
 void ASSERT_(bool, const char*, const char*, int);
 void ASSERT_OK_(Error, const char*, const char*, int);
 void ASSERT_ERR_(Error, const char*, const char*, int);
 
-void ASSERT_EQ_int64_t(long long, long long, const char*, const char*, int);
-void ASSERT_EQ_uint64_t(unsigned long long, unsigned long long, const char*, const char*, int);
+void ASSERT_EQ_int(long long, long long, const char*, const char*, int);
+void ASSERT_EQ_uint(unsigned long long, unsigned long long, const char*, const char*, int);
 void ASSERT_EQ_bool(bool v1, bool v2, const char*, const char*, int);
 void ASSERT_EQ_float(float, float, const char*, const char*, int);
 void ASSERT_EQ_double(double, double, const char*, const char*, int);
 void ASSERT_EQ_char_p(const char*, const char*, const char*, const char*, int);
 
-void ASSERT_NE_int64_t(long long, long long, const char*, const char*, int);
-void ASSERT_NE_uint64_t(unsigned long long, unsigned long long, const char*, const char*, int);
+void ASSERT_NE_int(long long, long long, const char*, const char*, int);
+void ASSERT_NE_uint(unsigned long long, unsigned long long, const char*, const char*, int);
 void ASSERT_NE_bool(bool v1, bool v2, const char*, const char*, int);
 void ASSERT_NE_float(float, float, const char*, const char*, int);
 void ASSERT_NE_double(double, double, const char*, const char*, int);
 void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 
-#define PRINT_BANNER()                                                                             \
-    printf("\n");                                                                                  \
-    for (size_t i = 0; i < strlen(__FUNCTION__) + 12; i++)                                         \
-    {                                                                                              \
-        printf("=");                                                                               \
-    }                                                                                              \
-    printf("\n-- TEST: %s --\n", __FUNCTION__);                                                    \
-    for (size_t i = 0; i < strlen(__FUNCTION__) + 12; i++)                                         \
-    {                                                                                              \
-        printf("=");                                                                               \
-    }                                                                                              \
-    printf("\n");                                                                                  \
+#define PRINT_BANNER()                                     \
+    printf("\n");                                          \
+    for (size_t i = 0; i < strlen(__FUNCTION__) + 12; i++) \
+    {                                                      \
+        printf("=");                                       \
+    }                                                      \
+    printf("\n-- TEST: %s --\n", __FUNCTION__);            \
+    for (size_t i = 0; i < strlen(__FUNCTION__) + 12; i++) \
+    {                                                      \
+        printf("=");                                       \
+    }                                                      \
+    printf("\n");                                          \
     size_t test_counter_ = 0;
 
 #define ASSERT(value, message) ASSERT_(value, message, __FILE__, __LINE__)
@@ -203,16 +204,16 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 // clang-format off
 #define ASSERT_EQ(value_1, value_2, message)      \
     _Generic((value_1),                           \
-        signed char        : ASSERT_EQ_int64_t,   \
-        short              : ASSERT_EQ_int64_t,   \
-        int                : ASSERT_EQ_int64_t,   \
-        long               : ASSERT_EQ_int64_t,   \
-        long long          : ASSERT_EQ_int64_t,   \
-        unsigned char      : ASSERT_EQ_uint64_t,  \
-        unsigned short     : ASSERT_EQ_uint64_t,  \
-        unsigned int       : ASSERT_EQ_uint64_t,  \
-        unsigned long      : ASSERT_EQ_uint64_t,  \
-        unsigned long long : ASSERT_EQ_uint64_t,  \
+        signed char        : ASSERT_EQ_int,   \
+        short              : ASSERT_EQ_int,   \
+        int                : ASSERT_EQ_int,   \
+        long               : ASSERT_EQ_int,   \
+        long long          : ASSERT_EQ_int,   \
+        unsigned char      : ASSERT_EQ_uint,  \
+        unsigned short     : ASSERT_EQ_uint,  \
+        unsigned int       : ASSERT_EQ_uint,  \
+        unsigned long      : ASSERT_EQ_uint,  \
+        unsigned long long : ASSERT_EQ_uint,  \
         bool               : ASSERT_EQ_bool,      \
         float              : ASSERT_EQ_float,     \
         double             : ASSERT_EQ_double,    \
@@ -222,16 +223,16 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 
 #define ASSERT_NE(value_1, value_2, message)      \
     _Generic((value_1),                           \
-        signed char        : ASSERT_NE_int64_t,   \
-        short              : ASSERT_NE_int64_t,   \
-        int                : ASSERT_NE_int64_t,   \
-        long               : ASSERT_NE_int64_t,   \
-        long long          : ASSERT_NE_int64_t,   \
-        unsigned char      : ASSERT_NE_uint64_t,  \
-        unsigned short     : ASSERT_NE_uint64_t,  \
-        unsigned int       : ASSERT_NE_uint64_t,  \
-        unsigned long      : ASSERT_NE_uint64_t,  \
-        unsigned long long : ASSERT_NE_uint64_t,  \
+        signed char        : ASSERT_NE_int,   \
+        short              : ASSERT_NE_int,   \
+        int                : ASSERT_NE_int,   \
+        long               : ASSERT_NE_int,   \
+        long long          : ASSERT_NE_int,   \
+        unsigned char      : ASSERT_NE_uint,  \
+        unsigned short     : ASSERT_NE_uint,  \
+        unsigned int       : ASSERT_NE_uint,  \
+        unsigned long      : ASSERT_NE_uint,  \
+        unsigned long long : ASSERT_NE_uint,  \
         bool               : ASSERT_NE_bool,      \
         float              : ASSERT_NE_float,     \
         double             : ASSERT_NE_double,    \
@@ -252,16 +253,17 @@ void test_fs_utils(void);
 void test_common(void);
 void test_converter(void);
 #else /* _TEST not defined */
-#define log_out get_log_out_file()
-#define log_err get_log_err_file()
+#define log_out (log_out_file_p == NULL ? stdout : log_out_file_p)
+#define log_err (log_err_file_p == NULL ? stderr : log_err_file_p)
+
 #endif
 
-#define SET_MISSING_ENTRY(result, bool_value, success_string)                                      \
-    if (is_err(result))                                                                            \
-    {                                                                                              \
-        LOG_ERROR("Missing entry.");                                                               \
-        bool_value = true;                                                                         \
-    }                                                                                              \
+#define SET_MISSING_ENTRY(result, bool_value, success_string) \
+    if (is_err(result))                                       \
+    {                                                         \
+        LOG_ERROR("Missing entry.");                          \
+        bool_value = true;                                    \
+    }                                                         \
     LOG_TRACE("%s", success_string);
 
 typedef struct JsonItem JsonItem;
@@ -392,77 +394,59 @@ Error invalid_request(const JsonArray*, size_t, const JsonArray**);
         )(json_stuff, needle, out_p)
 // clang-format on
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wextra-semi"
+                                                                                ;
+#pragma GCC diagnostic pop
+
 // ---------- LOGGER ----------
 
 // Ensure that errors are not printed to stderr during tests as they would cause the unit test
 // to fail.
 
-#define return_on_err(_expr)                                                                       \
-    {                                                                                              \
-        Error _res = _expr;                                                                        \
-        if (_res != ERR_ALL_GOOD)                                                                  \
-        {                                                                                          \
-            LOG_WARNING("Error propagated from here.");                                            \
-            return _res;                                                                           \
-        }                                                                                          \
+#define return_on_err(_expr)                            \
+    {                                                   \
+        Error _res = _expr;                             \
+        if (_res != ERR_ALL_GOOD)                       \
+        {                                               \
+            LOG_WARNING("Error propagated from here."); \
+            return _res;                                \
+        }                                               \
     }
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
 #define DATE_TIME_STR_LEN 32
-                                                        void logger_init(const char*, const char*);
-pthread_mutex_t* logger_get_out_mut_p(void);
-pthread_mutex_t* logger_get_err_mut_p(void);
+void logger_init(const char*, const char*);
 
-FILE* get_log_out_file(void);
-FILE* get_log_err_file(void);
+FILE* log_out_file_p = NULL;
+FILE* log_err_file_p = NULL;
+pthread_mutex_t log_out_mutex;
+pthread_mutex_t log_err_mutex;
 
 void get_date_time(char* date_time_str);
 
-#define log_header_o(TYPE)                                                                         \
-    char date_time_str[DATE_TIME_STR_LEN];                                                         \
-    get_date_time(date_time_str);                                                                  \
-    pthread_mutex_lock(logger_get_out_mut_p());                                                    \
-    fprintf(                                                                                       \
-        log_out,                                                                                   \
-        "[%5s] <%d> %s %s:%d | ",                                                                  \
-        #TYPE,                                                                                     \
-        getpid(),                                                                                  \
-        date_time_str,                                                                             \
-        __FILENAME__,                                                                              \
-        __LINE__);
+#define log_formatter(out_or_err, TYPE, fmt, ...)  \
+    char date_time_str[DATE_TIME_STR_LEN];         \
+    get_date_time(date_time_str);                  \
+    pthread_mutex_lock(&log_##out_or_err##_mutex); \
+    fprintf(                                       \
+        log_##out_or_err,                          \
+        "[%5s] <%d> %s %s:%d | " fmt "\n",         \
+        #TYPE,                                     \
+        getpid(),                                  \
+        date_time_str,                             \
+        __FILENAME__,                              \
+        __LINE__ __VA_OPT__(, ) __VA_ARGS__);      \
+    fflush(log_##out_or_err);                      \
+    pthread_mutex_unlock(&log_##out_or_err##_mutex);
 
-#define log_header_e(TYPE)                                                                         \
-    char date_time_str[DATE_TIME_STR_LEN];                                                         \
-    get_date_time(date_time_str);                                                                  \
-    pthread_mutex_lock(logger_get_err_mut_p());                                                    \
-    fprintf(                                                                                       \
-        log_err,                                                                                   \
-        "[%5s] <%d> %s %s:%d | ",                                                                  \
-        #TYPE,                                                                                     \
-        getpid(),                                                                                  \
-        date_time_str,                                                                             \
-        __FILENAME__,                                                                              \
-        __LINE__);
-
-#define log_footer_o(...)                                                                          \
-    fprintf(log_out, __VA_ARGS__);                                                                 \
-    fprintf(log_out, "\n");                                                                        \
-    fflush(log_out);                                                                               \
-    pthread_mutex_unlock(logger_get_out_mut_p());
-
-#define log_footer_e(...)                                                                          \
-    fprintf(log_err, __VA_ARGS__);                                                                 \
-    fprintf(log_err, "\n");                                                                        \
-    fflush(log_err);                                                                               \
-    pthread_mutex_unlock(logger_get_err_mut_p());
-
-#define PRINT_SEPARATOR()                                                                          \
-    {                                                                                              \
-        char date_time_str[DATE_TIME_STR_LEN];                                                     \
-        get_date_time(date_time_str);                                                              \
-        pthread_mutex_lock(logger_get_out_mut_p());                                                \
-        fprintf(log_out, "------- <%d> %s -------\n", getpid(), date_time_str);                    \
-        pthread_mutex_unlock(logger_get_out_mut_p());                                              \
+#define PRINT_SEPARATOR()                                                       \
+    {                                                                           \
+        char date_time_str[DATE_TIME_STR_LEN];                                  \
+        get_date_time(date_time_str);                                           \
+        pthread_mutex_lock(&log_out_mutex);                                     \
+        fprintf(log_out, "------- <%d> %s -------\n", getpid(), date_time_str); \
+        pthread_mutex_unlock(&log_out_mutex);                                   \
     }
 
 #else /* LOG_LEVEL > LEVEL_NO_LOGS */
@@ -471,58 +455,33 @@ void get_date_time(char* date_time_str);
 #endif /* LOG_LEVEL > LEVEL_NO_LOGS */
 
 #if LOG_LEVEL >= LEVEL_ERROR
-#define LOG_ERROR(...)                                                                             \
-    {                                                                                              \
-        log_header_e(ERROR);                                                                       \
-        log_footer_e(__VA_ARGS__);                                                                 \
-    }
+#define LOG_ERROR(fmt, ...) {log_formatter(err, ERROR, fmt, __VA_ARGS__)}
 
-#define LOG_PERROR(...)                                                                            \
-    {                                                                                              \
-        log_header_e(ERROR);                                                                       \
-        fprintf(log_err, "`%s` | ", strerror(errno));                                              \
-        log_footer_e(__VA_ARGS__);                                                                 \
-    }
-#else
+#define LOG_PERROR(fmt, ...) {log_formatter(err, ERROR, fmt "`%s` | ", __VA_ARGS__ __VA_OPT__(, ) strerror(errno))}
+#else /* U_TEST */
 #define LOG_ERROR(...)
-#endif
+#endif /* U_TEST */
 
 #if LOG_LEVEL >= LEVEL_WARNING
-#define LOG_WARNING(...)                                                                           \
-    {                                                                                              \
-        log_header_e(WARN);                                                                        \
-        log_footer_e(__VA_ARGS__);                                                                 \
-    }
+#define LOG_WARNING(fmt, ...) {log_formatter(err, WARN, fmt, __VA_ARGS__)}
 #else
 #define LOG_WARNING(...)
 #endif
 
 #if LOG_LEVEL >= LEVEL_INFO
-#define LOG_INFO(...)                                                                              \
-    {                                                                                              \
-        log_header_o(INFO);                                                                        \
-        log_footer_o(__VA_ARGS__);                                                                 \
-    }
+#define LOG_INFO(fmt, ...) {log_formatter(out, INFO, fmt, __VA_ARGS__)}
 #else
 #define LOG_INFO(...)
 #endif
 
 #if LOG_LEVEL >= LEVEL_DEBUG
-#define LOG_DEBUG(...)                                                                             \
-    {                                                                                              \
-        log_header_o(DEBUG);                                                                       \
-        log_footer_o(__VA_ARGS__);                                                                 \
-    }
+#define LOG_DEBUG(fmt, ...) {log_formatter(out, DEBUG, fmt, __VA_ARGS__)}
 #else
 #define LOG_DEBUG(...)
 #endif
 
 #if LOG_LEVEL >= LEVEL_TRACE
-#define LOG_TRACE(...)                                                                             \
-    {                                                                                              \
-        log_header_o(TRACE);                                                                       \
-        log_footer_o(__VA_ARGS__);                                                                 \
-    }
+#define LOG_TRACE(fmt, ...) {log_formatter(out, TRACE, fmt, __VA_ARGS__)}
 #else
 #define LOG_TRACE(...)
 #endif
@@ -540,7 +499,6 @@ Error fs_utils_rmdir(const char*);
 Error fs_utils_ls(const char*);
 // Files only.
 Error fs_utils_rm_from_path_as_char_p(const char*);
-Error _fs_utils_read_to_string(const char* file, const int line, const char*, String*);
 Error fs_utils_append(const char*, const char*);
 Error fs_utils_create_with_content(const char*, const char*);
 // Files and folders.

@@ -1,16 +1,5 @@
 #if LOG_LEVEL > LEVEL_NO_LOGS
 
-static FILE* log_out_file_p = NULL;
-static FILE* log_err_file_p = NULL;
-static pthread_mutex_t log_out_mutex;
-static pthread_mutex_t log_err_mutex;
-
-FILE* get_log_out_file(void) { return log_out_file_p == NULL ? stdout : log_out_file_p; }
-FILE* get_log_err_file(void) { return log_err_file_p == NULL ? stderr : log_err_file_p; }
-
-pthread_mutex_t* logger_get_out_mut_p(void) { return &log_out_mutex; }
-pthread_mutex_t* logger_get_err_mut_p(void) { return &log_err_mutex; }
-
 void _logger_open_out_file(const char* log_out_file_path_str)
 {
     log_out_file_p = fopen(log_out_file_path_str, "a");
@@ -112,16 +101,16 @@ void test_logger(void)
 
 #define PRINT_PASS_MESSAGE(message) printf("> \x1B[32mPASS\x1B[0m\t %s\n", message)
 
-#define PRINT_FAIL_MESSAGE_(message, filename, line_number)                                        \
-    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message);                                      \
+#define PRINT_FAIL_MESSAGE_(message, filename, line_number)   \
+    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message); \
     fprintf(stderr, "> Err - Test failed.\n%s:%d : false assertion\n", filename, line_number)
 
-#define PRINT_FAIL_MESSAGE_EQ(message, filename, line_number)                                      \
-    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message);                                      \
+#define PRINT_FAIL_MESSAGE_EQ(message, filename, line_number) \
+    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message); \
     fprintf(stderr, "> Err - Test failed.\n%s:%d : left != right\n", filename, line_number)
 
-#define PRINT_FAIL_MESSAGE_NE(message, filename, line_number)                                      \
-    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message);                                      \
+#define PRINT_FAIL_MESSAGE_NE(message, filename, line_number) \
+    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message); \
     fprintf(stderr, "> Err - Test failed.\n%s:%d : left == right\n", filename, line_number)
 
 void ASSERT_(bool value, const char* message, const char* filename, int line_number)
@@ -163,7 +152,7 @@ void ASSERT_ERR_(Error result, const char* message, const char* filename, int li
     }
 }
 
-void ASSERT_EQ_int64_t(
+void ASSERT_EQ_int(
     long long value_1,
     long long value_2,
     const char* message,
@@ -181,7 +170,7 @@ void ASSERT_EQ_int64_t(
     }
 }
 
-void ASSERT_EQ_uint64_t(
+void ASSERT_EQ_uint(
     unsigned long long value_1,
     unsigned long long value_2,
     const char* message,
@@ -278,7 +267,7 @@ void ASSERT_EQ_char_p(
     }
 }
 
-void ASSERT_NE_int64_t(
+void ASSERT_NE_int(
     long long value_1,
     long long value_2,
     const char* message,
@@ -296,7 +285,7 @@ void ASSERT_NE_int64_t(
     }
 }
 
-void ASSERT_NE_uint64_t(
+void ASSERT_NE_uint(
     unsigned long long value_1,
     unsigned long long value_2,
     const char* message,

@@ -114,7 +114,7 @@ elif [ "${MODE}" = "LIB" ]; then
     ls -1 "${DIST_DIR}"
     echo "-----    Usage    -----"
     echo "- Add ${APP_NAME}.h to your projects."
-    echo "- Compile your projects using \n\t\$ clang <your-translation-units> -L<path-to-lib${APP_NAME}> -l${APP_NAME} -o my_program"
+    echo "- Compile your projects using \n\t\$ clang <your-translation-units> -L<path-to-lib${APP_NAME}> -l${APP_NAME} -o <my_program>"
 elif [ "${MODE}" = "RELEASE" ]; then
     rm -rf ${DIST_DIR}
     mkdir ${DIST_DIR}
@@ -124,7 +124,7 @@ elif [ "${MODE}" = "RELEASE" ]; then
     ls -1 "${DIST_DIR}"
     echo "-----    Usage    -----"
     echo "- Add ${APP_NAME}.h to your projects."
-    echo "- Compile your projects using \n\t\$ clang <your-translation-units> <path-to-'${APP_NAME}.o'> -o my_program"
+    echo "- Compile your projects using \n\t\$ clang <your-translation-units> <path-to-'${APP_NAME}.o'> -o <my_program>"
 else
     echo "Error: accepted modes are:\n\t- 'test'\n\t- 'debug'\n\t- 'release'\n\t- lib"
     exit 1
