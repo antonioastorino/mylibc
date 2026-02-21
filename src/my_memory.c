@@ -1,41 +1,41 @@
 #ifdef _MEMORY_CHECK
-#define create_file(pointer, file, line)                                                           \
-    {                                                                                              \
-        char file_name[PATH_MAX];                                                                  \
-        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer);                                \
-        FILE* fh = fopen(file_name, "wx");                                                         \
-        if (!fh)                                                                                   \
-        {                                                                                          \
-            LOG_PERROR("Cannot create %p file", pointer);                                          \
-            exit(errno);                                                                           \
-        }                                                                                          \
-        fprintf(fh, "%s:%d", file, line);                                                          \
-        fclose(fh);                                                                                \
+#define create_file(pointer, file, line)                            \
+    {                                                               \
+        char file_name[PATH_MAX];                                   \
+        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer); \
+        FILE* fh = fopen(file_name, "wx");                          \
+        if (!fh)                                                    \
+        {                                                           \
+            LOG_PERROR("Cannot create %p file", pointer);           \
+            exit(errno);                                            \
+        }                                                           \
+        fprintf(fh, "%s:%d", file, line);                           \
+        fclose(fh);                                                 \
     }
 
-#define remove_file(pointer)                                                                       \
-    {                                                                                              \
-        char file_name[PATH_MAX];                                                                  \
-        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer);                                \
-        if (remove(file_name))                                                                     \
-        {                                                                                          \
-            LOG_PERROR("Cannot remove %p file.", pointer);                                         \
-            exit(errno);                                                                           \
-        }                                                                                          \
+#define remove_file(pointer)                                        \
+    {                                                               \
+        char file_name[PATH_MAX];                                   \
+        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer); \
+        if (remove(file_name))                                      \
+        {                                                           \
+            LOG_PERROR("Cannot remove %p file.", pointer);          \
+            exit(errno);                                            \
+        }                                                           \
     }
 
 #else /* _MEMORY_CHECK not defined */
 
-#define create_file(pointer, file, line)                                                           \
-    {                                                                                              \
-        UNUSED(pointer);                                                                           \
-        UNUSED(file);                                                                              \
-        UNUSED(line);                                                                              \
+#define create_file(pointer, file, line) \
+    {                                    \
+        UNUSED(pointer);                 \
+        UNUSED(file);                    \
+        UNUSED(line);                    \
     }
 
-#define remove_file(pointer)                                                                       \
-    {                                                                                              \
-        UNUSED(pointer);                                                                           \
+#define remove_file(pointer) \
+    {                        \
+        UNUSED(pointer);     \
     }
 
 #endif /* _MEMORY_CHECK */

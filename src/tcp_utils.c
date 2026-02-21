@@ -27,9 +27,9 @@ Error tcp_utils_server_init(uint16_t port)
         return ERR_PERMISSION_DENIED;
     }
 
-    const int domain   = AF_INET; // (= PF_INET) Internet domain sockets for use with IPv4 addresses
+    const int domain   = AF_INET;     // (= PF_INET) Internet domain sockets for use with IPv4 addresses
     const int type     = SOCK_STREAM; // bitstream socket used in TCP
-    const int protocol = 0; // default type of socket that works with the other chosen params
+    const int protocol = 0;           // default type of socket that works with the other chosen params
     int on             = 1;
 
     // create a socket

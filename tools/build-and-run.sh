@@ -22,6 +22,12 @@ fi
 MODE=${@:$OPTIND:1}
 MODE=${MODE:u}
 
+echo "Formatting source code..."
+if ! [ -z "${HOME}/config/.clang-format" ]; then
+    clang-format -i --style=file:"$HOME/config/.clang-format" src/*
+fi
+echo "Done"
+
 function f_analyze_mem() {
     echo "Memory report analysis started."
     echo

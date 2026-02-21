@@ -29,6 +29,7 @@
 
 #define UNUSED(x) (void)(x)
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define my_strncmp(s1, literal) (strncmp(s1, literal, strlen(literal)) == 0)
 
 #define TCP_MAX_MSG_LEN 65535
 #define TCP_MAX_CONNECTIONS 1023
@@ -495,6 +496,29 @@ void get_date_time(char* date_time_str);
 #else
 #define LOG_TRACE(...)
 #endif
+// ---------- LOGGER END ----------
+#define MAX_MAP_KEY_LEN (256)
+#define MAX_MAP_VAL_LEN (256)
+
+typedef enum
+{
+    MAP_LLU,
+    MAP_LLD,
+    MAP_CSTR,
+} MapType;
+
+typedef struct
+{
+    char key[MAX_MAP_KEY_LEN];
+    bool used;
+    MapType type;
+    union
+    {
+        llu_t value_llu;
+        lld_t value_lld;
+        char* value_cstr;
+    };
+} MapElement;
 
 Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
 Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);
@@ -519,13 +543,13 @@ Error fs_get_file_size(const char*, off_t*);
 
 // clang-format off
 #define fs_rm(file_path_p)                                        \
-    _Generic((file_path_p),                                             \
+    _Generic((file_path_p),                                       \
         const char*   : fs_rm_from_path_as_char_p,                \
         char*         : fs_rm_from_path_as_char_p                 \
     )(file_path_p)
 
 #define fs_read_to_string(file_path_p, out_string)                \
-    _Generic((file_path_p),                                             \
+    _Generic((file_path_p),                                       \
         const char* : _fs_read_to_string,                         \
         char* : _fs_read_to_string                                \
     )(__FILENAME__, __LINE__,file_path_p, out_string)
