@@ -505,20 +505,31 @@ typedef enum
     MAP_LLU,
     MAP_LLD,
     MAP_CSTR,
-} MapType;
+} HashMapType;
 
 typedef struct
 {
     char key[MAX_MAP_KEY_LEN];
     bool used;
-    MapType type;
+    HashMapType type;
     union
     {
         llu_t value_llu;
         lld_t value_lld;
         char* value_cstr;
     };
-} MapElement;
+} HashMapEntry;
+
+typedef struct
+{
+    size_t prime_index;
+    size_t size;
+    HashMapEntry* entry_array;
+} HashMap;
+
+HashMap* HashMap_new_with_capacity(size_t capacity);
+void HashMap_delete(HashMap**);
+#define __autofree_map__ __attribute__((cleanup(HashMap_delete)))
 
 Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
 Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);
