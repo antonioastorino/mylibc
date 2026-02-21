@@ -130,9 +130,9 @@ Error String_replace_pattern_llu_t(String*, const char*, const char*, const llu_
 Error String_replace_pattern_lld_t(String*, const char*, const char*, const lld_t, size_t*);
 Error String_replace_pattern_double(String*, const char*, const char*, const double, size_t*);
 
-#define String_new(...) _String_new(__FILE__, __LINE__, __VA_ARGS__)
+#define String_new(...) _String_new(__FILENAME__, __LINE__, __VA_ARGS__)
 #define String_replace_pattern(haystack, needle, replacement, out_count) \
-    _String_replace_pattern(__FILE__, __LINE__, haystack, needle, replacement, out_count)
+    _String_replace_pattern(__FILENAME__, __LINE__, haystack, needle, replacement, out_count)
 #define String_empty(string_name) String string_name = {.length = 0, .size = 0, .str = NULL}
 #define String_full(string_name, ...) String string_name = String_new(__VA_ARGS__)
 
@@ -141,7 +141,7 @@ Error String_replace_pattern_double(String*, const char*, const char*, const dou
     _Generic((in_value), \
      String*     : _String_between_patterns_in_string_p, \
      const char* : _String_between_patterns_in_char_p \
-     )(__FILE__, __LINE__, in_value, prefix, suffix, out_string)
+     )(__FILENAME__, __LINE__, in_value, prefix, suffix, out_string)
 
 #define String_replace_pattern_with_format(haystack, needle, format, replacement, out_count) \
     _Generic((replacement),                            \
@@ -170,7 +170,7 @@ StringArray StringArray_empty(void);
 StringArray _StringArray_new(const char* file, const int line, const char*, const char*);
 void StringArray_destroy(StringArray*);
 
-#define StringArray_new(str, separator) _StringArray_new(__FILE__, __LINE__, str, separator)
+#define StringArray_new(str, separator) _StringArray_new(__FILENAME__, __LINE__, str, separator)
 
 #ifdef _TEST
 #define log_out stdout
@@ -206,9 +206,9 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
     printf("\n");                                         \
     llu_t test_counter_ = 0;
 
-#define ASSERT(value, message) ASSERT_(value, message, __FILE__, __LINE__)
-#define ASSERT_OK(value, message) ASSERT_OK_(value, message, __FILE__, __LINE__)
-#define ASSERT_ERR(value, message) ASSERT_ERR_(value, message, __FILE__, __LINE__)
+#define ASSERT(value, message) ASSERT_(value, message, __FILENAME__, __LINE__)
+#define ASSERT_OK(value, message) ASSERT_OK_(value, message, __FILENAME__, __LINE__)
+#define ASSERT_ERR(value, message) ASSERT_ERR_(value, message, __FILENAME__, __LINE__)
 
 // clang-format off
 #define ASSERT_EQ(value_1, value_2, message)      \
@@ -228,7 +228,7 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
         double             : ASSERT_EQ_double,    \
         char*              : ASSERT_EQ_char_p,    \
         const char*        : ASSERT_EQ_char_p     \
-    )(value_1, value_2, message, __FILE__, __LINE__)
+    )(value_1, value_2, message, __FILENAME__, __LINE__)
 
 #define ASSERT_NE(value_1, value_2, message)      \
     _Generic((value_1),                           \
@@ -247,7 +247,7 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
         double             : ASSERT_NE_double,    \
         char*              : ASSERT_NE_char_p,    \
         const char*        : ASSERT_NE_char_p     \
-    )(value_1, value_2, message, __FILE__, __LINE__)
+    )(value_1, value_2, message, __FILENAME__, __LINE__)
 
 // clang-format on
 
@@ -332,13 +332,13 @@ void JsonObj_get_tokens(String*);
 Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
 
 // clang-format off
-#define OBJ_GET_VALUE_h(suffix, out_type)                                                          \
+#define OBJ_GET_VALUE_h(suffix, out_type)                            \
     Error obj_get_##suffix(const JsonObj*, const char*, out_type);
     OBJ_GET_VALUE_h(value_char_p, const char**)
     OBJ_GET_VALUE_h(value_child_p, JsonItem**)
     OBJ_GET_VALUE_h(value_array_p, JsonArray**)
 
-#define OBJ_GET_NUMBER_h(suffix, out_type)                                                         \
+#define OBJ_GET_NUMBER_h(suffix, out_type)                           \
     Error obj_get_##suffix(const JsonObj*, const char*, out_type);
     OBJ_GET_VALUE_h(value_lld, lld_t*)
     OBJ_GET_VALUE_h(value_llu, llu_t*)
@@ -356,7 +356,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
     GET_VALUE_h(value_double, double*)
     GET_VALUE_h(value_bool, bool*)
 
-#define GET_ARRAY_VALUE_h(suffix, out_type)                                                        \
+#define GET_ARRAY_VALUE_h(suffix, out_type)                       \
     Error get_array_##suffix(const JsonArray*, llu_t, out_type);
     GET_ARRAY_VALUE_h(value_char_p, const char**)
     GET_ARRAY_VALUE_h(value_lld, lld_t*)
@@ -365,48 +365,48 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
     GET_ARRAY_VALUE_h(value_bool, bool*)
     GET_ARRAY_VALUE_h(value_child_p, JsonItem**)
 
-#define JsonObj_new(in_json, out_json)                                                             \
-    _Generic(in_json,                                                                              \
-        const char*  : JsonObj_new_from_char_p,                                                    \
-        String*      : JsonObj_new_from_string_p                                                   \
-        )(__FILE__, __LINE__,in_json, out_json)
+#define JsonObj_new(in_json, out_json)                     \
+    _Generic(in_json,                                      \
+        const char*  : JsonObj_new_from_char_p,            \
+        String*      : JsonObj_new_from_string_p           \
+        )(__FILENAME__, __LINE__,in_json, out_json)
 
-#define Json_get(json_stuff, needle, out_p)                                                        \
-    _Generic ((json_stuff),                                                                        \
-        JsonObj*: _Generic((out_p),                                                                \
-            const char** : obj_get_value_char_p,                                                   \
-            lld_t*         : obj_get_value_lld,                                                      \
-            llu_t*      : obj_get_value_llu,                                                     \
-            double*       : obj_get_value_double,                                                    \
-            bool*        : obj_get_value_bool,                                                     \
-            JsonItem**   : obj_get_value_child_p,                                                  \
-            JsonArray**  : obj_get_value_array_p                                                   \
-            ),                                                                                     \
-         JsonItem*: _Generic((out_p),                                                              \
-            const char** : get_value_char_p,                                                       \
-            lld_t*         : get_value_lld,                                                          \
-            llu_t*      : get_value_llu,                                                         \
-            double*       : get_value_double,                                                        \
-            bool*        : get_value_bool,                                                         \
-            JsonItem**   : get_value_child_p,                                                      \
-            JsonArray**  : get_value_array_p                                                       \
-            ),                                                                                     \
-        JsonArray*: _Generic((out_p),                                                              \
-            const char** : get_array_value_char_p,                                                 \
-            lld_t*         : get_array_value_lld,                                                    \
-            llu_t*      : get_array_value_llu,                                                   \
-            double*       : get_array_value_double,                                                  \
-            bool*        : get_array_value_bool,                                                   \
-            JsonItem**   : get_array_value_child_p,                                                \
-            JsonArray**  : invalid_request                                                         \
-            )                                                                                      \
+#define Json_get(json_stuff, needle, out_p)                \
+    _Generic ((json_stuff),                                \
+        JsonObj*: _Generic((out_p),                        \
+            const char** : obj_get_value_char_p,           \
+            lld_t*       : obj_get_value_lld,              \
+            llu_t*       : obj_get_value_llu,              \
+            double*      : obj_get_value_double,           \
+            bool*        : obj_get_value_bool,             \
+            JsonItem**   : obj_get_value_child_p,          \
+            JsonArray**  : obj_get_value_array_p           \
+            ),                                             \
+         JsonItem*: _Generic((out_p),                      \
+            const char** : get_value_char_p,               \
+            lld_t*       : get_value_lld,                  \
+            llu_t*       : get_value_llu,                  \
+            double*      : get_value_double,               \
+            bool*        : get_value_bool,                 \
+            JsonItem**   : get_value_child_p,              \
+            JsonArray**  : get_value_array_p               \
+            ),                                             \
+        JsonArray*: _Generic((out_p),                      \
+            const char** : get_array_value_char_p,         \
+            lld_t*       : get_array_value_lld,            \
+            llu_t*       : get_array_value_llu,            \
+            double*      : get_array_value_double,         \
+            bool*        : get_array_value_bool,           \
+            JsonItem**   : get_array_value_child_p,        \
+            JsonArray**  : invalid_request                 \
+            )                                              \
         )(json_stuff, needle, out_p)
-// clang-format on
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wextra-semi"
-                                                                                ;
+;
 #pragma GCC diagnostic pop
+// clang-format on
 
 // ---------- LOGGER ----------
 
@@ -495,9 +495,9 @@ void get_date_time(char* date_time_str);
 #define LOG_TRACE(...)
 #endif
 
-Error numparser_cstr_to_lld(const char* str_p, lld_t*);
-Error numparser_cstr_to_llu(const char* str_p, llu_t*);
-Error numparser_cstr_to_double(const char* str_p, double*);
+Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
+Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);
+Error numparser_cstr_to_double(const char* str_p, double*, char terminator);
 double numparser_rounder(double to_be_rounded, double step, llu_t num_of_decimals);
 
 // Folders only.
@@ -527,7 +527,7 @@ Error fs_get_file_size(const char*, off_t*);
     _Generic((file_path_p),                                             \
         const char* : _fs_read_to_string,                         \
         char* : _fs_read_to_string                                \
-    )(__FILE__, __LINE__,file_path_p, out_string)
+    )(__FILENAME__, __LINE__,file_path_p, out_string)
 // clang-format on
 
 void* my_memory_malloc(const char* file, const int line, size_t size);

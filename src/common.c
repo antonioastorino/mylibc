@@ -99,29 +99,38 @@ void test_logger(void)
 
 // ---------- ASSERT ----------
 
-#define PRINT_PASS_MESSAGE(message) printf("> \x1B[32mPASS\x1B[0m\t %s\n", message)
+#define PRINT_PASS_MESSAGE() printf("> \x1B[32mPASS\x1B[0m - %s:%d - %s\n", filename, line_number, message)
 
-#define PRINT_FAIL_MESSAGE_(message, filename, line_number)   \
-    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message); \
-    fprintf(stderr, "> Err - Test failed.\n%s:%d : false assertion\n", filename, line_number)
+#define PRINT_FAIL_MESSAGE_()                                          \
+    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n"                     \
+                    "> Err - Test failed.\n%s:%d : false assertion\n", \
+            message,                                                   \
+            filename,                                                  \
+            line_number)
 
-#define PRINT_FAIL_MESSAGE_EQ(message, filename, line_number) \
-    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message); \
-    fprintf(stderr, "> Err - Test failed.\n%s:%d : left != right\n", filename, line_number)
+#define PRINT_FAIL_MESSAGE_EQ()                                      \
+    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n"                   \
+                    "> Err - Test failed.\n%s:%d : left != right\n", \
+            message,                                                 \
+            filename,                                                \
+            line_number)
 
-#define PRINT_FAIL_MESSAGE_NE(message, filename, line_number) \
-    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n", message); \
-    fprintf(stderr, "> Err - Test failed.\n%s:%d : left == right\n", filename, line_number)
+#define PRINT_FAIL_MESSAGE_NE()                                      \
+    fprintf(stderr, "> \x1B[31mFAIL\x1B[0m\t %s\n"                   \
+                    "> Err - Test failed.\n%s:%d : left == right\n", \
+            message,                                                 \
+            filename,                                                \
+            line_number)
 
 void ASSERT_(bool value, const char* message, const char* filename, int line_number)
 {
     if (value)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_();
         fprintf(stderr, "The value is `false`\n");
     }
 }
@@ -130,11 +139,11 @@ void ASSERT_OK_(Error result, const char* message, const char* filename, int lin
 {
     if (is_ok(result))
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_();
         fprintf(stderr, "The value is `false`\n");
     }
 }
@@ -143,11 +152,11 @@ void ASSERT_ERR_(Error result, const char* message, const char* filename, int li
 {
     if (is_err(result))
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_();
         fprintf(stderr, "The value is `false`\n");
     }
 }
@@ -161,11 +170,11 @@ void ASSERT_EQ_lld(
 {
     if (value_1 == value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_EQ();
         fprintf(stderr, "Left : `%lld`\nRight: `%lld`\n", value_1, value_2);
     }
 }
@@ -179,11 +188,11 @@ void ASSERT_EQ_llu(
 {
     if (value_1 == value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_EQ();
         fprintf(stderr, "Left : `%llu`\nRight: `%llu`\n", value_1, value_2);
     }
 }
@@ -197,11 +206,11 @@ void ASSERT_EQ_bool(
 {
     if (value_1 == value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_EQ();
         fprintf(
             stderr,
             "Left : `%s`\nRight: `%s`\n",
@@ -219,11 +228,11 @@ void ASSERT_EQ_double(
 {
     if (value_1 == value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_EQ(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_EQ();
         fprintf(stderr, "Left : `%.20lf`\nRight: `%.20lf`\n", value_1, value_2);
     }
 }
@@ -237,16 +246,16 @@ void ASSERT_EQ_char_p(
 {
     if (value_1 == value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else if (value_1 == NULL || value_2 == NULL || strcmp(value_1, value_2))
     {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_NE();
         fprintf(stderr, "Left : `%s`\nRight: `%s`\n", value_1, value_2);
     }
     else
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
 }
 
@@ -259,11 +268,11 @@ void ASSERT_NE_lld(
 {
     if (value_1 != value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_NE();
         fprintf(stderr, "Left : `%lld`\nRight: `%lld`\n", value_1, value_2);
     }
 }
@@ -277,11 +286,11 @@ void ASSERT_NE_llu(
 {
     if (value_1 != value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_NE();
         fprintf(stderr, "Left : `%llu`\nRight: `%llu`\n", value_1, value_2);
     }
 }
@@ -295,33 +304,16 @@ void ASSERT_NE_bool(
 {
     if (value_1 != value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_NE();
         fprintf(
             stderr,
             "Left : `%s`\nRight: `%s`\n",
             value_1 ? "true" : "false",
             value_2 ? "true" : "false");
-    }
-}
-void ASSERT_NE_float(
-    float value_1,
-    float value_2,
-    const char* message,
-    const char* filename,
-    int line_number)
-{
-    if (value_1 == value_2)
-    {
-        PRINT_PASS_MESSAGE(message);
-    }
-    else
-    {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
-        fprintf(stderr, "Left : `%f`\nRight: `%f`\n", value_1, value_2);
     }
 }
 
@@ -332,13 +324,13 @@ void ASSERT_NE_double(
     const char* filename,
     int line_number)
 {
-    if (value_1 == value_2)
+    if (value_1 != value_2)
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_NE();
         fprintf(stderr, "Left : `%lf`\nRight: `%lf`\n", value_1, value_2);
     }
 }
@@ -352,11 +344,11 @@ void ASSERT_NE_char_p(
 {
     if (value_1 != value_2 || value_1 == NULL || value_2 == NULL || strcmp(value_1, value_2))
     {
-        PRINT_PASS_MESSAGE(message);
+        PRINT_PASS_MESSAGE();
     }
     else
     {
-        PRINT_FAIL_MESSAGE_NE(message, filename, line_number);
+        PRINT_FAIL_MESSAGE_NE();
         fprintf(stderr, "Left : `%s`\nRight: `%s`\n", value_1, value_2);
     }
 }
@@ -378,6 +370,8 @@ void test_common(void)
     unsigned long int b_long_uint           = 1;
     unsigned long long int a_long_long_uint = 0;
     unsigned long long int b_long_long_uint = 1;
+    double a_double                         = 0.3;
+    double b_double                         = 0.4;
     char* a_null                            = NULL;
     char* b_null                            = NULL;
     char* a_valid                           = "valid";
@@ -395,7 +389,8 @@ void test_common(void)
     ASSERT_NE(a_long_uint, b_long_uint, "Both long uint");
     ASSERT_EQ(a_long_long_uint, a_long_long_uint, "Both long long uint");
     ASSERT_NE(a_long_long_uint, b_long_long_uint, "Both long long uint");
-    ASSERT_EQ(a_null, b_null, "Both null");
+    ASSERT_EQ(a_double, a_double, "Same double");
+    ASSERT_NE(a_double, b_double, "Different double");
     ASSERT_EQ(a_valid, b_valid, "Both valid");
     ASSERT_NE(a_null, b_valid, "First null");
     ASSERT_NE(a_valid, b_null, "Second null");

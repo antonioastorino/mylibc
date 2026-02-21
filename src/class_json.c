@@ -17,7 +17,7 @@ typedef enum
     INVALID,
 } ElementType;
 
-static JsonItem* _JsonItem_new(const char* file, const int line)
+JsonItem* _JsonItem_new(const char* file, const int line)
 {
     JsonItem* new_item         = (JsonItem*)my_memory_malloc(file, line, sizeof(JsonItem));
     new_item->key_p            = NULL;
@@ -28,7 +28,7 @@ static JsonItem* _JsonItem_new(const char* file, const int line)
     return new_item;
 }
 
-static bool _is_token(const char c)
+bool _is_token(const char c)
 {
     char* token_list = "{}[],:\"";
     for (llu_t i = 0; i < strlen(token_list); i++)
@@ -39,7 +39,7 @@ static bool _is_token(const char c)
     return false;
 }
 
-static ElementType _get_value_type(char* initial_char_p)
+ElementType _get_value_type(char* initial_char_p)
 {
     if (strncmp(initial_char_p, "{\"", 2) == 0 || strncmp(initial_char_p, ",\"", 2) == 0)
     {
@@ -67,7 +67,7 @@ static ElementType _get_value_type(char* initial_char_p)
     }
 }
 
-static String _strip_whitespace(const String* json_string_p)
+String _strip_whitespace(const String* json_string_p)
 {
     // The returned string cannot be longer than the input string (plus an termination char).
     char ret_cleaned_char_p[json_string_p->length + 1];
@@ -92,7 +92,7 @@ static String _strip_whitespace(const String* json_string_p)
     return String_new(ret_cleaned_char_p);
 }
 
-static char* _terminate_str(char* char_p)
+char* _terminate_str(char* char_p)
 {
     while ((char_p != NULL) && (char_p + 1 != NULL))
     {
@@ -114,7 +114,7 @@ static char* _terminate_str(char* char_p)
     return NULL;
 }
 
-static String _generate_tokens(String* json_string_p)
+String _generate_tokens(String* json_string_p)
 {
     char ret_tokens_char_p[json_string_p->length + 1];
     llu_t pos_out      = 0;
@@ -138,7 +138,7 @@ static String _generate_tokens(String* json_string_p)
     return String_new(ret_tokens_char_p);
 }
 
-static Error _validate_tokens(char* json_char_p)
+Error _validate_tokens(char* json_char_p)
 {
     Error ret_res        = ERR_ALL_GOOD;
     uint32_t obj_counter = 0;
@@ -193,8 +193,7 @@ static Error _validate_tokens(char* json_char_p)
     return ret_res;
 }
 
-static Error
-_deserialize(const char* file, const int line, JsonItem* curr_item_p, char** start_pos_p)
+Error _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** start_pos_p)
 {
     char* curr_pos_p = *start_pos_p;
     bool parent_set  = false;
@@ -260,7 +259,7 @@ _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** sta
             if (dot_found)
             {
                 double parsed_double = 0.0f;
-                ret_result           = numparser_cstr_to_double(num_buff, &parsed_double);
+                ret_result           = numparser_cstr_to_double(num_buff, &parsed_double, 0);
                 if (is_ok(ret_result))
                 {
                     curr_item_p->value.value_type   = VALUE_DOUBLE;
@@ -271,7 +270,7 @@ _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** sta
             else if (num_buff[0] == '-')
             { // Convert into an integer if it is negative.
                 lld_t parsed_lld = 0;
-                ret_result       = numparser_cstr_to_lld(num_buff, &parsed_lld);
+                ret_result       = numparser_cstr_to_lld(num_buff, &parsed_lld, 0);
                 if (is_ok(ret_result))
                 {
                     curr_item_p->value.value_type = VALUE_LLD;
@@ -283,7 +282,7 @@ _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** sta
             {
                 // Convert any positive value into a llu_t.
                 llu_t parsed_llu = 0;
-                ret_result       = numparser_cstr_to_llu(num_buff, &parsed_llu);
+                ret_result       = numparser_cstr_to_llu(num_buff, &parsed_llu, 0);
                 if (is_ok(ret_result))
                 {
                     curr_item_p->value.value_type = VALUE_LLU;
@@ -335,7 +334,7 @@ _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** sta
             LOG_TRACE("Found key: \"%s\"", curr_item_p->key_p);
             if (*curr_pos_p != ':')
             {
-                printf("something bad happened\n");
+                LOG_ERROR("Something bad happened");
                 exit(ERR_FATAL);
             }
             curr_pos_p++; // Skip the ':'.
@@ -367,7 +366,7 @@ _deserialize(const char* file, const int line, JsonItem* curr_item_p, char** sta
         }
         case INVALID:
         {
-            printf("To be handled\n");
+            LOG_ERROR("TODO: handle this");
             exit(3);
         }
 
@@ -448,7 +447,7 @@ Error JsonObj_new_from_string_p(
     return ERR_ALL_GOOD;
 }
 
-static void _JsonItem_destroy(JsonItem* json_item)
+void _JsonItem_destroy(JsonItem* json_item)
 {
     if (json_item == NULL)
     {
@@ -672,7 +671,7 @@ GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
 
 #ifdef _TEST
 
-static String load_file(char* filename)
+String load_file(char* filename)
 {
     FILE* json_file = fopen(filename, "r");
     if (json_file == NULL)
@@ -803,7 +802,6 @@ void test_class_json(void)
         llu_t value_llu;
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [\"array value\", 56]}";
-        printf("\n%s\n", json_char_p);
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(&json_obj, "key", &json_array);
         Json_get(json_array, 0, &value_str);
@@ -819,12 +817,10 @@ void test_class_json(void)
         llu_t value_llu;
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [ {\"array key\": 56}]}";
-        printf("\n%s\n", json_char_p);
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(&json_obj, "key", &json_array);
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item->key_p, "array key", "Array STRING element retrieved.");
-        printf("%d\n", json_item->value.value_type);
         Json_get(json_item, "array key", &value_llu);
         ASSERT_EQ(value_llu, 56, "Value found an item that is also array element.");
         JsonObj_destroy(&json_obj);
@@ -1057,7 +1053,6 @@ void test_class_json(void)
         ASSERT(ret_res == ERR_INVALID, "Conversion from negative INT to SIZE_T failed");
         ret_res = Json_get(&json_obj, "value_large_llu", &value_lld);
         ASSERT(ret_res == ERR_INVALID, "Conversion from large SIZE_T to INT failed");
-        printf("%lld\n", value_lld);
         JsonObj_destroy(&json_obj);
         String_destroy(&json_string);
     }
