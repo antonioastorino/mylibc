@@ -7,6 +7,7 @@
 #include "fs.c"
 #include "my_memory.c"
 #include "tcp_utils.c"
+#include "hash_table.c"
 
 #ifdef _TEST
 #ifndef _MODULE

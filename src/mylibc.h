@@ -261,6 +261,7 @@ void test_my_memory(void);
 void test_fs(void);
 void test_common(void);
 void test_numparser(void);
+void test_hash_table(void);
 #else /* _TEST not defined */
 #define log_out (log_out_file_p == NULL ? stdout : log_out_file_p)
 #define log_err (log_err_file_p == NULL ? stderr : log_err_file_p)
