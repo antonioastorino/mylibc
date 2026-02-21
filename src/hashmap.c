@@ -95,7 +95,7 @@ MapElement hashmap_new_element_cstr(char const* key, char const* value)
 // clang-format on
 
 #ifdef _TEST
-void test_hash_table(void)
+void test_hashmap(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("doubling prime");

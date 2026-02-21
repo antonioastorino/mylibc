@@ -7,7 +7,7 @@
 #include "fs.c"
 #include "my_memory.c"
 #include "tcp_utils.c"
-#include "hash_table.c"
+#include "hashmap.c"
 
 #ifdef _TEST
 #ifndef _MODULE
@@ -23,7 +23,7 @@ int main(void)
     test_tcp_utils();
     test_my_memory();
     test_common();
-    test_hash_table();
+    test_hashmap();
 }
 #endif /* _MODULE */
 #endif /* _TEST */
