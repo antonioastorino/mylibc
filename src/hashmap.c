@@ -1,4 +1,6 @@
-uint32_t __prime_vec[] = {
+#define __hm_autofree__ __attribute__((cleanup(HashMap_delete)))
+#define array_sizeof(__arr__) sizeof(__arr__) / sizeof(__arr__[0])
+llu_t __prime_vec[] = {
     2,
     5,
     11,
@@ -20,72 +22,57 @@ uint32_t __prime_vec[] = {
     823117,
 };
 
-void __next_prime_index(HashMap* map)
-{
-    if (map->prime_index + 1 < sizeof(__prime_vec) / sizeof(__prime_vec[0]))
-    {
-        map->prime_index++;
-    }
-}
-
-size_t __cstr_to_index(char const* cstr, size_t const prime_vec_index)
+size_t __hm_cstr_to_index(char const* cstr, llu_t const max_size)
 {
     size_t ret_val = 0;
     while (*cstr)
     {
-        ret_val = (ret_val + *cstr) % __prime_vec[prime_vec_index];
+        ret_val = (ret_val + *cstr) % max_size;
         cstr++;
     }
     return ret_val;
 }
 
-HashMapEntry hashmap_new_element_llu(char const* key, llu_t value)
+HashMap* HashMap_new_with_capacity(HashMapType hm_type, size_t capacity)
 {
-    HashMapEntry ret_map_element = (HashMapEntry){
-        .used      = true,
-        .type      = MAP_LLU,
-        .value_llu = value,
-    };
-    strncpy(ret_map_element.key, key, MAX_MAP_KEY_LEN - 1);
-    ret_map_element.key[MAX_MAP_KEY_LEN - 1] = 0; // null terminate
-    return ret_map_element;
-}
-
-HashMapEntry hashmap_new_element_lld(char const* key, lld_t value)
-{
-    HashMapEntry ret_map_element = (HashMapEntry){
-        .used      = true,
-        .type      = MAP_LLD,
-        .value_lld = value,
-    };
-    strncpy(ret_map_element.key, key, MAX_MAP_KEY_LEN - 1);
-    ret_map_element.key[MAX_MAP_KEY_LEN - 1] = 0; // null terminate
-    return ret_map_element;
-}
-
-HashMapEntry hashmap_new_element_cstr(char const* key, char const* value)
-{
-    HashMapEntry ret_map_element = (HashMapEntry){
-        .used = true,
-        .type = MAP_CSTR,
-    };
-    strncpy(ret_map_element.key, key, MAX_MAP_KEY_LEN - 1);
-    strncpy(ret_map_element.value_cstr, value, MAX_MAP_VAL_LEN - 1);
-    ret_map_element.key[MAX_MAP_KEY_LEN - 1]        = 0; // null terminate
-    ret_map_element.value_cstr[MAX_MAP_VAL_LEN - 1] = 0; // null terminate
-    return ret_map_element;
-}
-
-HashMap* HashMap_new_with_capacity(size_t capacity)
-{
-    HashMap* ret_map_p     = my_memory_malloc(__FILENAME__, __LINE__, sizeof(HashMap));
-    ret_map_p->prime_index = 0;
-    ret_map_p->size        = 0;
-    while (capacity * 1.3 > __prime_vec[ret_map_p->prime_index])
+    HashMap* ret_hm_p  = my_memory_malloc(__FILENAME__, __LINE__, sizeof(HashMap));
+    ret_hm_p->size     = 0;
+    ret_hm_p->type     = hm_type;
+    size_t prime_index = 0;
+    while (capacity * 1.3 > __prime_vec[prime_index]
+           && ((prime_index + 1) < array_sizeof(__prime_vec)))
     {
-        __next_prime_index(ret_map_p);
+        prime_index++;
     }
-    return ret_map_p;
+    ret_hm_p->capacity = __prime_vec[prime_index];
+    if (capacity < ret_hm_p->capacity)
+    {
+        LOG_WARNING("HM capacity overflow");
+    }
+    ret_hm_p->entries = my_memory_malloc( //
+        __FILENAME__,
+        __LINE__,
+        sizeof(HashMapEntry) * ret_hm_p->capacity);
+    for (size_t entry_index = 0; entry_index < ret_hm_p->capacity; entry_index++)
+    {
+        HashMapEntry* hm_entry_p = &ret_hm_p->entries[entry_index];
+        hm_entry_p->used         = false;
+        hm_entry_p->key[0]       = 0;
+        switch (hm_type)
+        {
+        case HM_TYPE_LLU:
+            hm_entry_p->value_llu = 0;
+            break;
+        case HM_TYPE_LLD:
+            hm_entry_p->value_lld = 0;
+            break;
+        case HM_TYPE_CSTR:
+            // Allocate 0 bytes to enable always realloc and free
+            hm_entry_p->value_cstr = my_memory_malloc(__FILENAME__, __LINE__, 0);
+            break;
+        }
+    }
+    return ret_hm_p;
 }
 
 void HashMap_delete(HashMap** map_pp)
@@ -98,61 +85,100 @@ void HashMap_delete(HashMap** map_pp)
     {
         return;
     }
+    if ((*map_pp)->type == HM_TYPE_CSTR)
+    {
+        for (size_t entry_index = 0; entry_index < (*map_pp)->capacity; entry_index++)
+        {
+            my_memory_free((*map_pp)->entries[entry_index].value_cstr);
+        }
+    }
+    my_memory_free((*map_pp)->entries);
     my_memory_free(*map_pp);
     *map_pp = NULL;
 }
 
+bool HashMap_get_llu(HashMap* hm_p, const char* key, llu_t* out_value_p)
+{
+    size_t index = __hm_cstr_to_index(key, hm_p->capacity);
+    if (hm_p->entries[index].used)
+    {
+        *out_value_p = hm_p->entries[index].value_llu;
+        return true;
+    }
+    return false;
+}
+
+bool HashMap_put_llu(HashMap* hm_p, const char* key, llu_t value)
+{
+    size_t index = __hm_cstr_to_index(key, hm_p->capacity);
+    while (hm_p->entries[index].used && !my_strncmp(hm_p->entries[index].key, key))
+    {
+        LOG_WARNING("Position `%zu` used, skipping.", index);
+        index = (index + 1) % hm_p->capacity;
+    }
+    if (!my_strncmp(hm_p->entries[index].key, key))
+    {
+        LOG_INFO("Adding key `%s`.", key);
+        strncpy(hm_p->entries[index].key, key, MAX_MAP_KEY_LEN - 1);
+        hm_p->entries[index].key[MAX_MAP_KEY_LEN - 1] = 0; // null terminate
+    }
+    LOG_INFO("Putting `%s:%llu` at index `%zu`.", key, value, index)
+    hm_p->entries[index].value_llu = value;
+    hm_p->entries[index].used      = true;
+    // TODO: check if we are out of available spots and return false
+    return true;
+}
+
+void HashMap_print_llu(HashMap* hm_p)
+{
+    if (!hm_p)
+    {
+        return;
+    }
+    for (size_t index = 0; index < hm_p->capacity; index++)
+    {
+        printf("`%6zu - %s:%llu`\n", //
+               index,
+               hm_p->entries[index].key,
+               hm_p->entries[index].value_llu);
+    }
+}
+
 // clang-format off
-#define hashmap_new_element(key, value)                \
-    _Generic((value),                                  \
-        short              : hashmap_new_element_lld,  \
-        int                : hashmap_new_element_lld,  \
-        long               : hashmap_new_element_lld,  \
-        long long          : hashmap_new_element_lld,  \
-        unsigned short     : hashmap_new_element_llu,  \
-        unsigned int       : hashmap_new_element_llu,  \
-        unsigned long      : hashmap_new_element_llu,  \
-        unsigned long long : hashmap_new_element_llu,  \
-        char *             : hashmap_new_element_cstr, \
-        const char *       : hashmap_new_element_cstr  \
-    )(key, value)
+//#define hm_new_element(key, value)                \
+//    _Generic((value),                             \
+//        short              : hm_new_element_lld,  \
+//        int                : hm_new_element_lld,  \
+//        long               : hm_new_element_lld,  \
+//        long long          : hm_new_element_lld,  \
+//        unsigned short     : hm_new_element_llu,  \
+//        unsigned int       : hm_new_element_llu,  \
+//        unsigned long      : hm_new_element_llu,  \
+//        unsigned long long : hm_new_element_llu,  \
+//        char *             : hm_new_element_cstr, \
+//        const char *       : hm_new_element_cstr  \
+//    )(key, value)
 // clang-format on
 
 #ifdef _TEST
 void test_hashmap(void)
 {
     PRINT_BANNER();
-    PRINT_TEST_TITLE("doubling prime");
-    {
-        HashMap map = {0};
-        ASSERT_EQ(map.prime_index, 0, "Initial index correct");
-        __next_prime_index(&map); // 1
-        ASSERT_EQ(map.prime_index, 1, "Next index correct");
-        ASSERT_EQ(__prime_vec[map.prime_index], 5, "Next prime correct");
-        map.prime_index = 17;
-        __next_prime_index(&map); // 18
-        ASSERT_EQ(map.prime_index, 18, "Last index correct");
-        __next_prime_index(&map); // still 18
-        ASSERT_EQ(map.prime_index, 18, "Index doesn't overflow");
-        ASSERT_EQ(__prime_vec[map.prime_index], 823117, "Index doesn't overflow");
-    }
     PRINT_TEST_TITLE("Hashing");
-    __cstr_to_index("TEST", 5);
-    PRINT_TEST_TITLE("Create map element");
-    {
-        HashMapEntry map_element = hashmap_new_element("test key", 32U);
-        ASSERT_EQ("test key", map_element.key, "Correct key");
-        ASSERT_EQ(MAP_LLU, map_element.type, "Correct type");
-        ASSERT_EQ(32, map_element.value_llu, "Correct value");
-    }
+    __hm_cstr_to_index("TEST", 5);
     PRINT_TEST_TITLE("Create map")
     {
-        const size_t capacity           = 5;
-        HashMap* map_p __autofree_map__ = HashMap_new_with_capacity(capacity);
-        ASSERT_EQ(map_p->size, 0, "Initial size is 0");
-        ASSERT(map_p->prime_index > 0, "Initial prime index > 0");
-        ASSERT(__prime_vec[map_p->prime_index] > capacity * 1.3, "Initial capacity is 0");
-        HashMap_delete(&map_p);
+        const size_t capacity              = 3;
+        __hm_autofree__ HashMap* test_hm_p = HashMap_new_with_capacity(HM_TYPE_LLU, capacity);
+        ASSERT_EQ(test_hm_p->size, 0, "Initial size is 0");
+        ASSERT_EQ(test_hm_p->type, HM_TYPE_LLU, "Initial prime index > 0");
+        ASSERT(test_hm_p->capacity > capacity * 1.3, "Initial capacity is sufficiently large");
+        ASSERT_EQ(test_hm_p->capacity, 5, "Initial capacity is sufficiently large");
+        ASSERT(HashMap_put_llu(test_hm_p, "test key0", 0), "Entry put");
+        ASSERT(HashMap_put_llu(test_hm_p, "test key1", 1), "Entry put");
+        ASSERT(HashMap_put_llu(test_hm_p, "test key5", 5), "Entry put");
+        HashMap_print_llu(test_hm_p);
     }
+    exit(0);
 }
 #endif /* _TEST */

@@ -498,20 +498,18 @@ void get_date_time(char* date_time_str);
 #endif
 // ---------- LOGGER END ----------
 #define MAX_MAP_KEY_LEN (256)
-#define MAX_MAP_VAL_LEN (256)
 
 typedef enum
 {
-    MAP_LLU,
-    MAP_LLD,
-    MAP_CSTR,
+    HM_TYPE_LLU,
+    HM_TYPE_LLD,
+    HM_TYPE_CSTR,
 } HashMapType;
 
 typedef struct
 {
     char key[MAX_MAP_KEY_LEN];
     bool used;
-    HashMapType type;
     union
     {
         llu_t value_llu;
@@ -522,14 +520,11 @@ typedef struct
 
 typedef struct
 {
-    size_t prime_index;
+    size_t capacity;
     size_t size;
-    HashMapEntry* entry_array;
+    HashMapType type;
+    HashMapEntry* entries;
 } HashMap;
-
-HashMap* HashMap_new_with_capacity(size_t capacity);
-void HashMap_delete(HashMap**);
-#define __autofree_map__ __attribute__((cleanup(HashMap_delete)))
 
 Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
 Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);
