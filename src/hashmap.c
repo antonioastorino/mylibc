@@ -43,9 +43,10 @@ HashMap* HashMap_new_with_capacity(HashMapType hm_type, size_t capacity)
            && ((prime_index + 1) < array_sizeof(__prime_vec)))
     {
         prime_index++;
+        printf("%zu, %llu\n", prime_index, __prime_vec[prime_index]);
     }
     ret_hm_p->capacity = __prime_vec[prime_index];
-    if (capacity < ret_hm_p->capacity)
+    if (capacity >= ret_hm_p->capacity)
     {
         LOG_WARNING("HM capacity overflow");
     }
@@ -56,7 +57,8 @@ HashMap* HashMap_new_with_capacity(HashMapType hm_type, size_t capacity)
     for (size_t entry_index = 0; entry_index < ret_hm_p->capacity; entry_index++)
     {
         HashMapEntry* hm_entry_p = &ret_hm_p->entries[entry_index];
-        hm_entry_p->used         = false;
+        hm_entry_p->prev_p       = NULL;
+        hm_entry_p->next_p       = NULL;
         hm_entry_p->key[0]       = 0;
         switch (hm_type)
         {
@@ -75,6 +77,26 @@ HashMap* HashMap_new_with_capacity(HashMapType hm_type, size_t capacity)
     return ret_hm_p;
 }
 
+void HashMapEntry_delete(HashMapEntry* hm_entry_p, HashMapType type)
+{
+    if (hm_entry_p->next_p)
+    {
+        HashMapEntry_delete(hm_entry_p->next_p, type);
+    }
+    printf("Delete key %s\n", hm_entry_p->key);
+    if (type == HM_TYPE_CSTR)
+    {
+        my_memory_free(hm_entry_p->value_cstr);
+        hm_entry_p->value_cstr = NULL;
+    }
+    // cannot free the head
+    if (hm_entry_p->prev_p)
+    {
+        my_memory_free(hm_entry_p);
+        hm_entry_p = NULL;
+    }
+}
+
 void HashMap_delete(HashMap** map_pp)
 {
     if (map_pp == NULL)
@@ -85,13 +107,11 @@ void HashMap_delete(HashMap** map_pp)
     {
         return;
     }
-    if ((*map_pp)->type == HM_TYPE_CSTR)
+    for (size_t entry_index = 0; entry_index < (*map_pp)->capacity; entry_index++)
     {
-        for (size_t entry_index = 0; entry_index < (*map_pp)->capacity; entry_index++)
-        {
-            my_memory_free((*map_pp)->entries[entry_index].value_cstr);
-        }
+        HashMapEntry_delete(&(*map_pp)->entries[entry_index], (*map_pp)->type);
     }
+
     my_memory_free((*map_pp)->entries);
     my_memory_free(*map_pp);
     *map_pp = NULL;
@@ -100,7 +120,7 @@ void HashMap_delete(HashMap** map_pp)
 bool HashMap_get_llu(HashMap* hm_p, const char* key, llu_t* out_value_p)
 {
     size_t index = __hm_cstr_to_index(key, hm_p->capacity);
-    if (hm_p->entries[index].used)
+    if (strlen(hm_p->entries[index].key))
     {
         *out_value_p = hm_p->entries[index].value_llu;
         return true;
@@ -108,23 +128,40 @@ bool HashMap_get_llu(HashMap* hm_p, const char* key, llu_t* out_value_p)
     return false;
 }
 
+#define is_entry_used(entry_p) (strlen(hm_entry_p->key))
 bool HashMap_put_llu(HashMap* hm_p, const char* key, llu_t value)
 {
-    size_t index = __hm_cstr_to_index(key, hm_p->capacity);
-    while (hm_p->entries[index].used && !my_strncmp(hm_p->entries[index].key, key))
+    size_t index             = __hm_cstr_to_index(key, hm_p->capacity);
+    HashMapEntry* hm_entry_p = &hm_p->entries[index];
+    while (true)
     {
-        LOG_WARNING("Position `%zu` used, skipping.", index);
-        index = (index + 1) % hm_p->capacity;
+        if (my_strncmp(hm_entry_p->key, key))
+        {
+            // Key match
+            LOG_INFO("Putting `%s:%llu` at index `%zu`.", key, value, index)
+            hm_entry_p->value_llu = value;
+            break;
+        }
+        else if (strlen(hm_entry_p->key) == 0)
+        {
+            // Empty key - unused entry
+            LOG_INFO("Adding key `%s`.", key);
+            strncpy(hm_entry_p->key, key, MAX_MAP_KEY_LEN - 1);
+            hm_entry_p->key[MAX_MAP_KEY_LEN - 1] = 0; // null terminate
+        }
+        else
+        {
+            // Position used, trying next node
+            if (hm_entry_p->next_p == NULL)
+            {
+                hm_entry_p->next_p         = my_memory_malloc(__FILENAME__, __LINE__, sizeof(HashMapEntry));
+                hm_entry_p->next_p->prev_p = hm_entry_p;
+                hm_entry_p->next_p->next_p = NULL;
+                hm_entry_p->next_p->key[0] = 0; // This will trigger the empty-key case
+            }
+            hm_entry_p = hm_entry_p->next_p;
+        }
     }
-    if (!my_strncmp(hm_p->entries[index].key, key))
-    {
-        LOG_INFO("Adding key `%s`.", key);
-        strncpy(hm_p->entries[index].key, key, MAX_MAP_KEY_LEN - 1);
-        hm_p->entries[index].key[MAX_MAP_KEY_LEN - 1] = 0; // null terminate
-    }
-    LOG_INFO("Putting `%s:%llu` at index `%zu`.", key, value, index)
-    hm_p->entries[index].value_llu = value;
-    hm_p->entries[index].used      = true;
     // TODO: check if we are out of available spots and return false
     return true;
 }
@@ -137,10 +174,18 @@ void HashMap_print_llu(HashMap* hm_p)
     }
     for (size_t index = 0; index < hm_p->capacity; index++)
     {
+        HashMapEntry* hm_entry_p = &hm_p->entries[index];
         printf("`%6zu - %s:%llu`\n", //
                index,
-               hm_p->entries[index].key,
-               hm_p->entries[index].value_llu);
+               hm_entry_p->key,
+               hm_entry_p->value_llu);
+        while (hm_entry_p->next_p)
+        {
+            hm_entry_p = hm_entry_p->next_p;
+            printf("`     ----> %s:%llu`\n", //
+                   hm_entry_p->key,
+                   hm_entry_p->value_llu);
+        }
     }
 }
 
@@ -179,6 +224,5 @@ void test_hashmap(void)
         ASSERT(HashMap_put_llu(test_hm_p, "test key5", 5), "Entry put");
         HashMap_print_llu(test_hm_p);
     }
-    exit(0);
 }
 #endif /* _TEST */
