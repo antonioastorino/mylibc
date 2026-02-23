@@ -506,9 +506,9 @@ typedef enum
     HM_TYPE_CSTR,
 } HashMapType;
 
-typedef struct HashMapEntry HashMapEntry;
+typedef struct _HashMapEntry HashMapEntry;
 
-typedef struct HashMapEntry
+typedef struct _HashMapEntry
 {
     char key[MAX_MAP_KEY_LEN];
     union
