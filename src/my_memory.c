@@ -85,6 +85,12 @@ void my_memory_free(void* ptr)
     free(ptr);
 }
 
+void my_memory_free_ptr(char** ptr)
+{
+    my_memory_free(*ptr);
+    *ptr = NULL;
+}
+
 #ifdef _TEST
 void test_my_memory(void)
 {

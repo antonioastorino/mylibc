@@ -30,6 +30,8 @@
 #define UNUSED(x) (void)(x)
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define my_strncmp(s1, literal) (strncmp(s1, literal, strlen(literal)) == 0)
+#define __autofree__ __attribute__((cleanup(my_memory_free)))
+#define __autofree_ptr__ __attribute__((cleanup(my_memory_free_ptr)))
 
 #define TCP_MAX_MSG_LEN 65535
 #define TCP_MAX_CONNECTIONS 1023
@@ -528,6 +530,8 @@ typedef struct
     HashMapType type;
     HashMapEntry* entries;
 } HashMap;
+
+#define __hm_autofree__ __attribute__((cleanup(HashMap_delete)))
 
 Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
 Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);
