@@ -43,7 +43,6 @@ HashMap* HashMap_new_with_capacity(HashMapType hm_type, size_t capacity)
            && ((prime_index + 1) < array_sizeof(__prime_vec)))
     {
         prime_index++;
-        printf("%zu, %llu\n", prime_index, __prime_vec[prime_index]);
     }
     ret_hm_p->capacity = __prime_vec[prime_index];
     if (capacity >= ret_hm_p->capacity)
@@ -83,7 +82,6 @@ void HashMapEntry_delete(HashMapEntry* hm_entry_p, HashMapType type)
     {
         HashMapEntry_delete(hm_entry_p->next_p, type);
     }
-    printf("Delete key %s\n", hm_entry_p->key);
     if (type == HM_TYPE_CSTR)
     {
         my_memory_free(hm_entry_p->value_cstr);
@@ -119,12 +117,17 @@ void HashMap_delete(HashMap** map_pp)
 
 bool HashMap_get_llu(HashMap* hm_p, const char* key, llu_t* out_value_p)
 {
-    size_t index = __hm_cstr_to_index(key, hm_p->capacity);
-    if (strlen(hm_p->entries[index].key))
+    size_t index             = __hm_cstr_to_index(key, hm_p->capacity);
+    HashMapEntry* hm_entry_p = &hm_p->entries[index];
+    do
     {
-        *out_value_p = hm_p->entries[index].value_llu;
-        return true;
-    }
+        if (my_strncmp(hm_entry_p->key, key))
+        {
+            *out_value_p = hm_entry_p->value_llu;
+            return true;
+        }
+        hm_entry_p = hm_entry_p->next_p;
+    } while (hm_entry_p);
     return false;
 }
 
@@ -175,17 +178,16 @@ void HashMap_print_llu(HashMap* hm_p)
     for (size_t index = 0; index < hm_p->capacity; index++)
     {
         HashMapEntry* hm_entry_p = &hm_p->entries[index];
-        printf("`%6zu - %s:%llu`\n", //
-               index,
-               hm_entry_p->key,
-               hm_entry_p->value_llu);
-        while (hm_entry_p->next_p)
+        int depth                = 1;
+        do
         {
-            hm_entry_p = hm_entry_p->next_p;
-            printf("`     ----> %s:%llu`\n", //
+            printf("%*s", depth * 4, "|---> ");
+            printf("%6s:%llu\n", //
                    hm_entry_p->key,
                    hm_entry_p->value_llu);
-        }
+            hm_entry_p = hm_entry_p->next_p;
+            depth++;
+        } while (hm_entry_p);
     }
 }
 
@@ -211,18 +213,22 @@ void test_hashmap(void)
     PRINT_BANNER();
     PRINT_TEST_TITLE("Hashing");
     __hm_cstr_to_index("TEST", 5);
-    PRINT_TEST_TITLE("Create map")
+    PRINT_TEST_TITLE("HasMap create, put, get, remove")
     {
         const size_t capacity              = 3;
+        llu_t value_llu                    = 0;
         __hm_autofree__ HashMap* test_hm_p = HashMap_new_with_capacity(HM_TYPE_LLU, capacity);
         ASSERT_EQ(test_hm_p->size, 0, "Initial size is 0");
         ASSERT_EQ(test_hm_p->type, HM_TYPE_LLU, "Initial prime index > 0");
         ASSERT(test_hm_p->capacity > capacity * 1.3, "Initial capacity is sufficiently large");
         ASSERT_EQ(test_hm_p->capacity, 5, "Initial capacity is sufficiently large");
-        ASSERT(HashMap_put_llu(test_hm_p, "test key0", 0), "Entry put");
-        ASSERT(HashMap_put_llu(test_hm_p, "test key1", 1), "Entry put");
-        ASSERT(HashMap_put_llu(test_hm_p, "test key5", 5), "Entry put");
+        ASSERT(HashMap_put_llu(test_hm_p, "test key00", 0), "Entry put");
+        ASSERT(HashMap_put_llu(test_hm_p, "test key01", 1), "Entry put");
+        ASSERT(HashMap_put_llu(test_hm_p, "test key05", 5), "Entry put");
+        ASSERT(HashMap_put_llu(test_hm_p, "test key55", 55), "Entry put");
         HashMap_print_llu(test_hm_p);
+        ASSERT(HashMap_get_llu(test_hm_p, "test key55", &value_llu), "Key found");
+        ASSERT(value_llu == 55, "Value correct");
     }
 }
 #endif /* _TEST */
