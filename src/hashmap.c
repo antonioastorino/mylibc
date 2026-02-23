@@ -1,4 +1,3 @@
-#define array_sizeof(__arr__) sizeof(__arr__) / sizeof(__arr__[0])
 llu_t __prime_vec[] = {
     2,
     5,
@@ -39,7 +38,7 @@ HashMap* HashMap_new_with_capacity(HashMapType hm_type, size_t capacity)
     ret_hm_p->type     = hm_type;
     size_t prime_index = 0;
     while (capacity * 1.3 > __prime_vec[prime_index]
-           && ((prime_index + 1) < array_sizeof(__prime_vec)))
+           && ((prime_index + 1) < sizeof_array(__prime_vec)))
     {
         prime_index++;
     }
@@ -116,26 +115,39 @@ void HashMap_delete(HashMap** map_pp)
     *map_pp = NULL;
 }
 
-bool HashMap_get_llu(HashMap* hm_p, const char* key, llu_t* out_value_p)
-{
-    size_t index             = __hm_cstr_to_index(key, hm_p->capacity);
-    HashMapEntry* hm_entry_p = &hm_p->entries[index];
-    if (hm_p->size <= 0)
-    {
-        LOG_WARNING("Cannot get `%s` from empty hashmap", key);
-        return false;
+#define __HASHMAP_GET_(__suffix, __type)                                               \
+    bool __HASHMAP_GET_##__suffix(HashMap* hm_p, const char* key, __type* out_value_p) \
+    {                                                                                  \
+        size_t index             = __hm_cstr_to_index(key, hm_p->capacity);            \
+        HashMapEntry* hm_entry_p = &hm_p->entries[index];                              \
+        if (hm_p->type == HM_TYPE_CSTR)                                                \
+        {                                                                              \
+            LOG_ERROR("Cannot call this function using a hashmap of type cstr")        \
+            return false;                                                              \
+        }                                                                              \
+        if (hm_p->size <= 0)                                                           \
+        {                                                                              \
+            LOG_WARNING("Cannot get `%s` from empty hashmap", key);                    \
+            return false;                                                              \
+        }                                                                              \
+        do                                                                             \
+        {                                                                              \
+            if (my_strncmp(hm_entry_p->key, key))                                      \
+            {                                                                          \
+                if (hm_p->type == HM_TYPE_LLU)                                         \
+                {                                                                      \
+                    *out_value_p = hm_entry_p->value_llu;                              \
+                }                                                                      \
+                else if (hm_p->type == HM_TYPE_LLU)                                    \
+                {                                                                      \
+                    *out_value_p = hm_entry_p->value_lld;                              \
+                }                                                                      \
+                return true;                                                           \
+            }                                                                          \
+            hm_entry_p = hm_entry_p->next_p;                                           \
+        } while (hm_entry_p);                                                          \
+        return false;                                                                  \
     }
-    do
-    {
-        if (my_strncmp(hm_entry_p->key, key))
-        {
-            *out_value_p = hm_entry_p->value_llu;
-            return true;
-        }
-        hm_entry_p = hm_entry_p->next_p;
-    } while (hm_entry_p);
-    return false;
-}
 
 bool HashMap_get_cstr_malloc(HashMap* hm_p, const char* key, char** out_value_pp)
 {
@@ -197,48 +209,57 @@ bool HashMap_remove(HashMap* hm_p, const char* key)
     return false;
 }
 
-bool __HashMap_put_llu(HashMap* hm_p, const char* key, llu_t value)
-{
-    size_t index             = __hm_cstr_to_index(key, hm_p->capacity);
-    HashMapEntry* hm_entry_p = &hm_p->entries[index];
-    if (hm_p->type != HM_TYPE_LLU)
-    {
-        LOG_ERROR("Cannot use HashMap of type `%d` for type `%d`.", hm_p->type, HM_TYPE_LLU);
-        return false;
+#define __HASHMAP_PUT_(__suffix, __type)                                                                         \
+    bool __HASHMAP_PUT_##__suffix(HashMap* hm_p, const char* key, __type value)                                  \
+    {                                                                                                            \
+        size_t index             = __hm_cstr_to_index(key, hm_p->capacity);                                      \
+        HashMapEntry* hm_entry_p = &hm_p->entries[index];                                                        \
+        if (hm_p->type != HM_TYPE_##__suffix)                                                                    \
+        {                                                                                                        \
+            LOG_ERROR("Cannot use HashMap of type `%d` for type `%d`.", hm_p->type, HM_TYPE_##__suffix);         \
+            return false;                                                                                        \
+        }                                                                                                        \
+        while (true)                                                                                             \
+        {                                                                                                        \
+            if (my_strncmp(hm_entry_p->key, key))                                                                \
+            {                                                                                                    \
+                /* Key match */                                                                                  \
+                if (hm_p->type == HM_TYPE_LLU)                                                                   \
+                {                                                                                                \
+                    LOG_INFO("Putting `%s:%llu` at index `%zu`.", key, value, index)                             \
+                    hm_entry_p->value_llu = value;                                                               \
+                }                                                                                                \
+                if (hm_p->type == HM_TYPE_LLD)                                                                   \
+                {                                                                                                \
+                    LOG_INFO("Putting `%s:%lld` at index `%zu`.", key, value, index)                             \
+                    hm_entry_p->value_lld = value;                                                               \
+                }                                                                                                \
+                break;                                                                                           \
+            }                                                                                                    \
+            else if (strlen(hm_entry_p->key) == 0)                                                               \
+            {                                                                                                    \
+                /* Empty key -> unused entry */                                                                  \
+                LOG_INFO("Adding key `%s`.", key);                                                               \
+                strncpy(hm_entry_p->key, key, MAX_MAP_KEY_LEN - 1);                                              \
+                hm_entry_p->key[MAX_MAP_KEY_LEN - 1] = 0; /* null terminate*/                                    \
+                hm_p->size++;                                                                                    \
+            }                                                                                                    \
+            else                                                                                                 \
+            {                                                                                                    \
+                /* Position used, trying next node*/                                                             \
+                if (hm_entry_p->next_p == NULL)                                                                  \
+                {                                                                                                \
+                    hm_entry_p->next_p         = my_memory_malloc(__FILENAME__, __LINE__, sizeof(HashMapEntry)); \
+                    hm_entry_p->next_p->prev_p = hm_entry_p;                                                     \
+                    hm_entry_p->next_p->next_p = NULL;                                                           \
+                    hm_entry_p->next_p->key[0] = 0; /* This will trigger the empty-key case*/                    \
+                }                                                                                                \
+                hm_entry_p = hm_entry_p->next_p;                                                                 \
+            }                                                                                                    \
+        }                                                                                                        \
+        /* TODO: check if we are out of available spots and return false*/                                       \
+        return true;                                                                                             \
     }
-    while (true)
-    {
-        if (my_strncmp(hm_entry_p->key, key))
-        {
-            // Key match
-            LOG_INFO("Putting `%s:%llu` at index `%zu`.", key, value, index)
-            hm_entry_p->value_llu = value;
-            break;
-        }
-        else if (strlen(hm_entry_p->key) == 0)
-        {
-            // Empty key -> unused entry
-            LOG_INFO("Adding key `%s`.", key);
-            strncpy(hm_entry_p->key, key, MAX_MAP_KEY_LEN - 1);
-            hm_entry_p->key[MAX_MAP_KEY_LEN - 1] = 0; // null terminate
-            hm_p->size++;
-        }
-        else
-        {
-            // Position used, trying next node
-            if (hm_entry_p->next_p == NULL)
-            {
-                hm_entry_p->next_p         = my_memory_malloc(__FILENAME__, __LINE__, sizeof(HashMapEntry));
-                hm_entry_p->next_p->prev_p = hm_entry_p;
-                hm_entry_p->next_p->next_p = NULL;
-                hm_entry_p->next_p->key[0] = 0; // This will trigger the empty-key case
-            }
-            hm_entry_p = hm_entry_p->next_p;
-        }
-    }
-    // TODO: check if we are out of available spots and return false
-    return true;
-}
 
 bool __HashMap_put_cstr(HashMap* hm_p, const char* key, char* value)
 {
@@ -320,16 +341,28 @@ void HashMap_print(HashMap* hm_p)
 }
 
 // clang-format off
-#define HashMap_put(hm_p, key, value)                     \
-    _Generic((value),                                     \
-        unsigned short              : __HashMap_put_llu,  \
-        unsigned int                : __HashMap_put_llu,  \
-        unsigned long               : __HashMap_put_llu,  \
-        unsigned long long          : __HashMap_put_llu,  \
-        char*                       : __HashMap_put_cstr, \
-        const char*                 : __HashMap_put_cstr  \
+__HASHMAP_PUT_(LLU, llu_t)
+__HASHMAP_PUT_(LLD, lld_t)
+__HASHMAP_GET_(LLU, llu_t)
+__HASHMAP_GET_(LLD, lld_t)
+
+#define HashMap_put(hm_p, key, value)            \
+    _Generic((value),                            \
+        unsigned short     : __HASHMAP_PUT_LLU,  \
+        unsigned int       : __HASHMAP_PUT_LLU,  \
+        unsigned long      : __HASHMAP_PUT_LLU,  \
+        unsigned long long : __HASHMAP_PUT_LLU,  \
+        short              : __HASHMAP_PUT_LLD,  \
+        int                : __HASHMAP_PUT_LLD,  \
+        long               : __HASHMAP_PUT_LLD,  \
+        long long          : __HASHMAP_PUT_LLD,  \
+        char*              : __HashMap_put_cstr, \
+        const char*        : __HashMap_put_cstr  \
     )(hm_p, key, value)
 // clang-format on
+
+#define HashMap_get_llu __HASHMAP_GET_LLU
+#define HashMap_get_lld __HASHMAP_GET_LLD
 
 #ifdef _TEST
 void test_hashmap(void)
@@ -424,6 +457,20 @@ void test_hashmap(void)
         ASSERT(HashMap_put(test_hm_p, "test key00", "New head"), "Entry put");
         ASSERT_EQ(test_hm_p->size, 4, "Size increased");
         HashMap_print(test_hm_p);
+    }
+    PRINT_TEST_TITLE("HasMap LLD create, put, get, remove")
+    {
+        const size_t capacity              = 4;
+        lld_t value_lld                    = 0;
+        __hm_autofree__ HashMap* test_hm_p = HashMap_new_with_capacity(HM_TYPE_LLD, capacity);
+        ASSERT_EQ(test_hm_p->size, 0, "Initial size is 0");
+        ASSERT_EQ(test_hm_p->type, HM_TYPE_LLD, "Type set correctly");
+        ASSERT(test_hm_p->capacity > capacity * 1.3, "Initial capacity is sufficiently large");
+        ASSERT_EQ(test_hm_p->capacity, 11, "Initial capacity correct");
+        ASSERT(!HashMap_put(test_hm_p, "test key00", 99U), "Entry not put");
+        ASSERT(!HashMap_get_lld(test_hm_p, "test key00", &value_lld), "Entry not gotten");
+        ASSERT(HashMap_put(test_hm_p, "test key00", 99), "Entry not put");
+        ASSERT(HashMap_get_lld(test_hm_p, "test key00", &value_lld), "Entry not gotten");
     }
 }
 #endif /* _TEST */

@@ -30,6 +30,7 @@
 #define UNUSED(x) (void)(x)
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define my_strncmp(s1, literal) (strncmp(s1, literal, strlen(literal)) == 0)
+#define sizeof_array(__arr__) sizeof(__arr__) / sizeof(__arr__[0])
 #define __autofree__ __attribute__((cleanup(my_memory_free)))
 #define __autofree_ptr__ __attribute__((cleanup(my_memory_free_ptr)))
 
