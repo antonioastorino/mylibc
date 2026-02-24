@@ -1,5 +1,15 @@
 # mylibc
 
+This project contains useful utilities for generic C projects:
+- Class-like string utilities
+- Class-like string array utilities (e.g., useful to split strings)
+- Class-like JSON deserializer utilities
+- number parser
+- TCP utilities
+- HashMap utilities
+
+The unit test environment embeds a memory-leak checker, making use of `my_memory.c` functions. Those tests are also useful examples on how to use the various utilities.
+
 ## Test and build
 
 ### Run unit tests

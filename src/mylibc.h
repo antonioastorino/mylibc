@@ -32,7 +32,8 @@
 #define my_strncmp(s1, literal) (strncmp(s1, literal, strlen(literal)) == 0)
 #define sizeof_array(__arr__) sizeof(__arr__) / sizeof(__arr__[0])
 #define __autofree__ __attribute__((cleanup(my_memory_free)))
-#define __autofree_ptr__ __attribute__((cleanup(my_memory_free_ptr)))
+#define __autofree_cstr__ __attribute__((cleanup(my_memory_free_cstr)))
+#define __autodestroy_json__ __attribute__((cleanup(JsonObj_destroy)))
 
 #define TCP_MAX_MSG_LEN 65535
 #define TCP_MAX_CONNECTIONS 1023
@@ -292,7 +293,7 @@ typedef enum
     VALUE_BOOL,
     VALUE_LLU,
     VALUE_DOUBLE,
-    VALUE_STR,
+    VALUE_CSTR,
     VALUE_ARRAY,
     VALUE_ITEM,
     VALUE_INVALID,
@@ -307,7 +308,7 @@ typedef struct JsonValue
         llu_t value_llu;                 // leaf llu_t
         double value_double;             // leaf double
         bool value_bool;                 // leaf bool
-        const char* value_char_p;        // leaf c-string
+        const char* value_cstr;          // leaf c-string
         struct JsonItem* value_child_p;  // another item
         struct JsonArray* value_array_p; // the first item of an array
     };
@@ -324,7 +325,7 @@ typedef struct JsonItem
 
 typedef struct JsonObj
 {
-    String json_string;
+    char* json_cstr;
     JsonItem root;
 } JsonObj;
 
@@ -339,7 +340,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
 // clang-format off
 #define OBJ_GET_VALUE_h(suffix, out_type)                            \
     Error obj_get_##suffix(const JsonObj*, const char*, out_type);
-    OBJ_GET_VALUE_h(value_char_p, const char**)
+    OBJ_GET_VALUE_h(value_cstr, const char**)
     OBJ_GET_VALUE_h(value_child_p, JsonItem**)
     OBJ_GET_VALUE_h(value_array_p, JsonArray**)
 
@@ -351,7 +352,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
     OBJ_GET_VALUE_h(value_bool, bool*)
 
 #define GET_VALUE_h(suffix, out_type) Error get_##suffix(const JsonItem*, const char*, out_type);
-    GET_VALUE_h(value_char_p, const char**)
+    GET_VALUE_h(value_cstr, const char**)
     GET_VALUE_h(value_child_p, JsonItem**)
     GET_VALUE_h(value_array_p, JsonArray**)
 
@@ -362,24 +363,24 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
     GET_VALUE_h(value_bool, bool*)
 
 #define GET_ARRAY_VALUE_h(suffix, out_type)                       \
-    Error get_array_##suffix(const JsonArray*, llu_t, out_type);
-    GET_ARRAY_VALUE_h(value_char_p, const char**)
+    Error get_array_##suffix(const JsonArray*, size_t, out_type);
+    GET_ARRAY_VALUE_h(value_cstr, const char**)
     GET_ARRAY_VALUE_h(value_lld, lld_t*)
     GET_ARRAY_VALUE_h(value_llu, llu_t*)
     GET_ARRAY_VALUE_h(value_double, double*)
     GET_ARRAY_VALUE_h(value_bool, bool*)
     GET_ARRAY_VALUE_h(value_child_p, JsonItem**)
 
-#define JsonObj_new(in_json, out_json)                     \
-    _Generic(in_json,                                      \
-        const char*  : JsonObj_new_from_char_p,            \
-        String*      : JsonObj_new_from_string_p           \
-        )(__FILENAME__, __LINE__,in_json, out_json)
+#define JsonObj_new(in_json, out_json)        \
+    _Generic(in_json,                         \
+        const char* : _JsonObj_new,           \
+        char *      : _JsonObj_new            \
+        )(__FILENAME__, __LINE__, in_json, out_json)
 
 #define Json_get(json_stuff, needle, out_p)                \
     _Generic ((json_stuff),                                \
         JsonObj*: _Generic((out_p),                        \
-            const char** : obj_get_value_char_p,           \
+            const char** : obj_get_value_cstr,             \
             lld_t*       : obj_get_value_lld,              \
             llu_t*       : obj_get_value_llu,              \
             double*      : obj_get_value_double,           \
@@ -388,7 +389,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
             JsonArray**  : obj_get_value_array_p           \
             ),                                             \
          JsonItem*: _Generic((out_p),                      \
-            const char** : get_value_char_p,               \
+            const char** : get_value_cstr,                 \
             lld_t*       : get_value_lld,                  \
             llu_t*       : get_value_llu,                  \
             double*      : get_value_double,               \
@@ -397,7 +398,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
             JsonArray**  : get_value_array_p               \
             ),                                             \
         JsonArray*: _Generic((out_p),                      \
-            const char** : get_array_value_char_p,         \
+            const char** : get_array_value_cstr,           \
             lld_t*       : get_array_value_lld,            \
             llu_t*       : get_array_value_llu,            \
             double*      : get_array_value_double,         \
@@ -574,6 +575,7 @@ void* my_memory_realloc(const char* file, const int line, void* ptr, size_t size
 int my_memory_vasprintf(const char* file, const int line, char**, const char*, va_list);
 int my_memory_asprintf(const char* file, const int line, char** ptr_p, const char* format, ...);
 void my_memory_free(void*);
+void my_memory_free_cstr(char**);
 
 Error tcp_utils_server_init(uint16_t port);
 Error tcp_utils_accept(int*);

@@ -427,12 +427,12 @@ void test_hashmap(void)
     }
     PRINT_TEST_TITLE("HasMap CSTR create, put, get, remove")
     {
-        const size_t capacity              = 4;
-        char* value1_cstr __autofree_ptr__ = NULL;
-        char* value2_cstr __autofree_ptr__ = NULL;
-        char* value3_cstr __autofree_ptr__ = NULL;
-        __hm_autofree__ HashMap* test_hm_p = NULL;
-        test_hm_p                          = HashMap_new_with_capacity(HM_TYPE_CSTR, capacity);
+        const size_t capacity               = 4;
+        char* value1_cstr __autofree_cstr__ = NULL;
+        char* value2_cstr __autofree_cstr__ = NULL;
+        char* value3_cstr __autofree_cstr__ = NULL;
+        __hm_autofree__ HashMap* test_hm_p  = NULL;
+        test_hm_p                           = HashMap_new_with_capacity(HM_TYPE_CSTR, capacity);
         ASSERT_EQ(test_hm_p->size, 0, "Initial size is 0");
         ASSERT_EQ(test_hm_p->type, HM_TYPE_CSTR, "Type set correctly");
         ASSERT(!HashMap_put(test_hm_p, "test key00", 99U), "Forbidden");

@@ -67,16 +67,18 @@ ElementType _get_value_type(char* initial_char_p)
     }
 }
 
-String _strip_whitespace(const String* json_string_p)
+static char* _strip_whitespace_malloc(const char* json_cstr)
 {
     // The returned string cannot be longer than the input string (plus an termination char).
-    char ret_cleaned_char_p[json_string_p->length + 1];
+    char* ret_str;
+    const size_t str_len = strlen(json_cstr);
+    ret_str              = my_memory_malloc(__FILENAME__, __LINE__, str_len + 1);
 
-    llu_t pos_out      = 0;
+    size_t pos_out     = 0;
     bool inside_string = false;
-    for (llu_t pos_in = 0; pos_in < json_string_p->length; pos_in++)
+    for (size_t pos_in = 0; pos_in < str_len; pos_in++)
     {
-        char curr_char = json_string_p->str[pos_in];
+        char curr_char = json_cstr[pos_in];
         // "Open/Close" a string.
         if (curr_char == '\"')
         { // TODO: check how it works if the value contains an escaped '\"'
@@ -85,14 +87,14 @@ String _strip_whitespace(const String* json_string_p)
         // Ignore everything outside a string that is not printable or is a space (ascii 32).
         if (inside_string || (curr_char > 32))
         {
-            ret_cleaned_char_p[pos_out++] = json_string_p->str[pos_in];
+            ret_str[pos_out++] = json_cstr[pos_in];
         }
     }
-    ret_cleaned_char_p[pos_out] = '\0';
-    return String_new(ret_cleaned_char_p);
+    ret_str[pos_out] = '\0';
+    return ret_str;
 }
 
-char* _terminate_str(char* char_p)
+static char* _terminate_str(char* char_p)
 {
     while ((char_p != NULL) && (char_p + 1 != NULL))
     {
@@ -114,14 +116,16 @@ char* _terminate_str(char* char_p)
     return NULL;
 }
 
-String _generate_tokens(String* json_string_p)
+static char* _generate_tokens_malloc(char* json_cstr)
 {
-    char ret_tokens_char_p[json_string_p->length + 1];
-    llu_t pos_out      = 0;
+    char* ret_str;
+    size_t str_len     = strlen(json_cstr);
+    ret_str            = my_memory_malloc(__FILENAME__, __LINE__, str_len + 1);
+    size_t pos_out     = 0;
     bool inside_string = false;
-    for (llu_t pos_in = 0; pos_in < json_string_p->length; pos_in++)
+    for (size_t pos_in = 0; pos_in < str_len; pos_in++)
     {
-        char curr_char = json_string_p->str[pos_in];
+        char curr_char = json_cstr[pos_in];
         // "Open/Close" a string.
         if (curr_char == '\"')
         {
@@ -130,21 +134,20 @@ String _generate_tokens(String* json_string_p)
         // Ignore tokens found inside a string unless it's the '\"", hence end of the string.
         if ((_is_token(curr_char) && !inside_string) || curr_char == '"')
         {
-            ret_tokens_char_p[pos_out++] = json_string_p->str[pos_in];
+            ret_str[pos_out++] = json_cstr[pos_in];
         }
     }
-    ret_tokens_char_p[pos_out] = '\0';
-
-    return String_new(ret_tokens_char_p);
+    ret_str[pos_out] = '\0';
+    return ret_str;
 }
 
-Error _validate_tokens(char* json_char_p)
+static Error _validate_tokens(char* json_char_p)
 {
-    Error ret_res        = ERR_ALL_GOOD;
-    uint32_t obj_counter = 0;
-    uint32_t arr_counter = 0;
+    Error ret_res                  = ERR_ALL_GOOD;
+    unsigned long long obj_counter = 0;
+    unsigned long long arr_counter = 0;
     char curr_char;
-    for (llu_t index = 0; json_char_p[index] != 0; index++)
+    for (size_t index = 0; json_char_p[index] != 0; index++)
     {
         curr_char = json_char_p[index];
         if (curr_char == '[')
@@ -259,45 +262,45 @@ Error _deserialize(const char* file, const int line, JsonItem* curr_item_p, char
             if (dot_found)
             {
                 double parsed_double = 0.0f;
-                ret_result           = numparser_cstr_to_double(num_buff, &parsed_double, 0);
+                ret_result           = numparser_cstr_to_double(num_buff, &parsed_double, '\0');
                 if (is_ok(ret_result))
                 {
                     curr_item_p->value.value_type   = VALUE_DOUBLE;
                     curr_item_p->value.value_double = parsed_double;
-                    LOG_TRACE("Found value %f", curr_item_p->value.value_double);
+                    LOG_TRACE("Found value %lf", curr_item_p->value.value_double);
                 }
             }
             else if (num_buff[0] == '-')
             { // Convert into an integer if it is negative.
                 lld_t parsed_lld = 0;
-                ret_result       = numparser_cstr_to_lld(num_buff, &parsed_lld, 0);
+                ret_result       = numparser_cstr_to_lld(num_buff, &parsed_lld, '\0');
                 if (is_ok(ret_result))
                 {
                     curr_item_p->value.value_type = VALUE_LLD;
                     curr_item_p->value.value_lld  = parsed_lld;
-                    LOG_TRACE("Found value %lld", curr_item_p->value.value_lld);
+                    LOG_TRACE("Found value %lld", parsed_lld);
                 }
             }
             else
             {
-                // Convert any positive value into a llu_t.
+                // Convert any positive value into a size_t.
                 llu_t parsed_llu = 0;
-                ret_result       = numparser_cstr_to_llu(num_buff, &parsed_llu, 0);
+                ret_result       = numparser_cstr_to_llu(num_buff, &parsed_llu, '\0');
                 if (is_ok(ret_result))
                 {
                     curr_item_p->value.value_type = VALUE_LLU;
                     curr_item_p->value.value_llu  = parsed_llu;
-                    LOG_TRACE("Found value %llu", curr_item_p->value.value_llu);
+                    LOG_TRACE("Found LLU value %llu", parsed_llu);
                 }
             }
             break;
         }
         case STRING:
         {
-            curr_item_p->value.value_type   = VALUE_STR;
-            curr_item_p->value.value_char_p = curr_pos_p + 1; // Point after the quote
-            curr_pos_p                      = _terminate_str(curr_pos_p);
-            LOG_TRACE("Found value \"%s\"", curr_item_p->value.value_char_p);
+            curr_item_p->value.value_type = VALUE_CSTR;
+            curr_item_p->value.value_cstr = curr_pos_p + 1; // Point after the quote
+            curr_pos_p                    = _terminate_str(curr_pos_p);
+            LOG_TRACE("Found value \"%s\"", curr_item_p->value.value_cstr);
             break;
         }
         case KEY:
@@ -381,50 +384,40 @@ Error _deserialize(const char* file, const int line, JsonItem* curr_item_p, char
     return ERR_ALL_GOOD;
 }
 
-Error JsonObj_new_from_char_p(
+Error _JsonObj_new(
     const char* file,
     const int line,
-    const char* json_char_p,
+    const char* json_cstr,
     JsonObj* out_json_obj_p)
 {
-    String json_string = String_new(json_char_p);
-    Error ret_result   = JsonObj_new_from_string_p(file, line, &json_string, out_json_obj_p);
-    String_destroy(&json_string);
-    return ret_result;
-}
-
-Error JsonObj_new_from_string_p(
-    const char* file,
-    const int line,
-    const String* json_string_p,
-    JsonObj* out_json_obj_p)
-{
-    if (json_string_p->length == 0)
+    Error ret_err                      = ERR_ALL_GOOD;
+    char* trimmed_json_cstr            = NULL;
+    char* curr_pos_p                   = NULL;
+    __autofree_cstr__ char* token_cstr = NULL;
+    if (strlen(json_cstr) == 0)
     {
         LOG_ERROR("Empty JSON string detected");
         return ERR_EMPTY_STRING;
     }
-    String trimmed_json_string = _strip_whitespace(json_string_p);
-    if ((trimmed_json_string.str[0] != '{') /*&& (*out_json_obj_pp->json_string.str[0] != '[')*/)
+    trimmed_json_cstr = _strip_whitespace_malloc(json_cstr);
+    if ((trimmed_json_cstr[0] != '{') /*&& (*out_json_obj_pp->json_cstr.str[0] != '[')*/)
     {
         // TODO: Handle case in which the JSON string starts with [{ (array of objects).
-        String_destroy(&trimmed_json_string);
         LOG_ERROR("Invalid JSON string.");
+        my_memory_free(trimmed_json_cstr);
         return ERR_JSON_INVALID;
     }
-    String tokens_string = _generate_tokens(&trimmed_json_string);
-    Error valid_json_res = _validate_tokens(tokens_string.str);
-    String_destroy(&tokens_string);
-    if (is_err(valid_json_res))
+    token_cstr = _generate_tokens_malloc(trimmed_json_cstr);
+    ret_err    = _validate_tokens(token_cstr);
+    if (is_err(ret_err))
     {
-        String_destroy(&trimmed_json_string);
+        my_memory_free(trimmed_json_cstr);
         LOG_ERROR("Invalid JSON string detected.");
-        return valid_json_res;
+        return ret_err;
     }
-    String_destroy(&tokens_string);
-    out_json_obj_p->json_string = trimmed_json_string;
+    out_json_obj_p->json_cstr = trimmed_json_cstr;
 
-    char* curr_pos_p = out_json_obj_p->json_string.str; // position analyzed (iterator)
+    curr_pos_p = out_json_obj_p->json_cstr; // position analyzed (iterator)
     // Create a dummy root item as the entry point of the JSON object. The first actual item is the
     // first sibling of root. This prevents root's value type from being overwritten, hence causing
     // errors.
@@ -486,14 +479,22 @@ void JsonObj_destroy(JsonObj* json_obj_p)
     {
         _JsonItem_destroy(&json_obj_p->root);
     }
-    String_destroy(&json_obj_p->json_string);
-    json_obj_p = NULL;
+    my_memory_free(json_obj_p->json_cstr);
+    json_obj_p->json_cstr = NULL;
+    json_obj_p            = NULL;
 }
 
 #define OBJ_GET_VALUE_c(suffix, value_token, out_type, ACTION)                      \
     Error obj_get_##suffix(const JsonObj* obj, const char* key, out_type out_value) \
     {                                                                               \
-        return get_##suffix(obj->root.next_sibling, key, out_value);                \
+        if (obj)                                                                    \
+        {                                                                           \
+            return get_##suffix(obj->root.next_sibling, key, out_value);            \
+        }                                                                           \
+        else                                                                        \
+        {                                                                           \
+            return ERR_NULL;                                                        \
+        }                                                                           \
     }
 
 #define GET_VALUE_c(suffix, value_token, out_type, ACTION)                           \
@@ -504,6 +505,10 @@ void JsonObj_destroy(JsonObj* json_obj_p)
             *out_value = NULL;                                                       \
             LOG_ERROR("Input item is NULL - key `%s`.", key);                        \
             return ERR_JSON_MISSING_ENTRY;                                           \
+        }                                                                            \
+        if (!item->key_p)                                                            \
+        {                                                                            \
+            return ERR_NULL;                                                         \
         }                                                                            \
         if (!strcmp(item->key_p, key))                                               \
         {                                                                            \
@@ -539,6 +544,10 @@ void JsonObj_destroy(JsonObj* json_obj_p)
             LOG_ERROR("Input item is NULL - key: `%s`.", key);                                \
             return ERR_NULL;                                                                  \
         }                                                                                     \
+        if (!item->key_p)                                                                     \
+        {                                                                                     \
+            return ERR_NULL;                                                                  \
+        }                                                                                     \
         if (!strcmp(item->key_p, key))                                                        \
         {                                                                                     \
             if (item->value.value_type == value_token)                                        \
@@ -550,26 +559,26 @@ void JsonObj_destroy(JsonObj* json_obj_p)
             else if ((item->value.value_type == VALUE_LLD) && (value_token == VALUE_DOUBLE))  \
             {                                                                                 \
                 LOG_WARNING("Converting int to double");                                      \
-                *out_value = (double)(1.0f * item->value.value_lld);                          \
+                *out_value = (double)(1.0 * item->value.value_lld);                           \
                 ACTION;                                                                       \
                 return ERR_ALL_GOOD;                                                          \
             }                                                                                 \
             else if ((item->value.value_type == VALUE_LLU) && (value_token == VALUE_DOUBLE))  \
             {                                                                                 \
-                LOG_WARNING("Converting llu_t to double");                                    \
-                *out_value = (double)(1.0f * item->value.value_llu);                          \
+                LOG_WARNING("Converting size_t to double");                                   \
+                *out_value = (double)(1.0 * item->value.value_llu);                           \
                 ACTION;                                                                       \
                 return ERR_ALL_GOOD;                                                          \
             }                                                                                 \
             else if ((item->value.value_type == VALUE_LLD) && (value_token == VALUE_LLU))     \
             {                                                                                 \
-                LOG_WARNING("Converting int to llu_t");                                       \
+                LOG_WARNING("Converting int to size_t");                                      \
                 if (item->value.value_lld < 0)                                                \
                 {                                                                             \
                     LOG_ERROR(                                                                \
-                        "Impossible to convert negative int %lld into llu_t",                 \
+                        "Impossible to convert negative int %lld into size_t",                \
                         item->value.value_lld);                                               \
-                    LOG_ERROR("Failed to convert from INT to SIZE_T");                        \
+                    LOG_ERROR("Failed to convert from INT to LLU");                           \
                     return ERR_INVALID;                                                       \
                 };                                                                            \
                 *out_value = (llu_t)item->value.value_lld;                                    \
@@ -578,7 +587,7 @@ void JsonObj_destroy(JsonObj* json_obj_p)
             }                                                                                 \
             else if ((item->value.value_type == VALUE_LLU) && (value_token == VALUE_LLD))     \
             {                                                                                 \
-                LOG_WARNING("Converting llu_t to lld_t");                                     \
+                LOG_WARNING("Converting size_t to int");                                      \
                 *out_value = (lld_t)item->value.value_llu;                                    \
                 /* check for overflow */                                                      \
                 if (*out_value < 0)                                                           \
@@ -602,44 +611,47 @@ void JsonObj_destroy(JsonObj* json_obj_p)
         }                                                                                     \
     }
 
-#define GET_ARRAY_VALUE_c(suffix, value_token, out_type)                                   \
-    Error get_array_##suffix(const JsonArray* json_array, llu_t index, out_type out_value) \
-    {                                                                                      \
-        if (json_array == NULL)                                                            \
-        {                                                                                  \
-            LOG_ERROR("Input item is NULL");                                               \
-            return ERR_JSON_MISSING_ENTRY;                                                 \
-        }                                                                                  \
-        JsonItem* json_item = json_array->element;                                         \
-        while (true)                                                                       \
-        {                                                                                  \
-            if (json_item->index == index)                                                 \
-            {                                                                              \
-                break;                                                                     \
-            }                                                                              \
-            else if (json_item->next_sibling == NULL)                                      \
-            {                                                                              \
-                LOG_WARNING("Index %llu out of boundaries.", index);                       \
-                return ERR_NULL;                                                           \
-            }                                                                              \
-            json_item = json_item->next_sibling;                                           \
-        }                                                                                  \
-        if (json_item->value.value_type != value_token)                                    \
-        {                                                                                  \
-            LOG_ERROR(                                                                     \
-                "Incompatible data type - found %d, requested %d",                         \
-                json_item->value.value_type,                                               \
-                value_token);                                                              \
-            return ERR_TYPE_MISMATCH;                                                      \
-        }                                                                                  \
-        *out_value = json_item->value.suffix;                                              \
-        return ERR_ALL_GOOD;                                                               \
+#define GET_ARRAY_VALUE_c(suffix, value_token, out_type)                                    \
+    Error get_array_##suffix(const JsonArray* json_array, size_t index, out_type out_value) \
+    {                                                                                       \
+        if (json_array == NULL)                                                             \
+        {                                                                                   \
+            LOG_ERROR("Input item is NULL");                                                \
+            return ERR_JSON_MISSING_ENTRY;                                                  \
+        }                                                                                   \
+        JsonItem* json_item = json_array->element;                                          \
+        while (true)                                                                        \
+        {                                                                                   \
+            if (json_item->index == index)                                                  \
+            {                                                                               \
+                break;                                                                      \
+            }                                                                               \
+            else if (json_item->next_sibling == NULL)                                       \
+            {                                                                               \
+                LOG_WARNING("Index %lu out of boundaries.", index);                         \
+                return ERR_NULL;                                                            \
+            }                                                                               \
+            json_item = json_item->next_sibling;                                            \
+        }                                                                                   \
+        if (json_item->value.value_type != value_token)                                     \
+        {                                                                                   \
+            LOG_ERROR(                                                                      \
+                "Incompatible data type - found %d, requested %d",                          \
+                json_item->value.value_type,                                                \
+                value_token);                                                               \
+            return ERR_TYPE_MISMATCH;                                                       \
+        }                                                                                   \
+        *out_value = json_item->value.suffix;                                               \
+        return ERR_ALL_GOOD;                                                                \
     }
 
 // clang-format off
-OBJ_GET_VALUE_c(value_char_p, VALUE_STR, const char**, )
+OBJ_GET_VALUE_c(value_cstr, VALUE_CSTR, const char**, )
 OBJ_GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, )
-OBJ_GET_VALUE_c( value_array_p, VALUE_ARRAY, JsonArray**,
+OBJ_GET_VALUE_c(
+    value_array_p,
+    VALUE_ARRAY,
+    JsonArray**,
     (*out_value)->element = item->value.value_child_p)
 
 OBJ_GET_NUMBER_c(value_lld, VALUE_LLD, lld_t*, )
@@ -647,31 +659,33 @@ OBJ_GET_NUMBER_c(value_llu, VALUE_LLU, llu_t*, )
 OBJ_GET_NUMBER_c(value_double, VALUE_DOUBLE, double*, )
 OBJ_GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, )
 
-GET_VALUE_c(value_char_p, VALUE_STR, const char**, )
+GET_VALUE_c(value_cstr, VALUE_CSTR, const char**, )
 GET_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**, )
-GET_VALUE_c(value_array_p, VALUE_ARRAY, JsonArray**,
+GET_VALUE_c(
+    value_array_p,
+    VALUE_ARRAY,
+    JsonArray**,
     (*out_value)->element = item->value.value_child_p)
 
 GET_NUMBER_c(value_lld, VALUE_LLD, lld_t*, )
-GET_NUMBER_c(value_llu, VALUE_LLU, llu_t*, )
+GET_NUMBER_c(value_llu, VALUE_LLU, llu_t *, )
 GET_NUMBER_c(value_double, VALUE_DOUBLE, double*, )
 GET_NUMBER_c(value_bool, VALUE_BOOL, bool*, )
 
-GET_ARRAY_VALUE_c(value_char_p, VALUE_STR, const char**)
+GET_ARRAY_VALUE_c(value_cstr, VALUE_CSTR, const char**)
 GET_ARRAY_VALUE_c(value_lld, VALUE_LLD, lld_t*)
 GET_ARRAY_VALUE_c(value_llu, VALUE_LLU, llu_t*)
 GET_ARRAY_VALUE_c(value_double, VALUE_DOUBLE, double*)
 GET_ARRAY_VALUE_c(value_bool, VALUE_BOOL, bool*)
 GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wextra-semi"
-;
-#pragma GCC diagnostic pop
-// clang-format on
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wextra-semi"
+; // ensure clang-format works when turned on again
+#pragma clang diagnostic pop
+                                                                                  // clang-format on
 
 #ifdef _TEST
-
-String load_file(char* filename)
+static char* load_file_alloc(char* filename)
 {
     FILE* json_file = fopen(filename, "r");
     if (json_file == NULL)
@@ -679,10 +693,10 @@ String load_file(char* filename)
         LOG_PERROR("Could not read file");
     }
     int c;
-    llu_t chars_read = 0;
-    llu_t size       = 4096;
-    char* buf        = my_memory_malloc(__FILE__, __LINE__, size);
-    if (buf == NULL)
+    size_t chars_read = 0;
+    size_t size       = 4096;
+    char* ret_str     = my_memory_malloc(__FILENAME__, __LINE__, size);
+    if (ret_str == NULL)
     {
         LOG_PERROR("out of memory");
         exit(1);
@@ -692,22 +706,19 @@ String load_file(char* filename)
         if (chars_read >= size - 1)
         {
             /* time to make it bigger */
-            size = (llu_t)(size * 1.5);
-            buf  = my_memory_realloc(__FILE__, __LINE__, buf, size);
-            if (buf == NULL)
+            size    = (size_t)(size * 1.5);
+            ret_str = realloc(ret_str, size);
+            if (ret_str == NULL)
             {
                 LOG_PERROR("out of memory");
                 exit(1);
             }
         }
-        buf[chars_read++] = c;
+        ret_str[chars_read++] = c;
     }
-    buf[chars_read++] = '\0';
+    ret_str[chars_read++] = '\0';
     fclose(json_file);
-    String json_string = String_new(buf);
-    my_memory_free(buf);
-    buf = NULL;
-    return json_string;
+    return ret_str;
 }
 
 void test_class_json(void)
@@ -750,80 +761,83 @@ void test_class_json(void)
     }
     PRINT_TEST_TITLE("Empty object")
     {
-        JsonObj json_obj;
+        __autodestroy_json__ JsonObj json_obj;
+        JsonItem* json_item_p;
         const char* json_char_p = "{}";
+        lld_t a;
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Empty JSON created");
-        JsonObj_destroy(&json_obj);
+        ASSERT_ERR(Json_get(&json_obj, "missing key", &json_item_p), "Fix NULL on key");
+        ASSERT_ERR(Json_get(&json_obj, "missing key", &a), "Fix NULL on key");
     }
     PRINT_TEST_TITLE("Wrong object")
     {
         JsonObj json_obj;
         const char* json_char_p = "{:}";
         ASSERT_ERR(JsonObj_new(json_char_p, &json_obj), "Invalid JSON");
+        // This does not cause an error, even though the object was not created because of parsing errors.
+        JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("Empty nested object")
     {
-        JsonObj json_obj;
-        const char* value_str;
+        __autodestroy_json__ JsonObj json_obj;
+        const char* value_cstr;
         const char* json_char_p = "{\"key\":{}}";
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Empty nested JSON");
-        ASSERT_ERR(Json_get(&json_obj, "key", &value_str), "Key found but value cannot be retrieved");
-        JsonObj_destroy(&json_obj);
+        ASSERT_ERR(Json_get(&json_obj, "key", &value_cstr), "Key found but value cannot be retrieved");
     }
     PRINT_TEST_TITLE("Key-value pair");
     {
-        JsonObj json_obj;
-        const char* value_str;
+        __autodestroy_json__ JsonObj json_obj;
+        const char* value_cstr;
         const char* json_char_p = " {\"key\": \"value string\"}";
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
-        Json_get(&json_obj, "key", &value_str);
-        ASSERT_EQ("value string", value_str, "Key for root found with correct value STRING");
-        ASSERT_ERR(Json_get(&json_obj, "missing key", &value_str), "Missing key detected.");
-        ASSERT_EQ(value_str == NULL, true, "Returned null due to missing key.");
-        JsonObj_destroy(&json_obj);
+        Json_get(&json_obj, "key", &value_cstr);
+        ASSERT_EQ("value string", value_cstr, "Key for root found with correct value STRING");
+        ASSERT_ERR(Json_get(&json_obj, "missing key", &value_cstr), "Missing key detected.");
+        ASSERT_EQ(value_cstr == NULL, true, "Returned null due to missing key.");
     }
     PRINT_TEST_TITLE("Sibling key-value pair");
     {
-        JsonObj json_obj;
-        const char* value_str;
+        __autodestroy_json__ JsonObj json_obj;
+        const char* value_cstr;
         llu_t value_llu;
         const char* json_char_p = " {\"key\": \"value string\", \"sibling\": 56}";
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
-        Json_get(&json_obj, "key", &value_str);
+        Json_get(&json_obj, "key", &value_cstr);
         Json_get(&json_obj, "sibling", &value_llu);
-        ASSERT_EQ("value string", value_str, "Key for root value STRING");
+        ASSERT_EQ("value string", value_cstr, "Key for root value STRING");
         ASSERT_EQ(56, value_llu, "Key for root found with correct value INT");
-        JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("Simple array");
     {
-        JsonObj json_obj;
-        const char* value_str;
+        __autodestroy_json__ JsonObj json_obj;
+        const char* value_cstr;
         llu_t value_llu;
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [\"array value\", 56]}";
+        printf("\n%s\n", json_char_p);
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(&json_obj, "key", &json_array);
-        Json_get(json_array, 0, &value_str);
-        ASSERT_EQ("array value", value_str, "Array STRING element retrieved.");
+        Json_get(json_array, 0, &value_cstr);
+        ASSERT_EQ("array value", value_cstr, "Array STRING element retrieved.");
         Json_get(json_array, 1, &value_llu);
-        ASSERT_EQ(56, value_llu, "Array SIZE_T element retrieved.");
-        JsonObj_destroy(&json_obj);
+        ASSERT_EQ(56, value_llu, "Array LLU element retrieved.");
     }
     PRINT_TEST_TITLE("Array of objects");
     {
-        JsonObj json_obj;
+        __autodestroy_json__ JsonObj json_obj;
         JsonItem* json_item;
         llu_t value_llu;
         JsonArray* json_array;
         const char* json_char_p = " {\"key\": [ {\"array key\": 56}]}";
+        printf("\n%s\n", json_char_p);
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         Json_get(&json_obj, "key", &json_array);
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item->key_p, "array key", "Array STRING element retrieved.");
+        printf("%d\n", json_item->value.value_type);
         Json_get(json_item, "array key", &value_llu);
         ASSERT_EQ(value_llu, 56, "Value found an item that is also array element.");
-        JsonObj_destroy(&json_obj);
     }
     PRINT_TEST_TITLE("object and array");
     {
@@ -834,6 +848,7 @@ void test_class_json(void)
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Json object created");
         ASSERT_OK(Json_get(&json_obj, "object", &json_item), "Object retrieved");
         ASSERT_OK(Json_get(json_item, "array", &json_array), "Array retrieved");
+        // Destroying multiple times is safe
         JsonObj_destroy(&json_obj);
         JsonObj_destroy(&json_obj);
     }
@@ -842,84 +857,79 @@ void test_class_json(void)
         JsonObj json_obj;
         JsonItem* json_item;
         llu_t value_llu;
-        const char* value_str;
+        const char* value_cstr;
         double value_double;
         bool value_bool;
         JsonArray* json_array;
-        String json_string = load_file("test/assets/test_json_array_1.json");
-        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
+        __autofree_cstr__ char* json_cstr = load_file_alloc("test/assets/test_json_array_1.json");
+        ASSERT_OK(JsonObj_new(json_cstr, &json_obj), "Json object created");
         Json_get(&json_obj, "array_key", &json_array);
         ASSERT_EQ(json_array != NULL, true, "Array found as root element.");
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item != NULL, true, "First array element is an item.");
         Json_get(json_item, "object 1", &value_llu);
-        ASSERT_EQ(value_llu, 56, "Value SIZE_T found");
+        ASSERT_EQ(value_llu, 56, "Value LLU found");
         Json_get(json_array, 1, &json_item);
         ASSERT_EQ(json_item != NULL, true, "Second array element is an item.");
         Json_get(json_item, "object 2", &value_double);
-        ASSERT_EQ(value_double, 404.5f, "Value FLOAT found");
+        ASSERT_EQ(value_double, 404.5f, "Value DOUBLE found");
         Json_get(json_array, 2, &json_item);
-        Json_get(json_item, "object 3", &value_str);
-        ASSERT_EQ(value_str, "SOME STRING", "Array element STRING found.");
+        Json_get(json_item, "object 3", &value_cstr);
+        ASSERT_EQ(value_cstr, "SOME STRING", "Array element STRING found.");
         Json_get(json_array, 3, &value_llu);
         ASSERT_EQ(value_llu, 32, "Array element INT found.");
         Json_get(json_array, 4, &value_bool);
         ASSERT_EQ(value_bool, false, "Array element BOOL found.");
         JsonObj_destroy(&json_obj);
-        String_destroy(&json_string);
     }
     PRINT_TEST_TITLE("test_json_array_2.json");
     {
-        String json_string = load_file("test/assets/test_json_array_2.json");
+        __autofree_cstr__ char* json_cstr = load_file_alloc("test/assets/test_json_array_2.json");
+        __autodestroy_json__ JsonObj json_obj;
         JsonItem* json_item;
-        JsonObj json_obj;
-        llu_t value_llu;
-        const char* value_str;
-        double value_double;
-        bool value_bool;
         JsonArray* json_array;
         JsonArray* json_array_2;
-        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
+        llu_t value_llu;
+        const char* value_cstr;
+        double value_double;
+        bool value_bool;
+        ASSERT_OK(JsonObj_new(json_cstr, &json_obj), "Json object created");
         Json_get(&json_obj, "array_key", &json_array);
         ASSERT_EQ(json_array != NULL, true, "Array found as root element.");
         Json_get(json_array, 0, &json_item);
         ASSERT_EQ(json_item != NULL, true, "First array element is an item.");
         Json_get(json_item, "inner array 1", &json_array_2);
         Json_get(json_array_2, 0, &value_llu);
-        ASSERT_EQ(value_llu, 12314, "Value SIZE_T found");
+        ASSERT_EQ(value_llu, 12314, "Value LLU found");
         Json_get(json_array_2, 1, &value_double);
-        ASSERT_EQ(value_double, -32.4, "Value FLOAT found");
+        ASSERT_EQ(value_double, -32.4, "Value DOUBLE found");
         Json_get(json_array_2, 2, &value_bool);
         ASSERT_EQ(value_bool, true, "Value TRUE found");
         Json_get(json_array, 1, &json_item);
         ASSERT_EQ(json_item != NULL, true, "Second array element is an item.");
         Json_get(json_item, "inner array 2", &json_array_2);
         Json_get(json_array_2, 0, &value_double);
-        ASSERT_EQ(value_double, 1.4000, "Value FLOAT found");
-        Json_get(json_array_2, 1, &value_str);
-        ASSERT_EQ(value_str, "hello", "Value STRING found");
+        ASSERT_EQ(value_double, 1.4, "Value DOUBLE found");
+        Json_get(json_array_2, 1, &value_cstr);
+        ASSERT_EQ(value_cstr, "hello", "Value STRING found");
         Json_get(json_array_2, 2, &value_bool);
         ASSERT_EQ(value_bool, false, "Value FALSE found");
-        JsonObj_destroy(&json_obj);
-        String_destroy(&json_string);
     }
     PRINT_TEST_TITLE("test_json_array_3.json");
     {
-        JsonObj json_obj;
+        __autodestroy_json__ JsonObj json_obj;
         JsonItem* json_item;
-        const char* value_str;
+        const char* value_cstr;
         llu_t value_llu;
         JsonArray* json_array;
-        String json_string = load_file("test/assets/test_json_array_3.json");
-        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
+        __autofree_cstr__ char* json_cstr = load_file_alloc("test/assets/test_json_array_3.json");
+        ASSERT_OK(JsonObj_new(json_cstr, &json_obj), "Json object created");
         ASSERT(Json_get(&json_obj, "Snapshot", &json_item) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_item, "Value", &value_llu) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_item, "Data", &json_array) == ERR_ALL_GOOD, "Ok");
         ASSERT(Json_get(json_array, 0, &json_item) == ERR_ALL_GOOD, "Ok");
-        ASSERT(Json_get(json_item, "Time", &value_str) == ERR_ALL_GOOD, "Ok");
-        ASSERT_EQ(value_str, "2021-07-23T08:09:00.000000Z", "Time correct.");
-        JsonObj_destroy(&json_obj);
-        String_destroy(&json_string);
+        ASSERT(Json_get(json_item, "Time", &value_cstr) == ERR_ALL_GOOD, "Ok");
+        ASSERT_EQ(value_cstr, "2021-07-23T08:09:00.000000Z", "Time correct.");
     }
     PRINT_TEST_TITLE("test_json_array_4.json");
     {
@@ -927,8 +937,8 @@ void test_class_json(void)
         llu_t value_llu;
         JsonArray* json_array;
         bool value_bool;
-        String json_string = load_file("test/assets/test_json_array_4.json");
-        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
+        __autofree_cstr__ char* json_cstr = load_file_alloc("test/assets/test_json_array_4.json");
+        ASSERT_OK(JsonObj_new(json_cstr, &json_obj), "Json object created");
         ASSERT_OK(Json_get(&json_obj, "array_key1", &json_array), "Ok");
         ASSERT_OK(Json_get(json_array, 0, &value_llu), "Ok");
         ASSERT_EQ(value_llu, 32, "Ok");
@@ -942,45 +952,43 @@ void test_class_json(void)
         ASSERT_OK(Json_get(&json_obj, "key", &value_llu), "Ok");
         ASSERT_EQ(value_llu, 34, "Ok");
         JsonObj_destroy(&json_obj);
-        String_destroy(&json_string);
     }
     PRINT_TEST_TITLE("Testing test/assets/test_json.json");
     {
-        JsonObj json_obj;
+        __autodestroy_json__ JsonObj json_obj;
         JsonItem* json_item;
-        const char* value_str;
+        const char* value_cstr;
         llu_t value_llu;
         double value_double;
         bool value_bool;
         JsonArray* json_array;
-        String json_string = load_file("test/assets/test_json.json");
-        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
-        String_destroy(&json_string); // We can delete it.
-        Json_get(&json_obj, "text_key", &value_str);
-        ASSERT_EQ("text_value", value_str, "String*value found in first item");
+        __autofree_cstr__ char* json_cstr = load_file_alloc("test/assets/test_json.json");
+        ASSERT_OK(JsonObj_new(json_cstr, &json_obj), "Json object created");
+        Json_get(&json_obj, "text_key", &value_cstr);
+        ASSERT_EQ("text_value", value_cstr, "String*value found in first item");
 
-        Json_get(&json_obj, "text_sibling", &value_str);
-        ASSERT_EQ("sibling_value", value_str, "String*value found in sibling");
+        Json_get(&json_obj, "text_sibling", &value_cstr);
+        ASSERT_EQ("sibling_value", value_cstr, "String*value found in sibling");
 
         Json_get(&json_obj, "nested_1", &json_item);
         ASSERT_EQ(json_item->key_p, "object_1.1", "Found nested object key");
 
-        Json_get(json_item, "object_1.1", &value_str);
-        ASSERT_EQ(value_str, "item_1.1", "Found nested object value");
-        Json_get(json_item, "object_1.2", &value_str);
-        ASSERT_EQ(value_str, "item_1.2", "Found nested sibling object value");
+        Json_get(json_item, "object_1.1", &value_cstr);
+        ASSERT_EQ(value_cstr, "item_1.1", "Found nested object value");
+        Json_get(json_item, "object_1.2", &value_cstr);
+        ASSERT_EQ(value_cstr, "item_1.2", "Found nested sibling object value");
         ASSERT(
-            Json_get(json_item, "object_32", &value_str) == ERR_JSON_MISSING_ENTRY,
+            Json_get(json_item, "object_32", &value_cstr) == ERR_JSON_MISSING_ENTRY,
             "Object not found");
-        ASSERT(value_str == NULL, "Null returned.");
+        ASSERT(value_cstr == NULL, "Null returned.");
 
         Json_get(&json_obj, "nested_2", &json_item);
-        Json_get(json_item, "object_2.1", &value_str);
-        ASSERT_EQ(value_str, "item_2.1", "Found nested object value");
+        Json_get(json_item, "object_2.1", &value_cstr);
+        ASSERT_EQ(value_cstr, "item_2.1", "Found nested object value");
         Json_get(json_item, "object_2.2", &json_item);
         ASSERT_EQ(json_item->key_p, "item_2.2", "Found nested object key");
-        Json_get(json_item, "item_2.2", &value_str);
-        ASSERT_EQ(value_str, "value_2.2.1", "Found nested sibling object value");
+        Json_get(json_item, "item_2.2", &value_cstr);
+        ASSERT_EQ(value_cstr, "value_2.2.1", "Found nested sibling object value");
 
         PRINT_TEST_TITLE("Test integer");
         Json_get(&json_obj, "test_integer", &value_llu);
@@ -1002,59 +1010,46 @@ void test_class_json(void)
         Json_get(json_array, 0, &value_llu);
         ASSERT_EQ(value_llu, 14352, "Array element of type INT read correctly");
         Json_get(json_array, 1, &value_double);
-        ASSERT_EQ(value_double, 2.15, "Array element of type FLOAT read correctly");
-        Json_get(json_array, 2, &value_str);
-        ASSERT_EQ(value_str, "string_element", "Array element of type C-string read correctly");
-        JsonObj_destroy(&json_obj);
+        ASSERT_EQ(value_double, 2.15, "Array element of type DOUBLE read correctly");
+        Json_get(json_array, 2, &value_cstr);
+        ASSERT_EQ(value_cstr, "string_element", "Array element of type C-string read correctly");
     }
     PRINT_TEST_TITLE("Invalid JSON string - empty")
     {
         JsonObj json_obj;
-        String json_string = String_new("");
-        ASSERT(
-            JsonObj_new(&json_string, &json_obj) == ERR_EMPTY_STRING,
-            "Empty JSON fails to initialize.");
-        String_destroy(&json_string);
+        char* json_cstr = "";
+        ASSERT(JsonObj_new(json_cstr, &json_obj) == ERR_EMPTY_STRING, "Empty JSON fails to initialize.");
     }
     PRINT_TEST_TITLE("Invalid JSON string - string not starting with '{'")
     { // TODO: crate token analyzer and add TC's.
         JsonObj json_obj;
-        String json_string = String_new("This is not a JSON file");
-        ASSERT(
-            JsonObj_new(&json_string, &json_obj) == ERR_JSON_INVALID,
-            "Invalid JSON fails to initialize.");
-        String_destroy(&json_string);
+        char* json_cstr = "This is not a JSON file";
+        ASSERT(JsonObj_new(json_cstr, &json_obj) == ERR_JSON_INVALID, "Invalid JSON fails to initialize.");
     }
     PRINT_TEST_TITLE("Fixed memory leak");
     {
         JsonArray* json_array;
-        const char* value_str;
+        const char* value_cstr;
         const char* json_char_p = "{\"request\":[\"Required parameter is missing\"]}";
-        JsonObj json_with_vector_obj;
+        __autodestroy_json__ JsonObj json_with_vector_obj;
         ASSERT(is_ok(JsonObj_new(json_char_p, &json_with_vector_obj)), "Json object created");
         Json_get(&json_with_vector_obj, "request", &json_array);
-        Json_get(json_array, 0, &value_str);
-        ASSERT_EQ(value_str, "Required parameter is missing", "");
-        JsonObj_destroy(&json_with_vector_obj);
+        Json_get(json_array, 0, &value_cstr);
+        ASSERT_EQ(value_cstr, "Required parameter is missing", "");
     }
     PRINT_TEST_TITLE("Data conversion");
     {
-        JsonObj json_obj;
+        __autodestroy_json__ JsonObj json_obj;
         llu_t value_llu;
         lld_t value_lld;
-        Error ret_res;
-        String json_string = load_file("test/assets/test_json_numbers.json");
-        ASSERT_OK(JsonObj_new(&json_string, &json_obj), "Json object created");
+        __autofree_cstr__ char* json_cstr = load_file_alloc("test/assets/test_json_numbers.json");
+        ASSERT_OK(JsonObj_new(json_cstr, &json_obj), "Json object created");
         Json_get(&json_obj, "value_positive_lld", &value_llu);
-        ASSERT_EQ((llu_t)23, value_llu, "Conversion from INT to SIZE_T successfull");
+        ASSERT_EQ((llu_t)23, value_llu, "Conversion from INT to LLU successfull");
         Json_get(&json_obj, "value_small_llu", &value_lld);
-        ASSERT_EQ((int)43, value_lld, "Conversion from SIZE_T to INT successfull");
-        ret_res = Json_get(&json_obj, "value_negative_lld", &value_llu);
-        ASSERT(ret_res == ERR_INVALID, "Conversion from negative INT to SIZE_T failed");
-        ret_res = Json_get(&json_obj, "value_large_llu", &value_lld);
-        ASSERT(ret_res == ERR_INVALID, "Conversion from large SIZE_T to INT failed");
-        JsonObj_destroy(&json_obj);
-        String_destroy(&json_string);
+        ASSERT_EQ((lld_t)43, value_lld, "Conversion from LLU to INT successfull");
+        ASSERT(Json_get(&json_obj, "value_negative_lld", &value_llu) == ERR_INVALID, "Conversion from negative INT to LLU failed");
+        ASSERT(Json_get(&json_obj, "value_large_llu", &value_lld) == ERR_INVALID, "Conversion from large LLU to INT failed");
     }
     /**/
 }

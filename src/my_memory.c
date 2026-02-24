@@ -81,11 +81,14 @@ int my_memory_asprintf(const char* file, const int line, char** ptr_p, const cha
 
 void my_memory_free(void* ptr)
 {
-    remove_file(ptr);
-    free(ptr);
+    if (ptr != NULL)
+    {
+        remove_file(ptr);
+        free(ptr);
+    }
 }
 
-void my_memory_free_ptr(char** ptr)
+void my_memory_free_cstr(char** ptr)
 {
     my_memory_free(*ptr);
     *ptr = NULL;
