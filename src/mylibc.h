@@ -135,9 +135,9 @@ Error String_replace_pattern_llu_t(String*, const char*, const char*, const llu_
 Error String_replace_pattern_lld_t(String*, const char*, const char*, const lld_t, size_t*);
 Error String_replace_pattern_double(String*, const char*, const char*, const double, size_t*);
 
-#define String_new(...) _String_new(__FILENAME__, __LINE__, __VA_ARGS__)
+#define String_new(...) _String_new(__FILE__, __LINE__, __VA_ARGS__)
 #define String_replace_pattern(haystack, needle, replacement, out_count) \
-    _String_replace_pattern(__FILENAME__, __LINE__, haystack, needle, replacement, out_count)
+    _String_replace_pattern(__FILE__, __LINE__, haystack, needle, replacement, out_count)
 #define String_empty(string_name) String string_name = {.length = 0, .size = 0, .str = NULL}
 #define String_full(string_name, ...) String string_name = String_new(__VA_ARGS__)
 
@@ -146,7 +146,7 @@ Error String_replace_pattern_double(String*, const char*, const char*, const dou
     _Generic((in_value), \
      String*     : _String_between_patterns_in_string_p, \
      const char* : _String_between_patterns_in_char_p \
-     )(__FILENAME__, __LINE__, in_value, prefix, suffix, out_string)
+     )(__FILE__, __LINE__, in_value, prefix, suffix, out_string)
 
 #define String_replace_pattern_with_format(haystack, needle, format, replacement, out_count) \
     _Generic((replacement),                            \
@@ -375,7 +375,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
     _Generic(in_json,                         \
         const char* : _JsonObj_new,           \
         char *      : _JsonObj_new            \
-        )(__FILENAME__, __LINE__, in_json, out_json)
+        )(__FILE__, __LINE__, in_json, out_json)
 
 #define Json_get(json_stuff, needle, out_p)                \
     _Generic ((json_stuff),                                \
@@ -534,6 +534,8 @@ typedef struct
 } HashMap;
 
 #define __hm_autofree__ __attribute__((cleanup(HashMap_delete)))
+#define HashMap_new_with_capacity(__hm_type, __capacity) __HashMap_new_with_capacity(__FILE__, __LINE__, __hm_type, __capacity)
+#define HashMap_get_cstr_malloc(__hm_p, __key, __out_value_pp) __HashMap_get_cstr_malloc(__FILE__, __LINE__, __hm_p, __key, __out_value_pp)
 
 Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
 Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);
@@ -567,7 +569,7 @@ Error fs_get_file_size(const char*, off_t*);
     _Generic((file_path_p),                                       \
         const char* : _fs_read_to_string,                         \
         char* : _fs_read_to_string                                \
-    )(__FILENAME__, __LINE__,file_path_p, out_string)
+    )(__FILE__, __LINE__,file_path_p, out_string)
 // clang-format on
 
 void* my_memory_malloc(const char* file, const int line, size_t size);
