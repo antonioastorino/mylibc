@@ -332,7 +332,7 @@ Error fs_get_file_size(const char* path_to_file_char_p, off_t* out_file_size)
 void test_fs(void)
 {
     PRINT_BANNER();
-    PRINT_TEST_TITLE("mkdir")
+    PRINT_TEST_TITLE("mkdir");
     {
         const char* path_string = "test/artifacts/test_folder_0";
         ASSERT_OK(fs_mkdir(path_string, 0666), "`fs_mkdir` works fine.");
@@ -344,7 +344,7 @@ void test_fs(void)
             fs_mkdir_with_parents(path_string, 0666) == ERR_FORBIDDEN,
             "`fs_mkdir_with_parents` should fail if the folder exists.");
     }
-    PRINT_TEST_TITLE("mkdir -p")
+    PRINT_TEST_TITLE("mkdir -p");
     {
         ASSERT_OK(
             fs_mkdir_with_parents("test/artifacts/test_folder_1/new_inner_folder/", 0777),
@@ -356,7 +356,7 @@ void test_fs(void)
             "`fs_mkdir_with_parents` works fine when the path does not end with '/'.");
     }
 
-    PRINT_TEST_TITLE("rmdir")
+    PRINT_TEST_TITLE("rmdir");
     {
         ASSERT_OK(
             fs_rmdir("test/artifacts/empty-0"),
@@ -365,7 +365,7 @@ void test_fs(void)
             fs_rmdir("test/artifacts/non-empty-0") == ERR_FS_INTERNAL,
             "`fs_rmdir` should fail if the folder is not empty.");
     }
-    PRINT_TEST_TITLE("rm -r")
+    PRINT_TEST_TITLE("rm -r");
     {
         ASSERT_OK(
             fs_rm_r("test/artifacts/empty"),
@@ -381,7 +381,7 @@ void test_fs(void)
             fs_rm_r("test/artifacts/delete_me.txt"),
             "`fs_rm_r` should NOT fail on a file.");
     }
-    PRINT_TEST_TITLE("rm")
+    PRINT_TEST_TITLE("rm");
     {
         ASSERT_OK(fs_rm("test/artifacts/delete_me_2.txt"), "`fs_rm` works fine.");
         ASSERT_ERR(

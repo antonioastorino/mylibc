@@ -341,7 +341,7 @@ Error _String_between_patterns_in_string_p(
 void test_class_string(void)
 {
     PRINT_BANNER();
-    PRINT_TEST_TITLE("Destroy empty string without failure")
+    PRINT_TEST_TITLE("Destroy empty string without failure");
     {
         String_empty(string_name);
         ASSERT(string_name.str == NULL, "Empty string created.");
@@ -354,7 +354,7 @@ void test_class_string(void)
         ASSERT(string_name.str == NULL, "String destroyed twice without failing.");
     }
 
-    PRINT_TEST_TITLE("New from string")
+    PRINT_TEST_TITLE("New from string");
     {
         const char* str = "Hello everybody";
         String_full(test_string, str);
@@ -364,7 +364,7 @@ void test_class_string(void)
         String_destroy(&test_string);
         ASSERT_EQ(String_is_null(&test_string), true, "Destroyed.");
     }
-    PRINT_TEST_TITLE("Destroy string twice")
+    PRINT_TEST_TITLE("Destroy string twice");
     {
         const char* str    = "Hello everybody";
         String test_string = String_new(str);
@@ -394,7 +394,7 @@ void test_class_string(void)
         String_destroy(&test_string);
     }
 
-    PRINT_TEST_TITLE("clone() function")
+    PRINT_TEST_TITLE("clone() function");
     {
         String test_origin = String_new("Original");
         String test_clone  = String_clone(&test_origin);

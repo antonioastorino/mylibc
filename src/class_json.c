@@ -724,7 +724,7 @@ static char* load_file_alloc(char* filename)
 void test_class_json(void)
 {
     PRINT_BANNER();
-    PRINT_TEST_TITLE("Validate tokens")
+    PRINT_TEST_TITLE("Validate tokens");
     {
         { // TODO: this should fail
             char json_char_p[] = "{[}]";
@@ -759,7 +759,7 @@ void test_class_json(void)
             ASSERT_ERR(_validate_tokens(json_char_p), "Extra ].");
         }
     }
-    PRINT_TEST_TITLE("Empty object")
+    PRINT_TEST_TITLE("Empty object");
     {
         __autodestroy_json__ JsonObj json_obj;
         JsonItem* json_item_p;
@@ -769,7 +769,7 @@ void test_class_json(void)
         ASSERT_ERR(Json_get(&json_obj, "missing key", &json_item_p), "Fix NULL on key");
         ASSERT_ERR(Json_get(&json_obj, "missing key", &a), "Fix NULL on key");
     }
-    PRINT_TEST_TITLE("Wrong object")
+    PRINT_TEST_TITLE("Wrong object");
     {
         JsonObj json_obj;
         const char* json_char_p = "{:}";
@@ -777,7 +777,7 @@ void test_class_json(void)
         // This does not cause an error, even though the object was not created because of parsing errors.
         JsonObj_destroy(&json_obj);
     }
-    PRINT_TEST_TITLE("Empty nested object")
+    PRINT_TEST_TITLE("Empty nested object");
     {
         __autodestroy_json__ JsonObj json_obj;
         const char* value_cstr;
@@ -1014,13 +1014,13 @@ void test_class_json(void)
         Json_get(json_array, 2, &value_cstr);
         ASSERT_EQ(value_cstr, "string_element", "Array element of type C-string read correctly");
     }
-    PRINT_TEST_TITLE("Invalid JSON string - empty")
+    PRINT_TEST_TITLE("Invalid JSON string - empty");
     {
         JsonObj json_obj;
         char* json_cstr = "";
         ASSERT(JsonObj_new(json_cstr, &json_obj) == ERR_EMPTY_STRING, "Empty JSON fails to initialize.");
     }
-    PRINT_TEST_TITLE("Invalid JSON string - string not starting with '{'")
+    PRINT_TEST_TITLE("Invalid JSON string - string not starting with '{'");
     { // TODO: crate token analyzer and add TC's.
         JsonObj json_obj;
         char* json_cstr = "This is not a JSON file";

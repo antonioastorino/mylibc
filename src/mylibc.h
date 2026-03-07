@@ -256,7 +256,7 @@ void ASSERT_NE_char_p(const char*, const char*, const char*, const char*, int);
 
 // clang-format on
 
-#define PRINT_TEST_TITLE(title) printf("\n------- T:%llu < %s > -------\n", ++test_counter_, title);
+#define PRINT_TEST_TITLE(title) printf("\n------- T:%llu < %s > -------\n", ++test_counter_, title)
 void test_class_string(void);
 void test_class_json(void);
 void test_class_string_array(void);
@@ -533,10 +533,6 @@ typedef struct
     HashMapEntry* entries;
 } HashMap;
 
-#define __hm_autofree__ __attribute__((cleanup(HashMap_delete)))
-#define HashMap_new_with_capacity(__hm_type, __capacity) __HashMap_new_with_capacity(__FILE__, __LINE__, __hm_type, __capacity)
-#define HashMap_get_cstr_malloc(__hm_p, __key, __out_value_pp) __HashMap_get_cstr_malloc(__FILE__, __LINE__, __hm_p, __key, __out_value_pp)
-
 Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
 Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);
 Error numparser_cstr_to_double(const char* str_p, double*, char terminator);
@@ -570,6 +566,7 @@ Error fs_get_file_size(const char*, off_t*);
         const char* : _fs_read_to_string,                         \
         char* : _fs_read_to_string                                \
     )(__FILE__, __LINE__,file_path_p, out_string)
+
 // clang-format on
 
 void* my_memory_malloc(const char* file, const int line, size_t size);
@@ -586,5 +583,32 @@ void tcp_utils_close_client_socket(int);
 Error tcp_utils_read(char*, int);
 Error tcp_utils_write(char*, int);
 Error tcp_utils_send_file(char*, long, int);
+
+bool __HASHMAP_PUT_LLU(const char* __file, int __line, HashMap** __hm_pp, const char* __key, llu_t __value);
+bool __HASHMAP_PUT_LLD(const char* __file, int __line, HashMap** __hm_pp, const char* __key, lld_t __value);
+bool __HashMap_put_cstr(const char* __file, int __line, HashMap** __hm_pp, const char* __key, char* __value);
+void HashMap_delete(HashMap** map_pp);
+#define __hm_autofree__ __attribute__((cleanup(HashMap_delete)))
+#define HashMap_new_with_capacity(__hm_type, __capacity) __HashMap_new_with_capacity(__FILE__, __LINE__, __hm_type, __capacity)
+#define HashMap_get_cstr_malloc(__hm_p, __key, __out_value_pp) __HashMap_get_cstr_malloc(__FILE__, __LINE__, __hm_p, __key, __out_value_pp)
+
+// clang-format off
+// __hm_pp is a double pointer because the hashmap might be reallocated if it needs to grow
+#define HashMap_put(__hm_pp, __key, __value)      \
+    _Generic((__value),                          \
+        unsigned short     : __HASHMAP_PUT_LLU,  \
+        unsigned int       : __HASHMAP_PUT_LLU,  \
+        unsigned long      : __HASHMAP_PUT_LLU,  \
+        unsigned long long : __HASHMAP_PUT_LLU,  \
+        short              : __HASHMAP_PUT_LLD,  \
+        int                : __HASHMAP_PUT_LLD,  \
+        long               : __HASHMAP_PUT_LLD,  \
+        long long          : __HASHMAP_PUT_LLD,  \
+        char*              : __HashMap_put_cstr, \
+        const char*        : __HashMap_put_cstr  \
+    )(__FILE__, __LINE__, __hm_pp, __key, __value)
+// clang-format on
+#define HashMap_get_llu __HASHMAP_GET_LLU
+#define HashMap_get_lld __HASHMAP_GET_LLD
 
 #endif /* MYLIBC_H */
