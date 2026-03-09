@@ -35,6 +35,90 @@ size_t __hm_cstr_to_index(char const* cstr, llu_t const max_size)
     return ret_val;
 }
 
+#define __HASHMAP_TRAVERSE(__suffix, __SUFFIX, __type, __ret_action)      \
+    bool HashMap_traverse_##__suffix(                                     \
+        HashMap* hm_p,                                                    \
+        bool* restart,                                                    \
+        char* out_key,                                                    \
+        __type out_val_p)                                                 \
+    {                                                                     \
+        static size_t curr_index        = 0;                              \
+        static HashMapEntry* hm_entry_p = NULL;                           \
+        out_key[0]                      = 0;                              \
+        *out_val_p                      = 0;                              \
+        if (!hm_p)                                                        \
+        {                                                                 \
+            return false;                                                 \
+        }                                                                 \
+        if (hm_p->type != HM_TYPE_##__SUFFIX)                             \
+        {                                                                 \
+            LOG_ERROR("Wrong hashmap type: expected HM_TYPE_" #__SUFFIX); \
+            return false;                                                 \
+        }                                                                 \
+        if (*restart)                                                     \
+        {                                                                 \
+            *restart   = false;                                           \
+            hm_entry_p = NULL;                                            \
+            curr_index = 0;                                               \
+        }                                                                 \
+        if (curr_index >= hm_p->capacity)                                 \
+        {                                                                 \
+            LOG_INFO("Reached the bottom");                               \
+            return false;                                                 \
+        }                                                                 \
+                                                                          \
+        /* hm_entry_p is set to NULL when we want to look at              \
+         * the root element, otherwise it points to a child element */    \
+        if (!hm_entry_p)                                                  \
+        {                                                                 \
+            hm_entry_p = &hm_p->entries[curr_index];                      \
+        }                                                                 \
+                                                                          \
+        while (hm_entry_p->key[0] == 0)                                   \
+        {                                                                 \
+            curr_index++;                                                 \
+            if (curr_index >= hm_p->capacity)                             \
+            {                                                             \
+                LOG_INFO("No more entries");                              \
+                return false;                                             \
+            }                                                             \
+            hm_entry_p = &hm_p->entries[curr_index];                      \
+        }                                                                 \
+        strncpy(out_key, hm_entry_p->key, MAX_MAP_KEY_LEN - 1);           \
+        __ret_action;                                                     \
+        /* Set the next place to scan:                                    \
+         * - the next child of the current element                        \
+         * - the next element*/                                           \
+        if (hm_entry_p->next_p)                                           \
+        {                                                                 \
+            hm_entry_p = hm_entry_p->next_p;                              \
+        }                                                                 \
+        else                                                              \
+        {                                                                 \
+            hm_entry_p = NULL;                                            \
+            curr_index++;                                                 \
+        }                                                                 \
+        LOG_TRACE("Next index `%zu`", curr_index);                        \
+        return true;                                                      \
+    }
+
+// clang-format off
+__HASHMAP_TRAVERSE(lld, LLD, lld_t*, *out_val_p = hm_entry_p->value_lld)
+__HASHMAP_TRAVERSE(llu, LLU, llu_t*, *out_val_p = hm_entry_p->value_llu)
+__HASHMAP_TRAVERSE(cstr, CSTR, char**,
+            size_t val_len = strlen(hm_entry_p->value_cstr) + 1;
+            *out_val_p     = (char*)my_memory_malloc(__FILE__, __LINE__, val_len);
+            strncpy(*out_val_p, hm_entry_p->value_cstr, val_len)
+)
+
+#define HashMap_traverse(__hm_p, __restart, __out_key_p, __out_val_p) \
+    _Generic((__out_val_p),                                           \
+    llu_t* : HashMap_traverse_llu,                                    \
+    lld_t* : HashMap_traverse_lld,                                    \
+    char** : HashMap_traverse_cstr                                    \
+    )(__hm_p, __restart, __out_key_p, __out_val_p)
+// clang-format on
+
 HashMap* __HashMap_new_with_capacity(const char* __file, int __line, HashMapType hm_type, size_t capacity)
 {
     HashMap* ret_hm_p  = my_memory_malloc(__file, __line, sizeof(HashMap));
@@ -81,13 +165,13 @@ void HashMap_resize_if_needed(HashMap** src_hm_pp)
     {
         return;
     }
-    if ((*src_hm_pp)->size <= (*src_hm_pp)->capacity / 2)
+    if ((*src_hm_pp)->size * 1.3 <= (*src_hm_pp)->capacity)
     {
         return;
     }
     LOG_WARNING("Size limit reached, creating bigger table");
 
-    HashMap* dst_hm_p = HashMap_new_with_capacity((*src_hm_pp)->type, (*src_hm_pp)->size);
+    HashMap* dst_hm_p = HashMap_new_with_capacity((*src_hm_pp)->type, (*src_hm_pp)->capacity);
     for (size_t index = 0; index < (*src_hm_pp)->capacity; index++)
     {
         HashMapEntry* hm_entry_p = &(*src_hm_pp)->entries[index];
@@ -282,7 +366,7 @@ bool HashMap_remove(HashMap* hm_p, const char* key)
                 }                                                                                              \
                 break;                                                                                         \
             }                                                                                                  \
-            else if (strlen(hm_entry_p->key) == 0)                                                             \
+            else if (hm_entry_p->key[0] == 0)                                                                  \
             {                                                                                                  \
                 /* Empty key -> unused entry */                                                                \
                 LOG_TRACE("Adding key `%s`.", __key);                                                          \
@@ -329,7 +413,7 @@ bool __HashMap_put_cstr(const char* __file, int __line, HashMap** __hm_pp, const
             my_memory_asprintf(__file, __line, &hm_entry_p->value_cstr, __value);
             break;
         }
-        else if (strlen(hm_entry_p->key) == 0)
+        else if (hm_entry_p->key[0] == 0)
         {
             // Empty key -> unused entry
             LOG_TRACE("Adding key `%s`.", __key);
@@ -528,6 +612,86 @@ void test_hashmap(void)
         HashMap_print(test_hm_p);
         ASSERT(HashMap_put(&test_hm_p, "test key02", "there"), "Entry put");
         ASSERT_EQ(test_hm_p->capacity, 5, "Capacity increased correctly");
+        HashMap_print(test_hm_p);
+    }
+    PRINT_TEST_TITLE("HashMap LLU traverse");
+    {
+        const size_t capacity              = 1;
+        __hm_autofree__ HashMap* test_hm_p = HashMap_new_with_capacity(HM_TYPE_LLU, capacity);
+        bool restart                       = true;
+        char key[MAX_MAP_KEY_LEN]          = {0};
+        llu_t value_llu                    = 0;
+        ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Empty map");
+        ASSERT(restart == false, "Restart reset");
+        ASSERT(HashMap_put(&test_hm_p, "First entry", 5041U), "Entry put");
+        restart = true;
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
+        ASSERT_EQ(key, "First entry", "Entry found");
+        ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_llu), "No more entries");
+        ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_llu), "No more entries");
+        ASSERT(HashMap_put(&test_hm_p, "Other entry", 4U), "Entry put");
+        HashMap_print(test_hm_p);
+        ASSERT(HashMap_put(&test_hm_p, "First entrx", 10U), "Entry put");
+        restart = true;
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
+        ASSERT_EQ(key, "Other entry", "Entry found");
+        ASSERT_EQ(value_llu, 4U, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
+        ASSERT_EQ(key, "First entrx", "Entry found");
+        ASSERT_EQ(value_llu, 10U, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
+        ASSERT_EQ(key, "First entry", "Entry found");
+        ASSERT_EQ(value_llu, 5041U, "Value correct");
+        HashMap_print(test_hm_p);
+    }
+    PRINT_TEST_TITLE("HashMap LLD traverse");
+    {
+        const size_t capacity              = 1;
+        __hm_autofree__ HashMap* test_hm_p = HashMap_new_with_capacity(HM_TYPE_LLD, capacity);
+        bool restart                       = true;
+        char key[MAX_MAP_KEY_LEN]          = {0};
+        lld_t value_lld                    = 0;
+        ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Empty map");
+        ASSERT(restart == false, "Restart reset");
+        ASSERT(HashMap_put(&test_hm_p, "First entry", 1), "Entry put");
+        restart = true;
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
+        ASSERT_EQ(key, "First entry", "Entry found");
+        ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_lld), "No more entries");
+        ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_lld), "No more entries");
+        ASSERT(HashMap_put(&test_hm_p, "Other entry", 4), "Entry put");
+        HashMap_print(test_hm_p);
+        ASSERT(HashMap_put(&test_hm_p, "First entrx", 5), "Entry put");
+        restart = true;
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
+        ASSERT_EQ(key, "Other entry", "Entry found");
+        ASSERT_EQ(value_lld, 4, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
+        ASSERT_EQ(key, "First entrx", "Entry found");
+        ASSERT_EQ(value_lld, 5, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
+        ASSERT_EQ(key, "First entry", "Entry found");
+        ASSERT_EQ(value_lld, 1, "Value correct");
+        HashMap_print(test_hm_p);
+    }
+    PRINT_TEST_TITLE("HashMap CSTR traverse");
+    {
+        const size_t capacity              = 1;
+        __hm_autofree__ HashMap* test_hm_p = HashMap_new_with_capacity(HM_TYPE_CSTR, capacity);
+        bool restart                       = true;
+        char key[MAX_MAP_KEY_LEN]          = {0};
+        char* value_cstr                   = NULL;
+        ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_cstr), "Empty map");
+        ASSERT(restart == false, "Restart reset");
+        ASSERT(HashMap_put(&test_hm_p, "Entry 1", "First entry val"), "Entry put");
+        ASSERT(HashMap_put(&test_hm_p, "Entry 2", "Second entry val"), "Entry put");
+        ASSERT(HashMap_put(&test_hm_p, "Entry 3", "Third entry val"), "Entry put");
+        restart = true;
+        while (HashMap_traverse(test_hm_p, &restart, key, &value_cstr))
+        {
+            printf("Key: `%s`, value: `%s`\n", key, value_cstr);
+            my_memory_free_cstr(&value_cstr);
+        }
         HashMap_print(test_hm_p);
     }
 }
