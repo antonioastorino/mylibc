@@ -584,9 +584,6 @@ Error tcp_utils_read(char*, int);
 Error tcp_utils_write(char*, int);
 Error tcp_utils_send_file(char*, long, int);
 
-bool __HASHMAP_PUT_LLU(const char* __file, int __line, HashMap** __hm_pp, const char* __key, llu_t __value);
-bool __HASHMAP_PUT_LLD(const char* __file, int __line, HashMap** __hm_pp, const char* __key, lld_t __value);
-bool __HashMap_put_cstr(const char* __file, int __line, HashMap** __hm_pp, const char* __key, char* __value);
 void HashMap_delete(HashMap** map_pp);
 #define __hm_autofree__ __attribute__((cleanup(HashMap_delete)))
 #define HashMap_new_with_capacity(__hm_type, __capacity) __HashMap_new_with_capacity(__FILE__, __LINE__, __hm_type, __capacity)

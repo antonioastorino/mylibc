@@ -1,3 +1,7 @@
+bool __HASHMAP_PUT_LLU(const char* __file, int __line, HashMap** __hm_pp, const char* __key, llu_t __value);
+bool __HASHMAP_PUT_LLD(const char* __file, int __line, HashMap** __hm_pp, const char* __key, lld_t __value);
+bool __HashMap_put_cstr(const char* __file, int __line, HashMap** __hm_pp, const char* __key, char* __value);
+
 llu_t __prime_vec[] = {
     2,
     5,
@@ -268,12 +272,12 @@ bool HashMap_remove(HashMap* hm_p, const char* key)
                 /* Key match */                                                                                \
                 if ((*__hm_pp)->type == HM_TYPE_LLU)                                                           \
                 {                                                                                              \
-                    LOG_INFO("Putting `%s:%llu` at index `%zu`.", __key, __value, index)                       \
+                    LOG_TRACE("Putting `%s:%llu` at index `%zu`.", __key, __value, index)                      \
                     hm_entry_p->value_llu = __value;                                                           \
                 }                                                                                              \
                 if ((*__hm_pp)->type == HM_TYPE_LLD)                                                           \
                 {                                                                                              \
-                    LOG_INFO("Putting `%s:%lld` at index `%zu`.", __key, __value, index)                       \
+                    LOG_TRACE("Putting `%s:%lld` at index `%zu`.", __key, __value, index)                      \
                     hm_entry_p->value_lld = __value;                                                           \
                 }                                                                                              \
                 break;                                                                                         \
@@ -281,7 +285,7 @@ bool HashMap_remove(HashMap* hm_p, const char* key)
             else if (strlen(hm_entry_p->key) == 0)                                                             \
             {                                                                                                  \
                 /* Empty key -> unused entry */                                                                \
-                LOG_INFO("Adding key `%s`.", __key);                                                           \
+                LOG_TRACE("Adding key `%s`.", __key);                                                          \
                 strncpy(hm_entry_p->key, __key, MAX_MAP_KEY_LEN - 1);                                          \
                 hm_entry_p->key[MAX_MAP_KEY_LEN - 1] = 0; /* null terminate*/                                  \
                 (*__hm_pp)->size++;                                                                            \
@@ -317,7 +321,7 @@ bool __HashMap_put_cstr(const char* __file, int __line, HashMap** __hm_pp, const
         if (my_strncmp(hm_entry_p->key, __key))
         {
             // Key match
-            LOG_INFO("Putting `%s:%s` at index `%zu`.", __key, __value, index)
+            LOG_TRACE("Putting `%s:%s` at index `%zu`.", __key, __value, index)
             if (hm_entry_p->value_cstr)
             {
                 my_memory_free(hm_entry_p->value_cstr);
@@ -328,7 +332,7 @@ bool __HashMap_put_cstr(const char* __file, int __line, HashMap** __hm_pp, const
         else if (strlen(hm_entry_p->key) == 0)
         {
             // Empty key -> unused entry
-            LOG_INFO("Adding key `%s`.", __key);
+            LOG_TRACE("Adding key `%s`.", __key);
             strncpy(hm_entry_p->key, __key, MAX_MAP_KEY_LEN - 1);
             hm_entry_p->key[MAX_MAP_KEY_LEN - 1] = 0; // null terminate
             (*__hm_pp)->size++;
