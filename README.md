@@ -25,7 +25,9 @@ This will compile the unit test and start the debugger (lldb or gdb).
 ```
 
 ### Release
-> NOTE: do NOT use this mode if your projects is using the `_TEST` and `_MEMORY_CHECK` flags to run unit tests
+> NOTE: do NOT use this mode if your project is using the `_TEST` and `_MEMORY_CHECK` compiler flags
+
+
 This will compile the project as an object file with
 - no entry point
 - optimization level 3
@@ -44,7 +46,9 @@ clang src/<your-main-file>.c \
 
 
 ### Static library 
-> NOTE: do NOT use this mode if your projects is using the `_TEST` and `_MEMORY_CHECK` flags to run unit tests
+> NOTE: do NOT use this mode if your project is using the `_TEST` and `_MEMORY_CHECK` compiler flags
+
+
 This will compile the project as an archive file with
 - no entry point
 - optimization level 3
@@ -54,7 +58,9 @@ This will compile the project as an archive file with
 ```
 
 ### Module
-> NOTE: use this mode if your projects is using the `_TEST` and `_MEMORY_CHECK` flags to run unit tests
+> NOTE: use this mode if your project is using the `_TEST` and `_MEMORY_CHECK` compiler flags
+
+
 This will compile the project as an object file with
 - no entry point
 - optimization level 0
