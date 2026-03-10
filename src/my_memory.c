@@ -1,49 +1,44 @@
-#include "my_memory.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/errno.h>
-
-#if MEMORY_CHECK == 1
-#define create_file(pointer, file, line)                                                           \
-    {                                                                                              \
-        char file_name[256] = {0};                                                                 \
-        snprintf(file_name, 255, "/tmp/pointers/%p", pointer);                                     \
-        FILE* fh = fopen(file_name, "wx");                                                         \
-        if (!fh)                                                                                   \
-        {                                                                                          \
-            LOG_PERROR("Cannot create %p file", pointer);                                          \
-            exit(errno);                                                                           \
-        }                                                                                          \
-        fprintf(fh, "%s:%d", file, line);                                                          \
-        fclose(fh);                                                                                \
+#ifdef _MEMORY_CHECK
+#define create_file(pointer, file, line)                            \
+    {                                                               \
+        char file_name[PATH_MAX];                                   \
+        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer); \
+        FILE* fh = fopen(file_name, "wx");                          \
+        if (!fh)                                                    \
+        {                                                           \
+            LOG_PERROR("Cannot create %p file", pointer);           \
+            exit(errno);                                            \
+        }                                                           \
+        fprintf(fh, "%s:%d", file, line);                           \
+        fclose(fh);                                                 \
     }
 
-#define remove_file(pointer)                                                                       \
-    {                                                                                              \
-        char file_name[256] = {0};                                                                 \
-        snprintf(file_name, 255, "/tmp/pointers/%p", pointer);                                     \
-        if (remove(file_name))                                                                     \
-        {                                                                                          \
-            LOG_PERROR("Cannot remove %p file.", pointer);                                         \
-            exit(errno);                                                                           \
-        }                                                                                          \
+#define remove_file(pointer)                                        \
+    {                                                               \
+        char file_name[PATH_MAX];                                   \
+        snprintf(file_name, PATH_MAX, "/tmp/pointers/%p", pointer); \
+        if (remove(file_name))                                      \
+        {                                                           \
+            LOG_PERROR("Cannot remove %p file.", pointer);          \
+            exit(errno);                                            \
+        }                                                           \
     }
 
-#else /* MEMORY_CHECK == 1 */
+#else /* _MEMORY_CHECK not defined */
 
-#define create_file(pointer, file, line)                                                           \
-    {                                                                                              \
-        UNUSED(pointer);                                                                           \
-        UNUSED(file);                                                                              \
-        UNUSED(line);                                                                              \
+#define create_file(pointer, file, line) \
+    {                                    \
+        UNUSED(pointer);                 \
+        UNUSED(file);                    \
+        UNUSED(line);                    \
     }
 
-#define remove_file(pointer)                                                                       \
-    {                                                                                              \
-        UNUSED(pointer);                                                                           \
+#define remove_file(pointer) \
+    {                        \
+        UNUSED(pointer);     \
     }
 
-#endif /* MEMORY_CHECK == 1 */
+#endif /* _MEMORY_CHECK */
 
 void* my_memory_malloc(const char* file, const int line, size_t size)
 {
@@ -86,11 +81,20 @@ int my_memory_asprintf(const char* file, const int line, char** ptr_p, const cha
 
 void my_memory_free(void* ptr)
 {
-    remove_file(ptr);
-    free(ptr);
+    if (ptr != NULL)
+    {
+        remove_file(ptr);
+        free(ptr);
+    }
 }
 
-#if TEST == 1
+void my_memory_free_cstr(char** ptr)
+{
+    my_memory_free(*ptr);
+    *ptr = NULL;
+}
+
+#ifdef _TEST
 void test_my_memory(void)
 {
     PRINT_BANNER();
@@ -103,4 +107,4 @@ void test_my_memory(void)
         my_memory_free(char_p);
     }
 }
-#endif /* TEST == 1 */
+#endif /* _TEST */

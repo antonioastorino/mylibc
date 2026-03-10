@@ -1,11 +1,3 @@
-#include "class_string.h"
-#include "my_memory.h"
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #define SIZE_FACTOR 1.5
 
 bool String_is_null(const String* string_obj_p)
@@ -183,7 +175,7 @@ Error String_replace_char(
     return ERR_ALL_GOOD;
 }
 
-#define String_replace_pattern_c(suffix)                                                               \
+#define STRING_REPLACE_PATTERN_C(suffix)                                                               \
     Error String_replace_pattern_##suffix(                                                             \
         String* haystack_string_p,                                                                     \
         const char* needle,                                                                            \
@@ -203,9 +195,9 @@ Error String_replace_char(
 // I ma forced to add a semi-colon at the end of each of the following lines otherwise the formatter
 // will make a mess. However, the compiler is complaining about those, and hence I disabled the
 // warning.
-String_replace_pattern_c(size_t);
-String_replace_pattern_c(float);
-String_replace_pattern_c(int);
+STRING_REPLACE_PATTERN_C(llu_t);
+STRING_REPLACE_PATTERN_C(double);
+STRING_REPLACE_PATTERN_C(lld_t);
 #pragma GCC diagnostic pop
 
 Error _String_replace_pattern(
@@ -345,11 +337,11 @@ Error _String_between_patterns_in_string_p(
         file, line, in_string_p->str, prefix, suffix, out_string_obj_p);
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_class_string(void)
 {
     PRINT_BANNER();
-    PRINT_TEST_TITLE("Destroy empty string without failure")
+    PRINT_TEST_TITLE("Destroy empty string without failure");
     {
         String_empty(string_name);
         ASSERT(string_name.str == NULL, "Empty string created.");
@@ -362,7 +354,7 @@ void test_class_string(void)
         ASSERT(string_name.str == NULL, "String destroyed twice without failing.");
     }
 
-    PRINT_TEST_TITLE("New from string")
+    PRINT_TEST_TITLE("New from string");
     {
         const char* str = "Hello everybody";
         String_full(test_string, str);
@@ -372,7 +364,7 @@ void test_class_string(void)
         String_destroy(&test_string);
         ASSERT_EQ(String_is_null(&test_string), true, "Destroyed.");
     }
-    PRINT_TEST_TITLE("Destroy string twice")
+    PRINT_TEST_TITLE("Destroy string twice");
     {
         const char* str    = "Hello everybody";
         String test_string = String_new(str);
@@ -402,7 +394,7 @@ void test_class_string(void)
         String_destroy(&test_string);
     }
 
-    PRINT_TEST_TITLE("clone() function")
+    PRINT_TEST_TITLE("clone() function");
     {
         String test_origin = String_new("Original");
         String test_clone  = String_clone(&test_origin);
@@ -615,4 +607,4 @@ void test_class_string(void)
     }
     /**/
 }
-#endif
+#endif /* _TEST */

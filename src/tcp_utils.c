@@ -1,16 +1,3 @@
-#include "tcp_utils.h"
-#include <fcntl.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/select.h>
-
-#ifdef __linux__
-#include <sys/sendfile.h>
-#endif /* __linux__ */
-
 static bool g_initialized = false;
 static int g_server_socket;
 
@@ -40,9 +27,9 @@ Error tcp_utils_server_init(uint16_t port)
         return ERR_PERMISSION_DENIED;
     }
 
-    const int domain   = AF_INET; // (= PF_INET) Internet domain sockets for use with IPv4 addresses
+    const int domain   = AF_INET;     // (= PF_INET) Internet domain sockets for use with IPv4 addresses
     const int type     = SOCK_STREAM; // bitstream socket used in TCP
-    const int protocol = 0; // default type of socket that works with the other chosen params
+    const int protocol = 0;           // default type of socket that works with the other chosen params
     int on             = 1;
 
     // create a socket
@@ -170,32 +157,34 @@ Error tcp_utils_write(char* out_buff_char_p, int client_socket)
 
 Error tcp_utils_send_file(char* file_path, long file_size, int client_socket)
 {
-    int resource_file = open(file_path, O_RDONLY);
-    if (resource_file == -1)
+    int resource_fd = open(file_path, O_RDONLY);
+    if (resource_fd == -1)
     {
         LOG_PERROR("Error opening file");
         return ERR_UNEXPECTED;
     }
+    flock(resource_fd, LOCK_SH);
 #ifdef __linux__
-    ssize_t bytes_sent = sendfile(client_socket, resource_file, NULL, file_size);
+    ssize_t bytes_sent = sendfile(client_socket, resource_fd, NULL, file_size);
     LOG_INFO("Size `%ld` bytes.", file_size);
     LOG_INFO("Sent `%ld` bytes.", bytes_sent);
     if (bytes_sent == -1)
 #else
-    off_t len                      = file_size; // set to 0 will send all the origin file
-    int res                        = sendfile(resource_file, client_socket, 0, &len, NULL, 0);
+    off_t len = file_size; // set to 0 will send all the origin file
+    int res   = sendfile(resource_fd, client_socket, 0, &len, NULL, 0);
+    flock(resource_fd, LOCK_UN);
     LOG_INFO("Sent `%lld` bytes.", len);
     if (res == -1)
 #endif
     {
         LOG_PERROR("Failed to send file");
-        close(resource_file);
+        close(resource_fd);
         return ERR_TCP_INTERNAL;
     }
-    close(resource_file);
+    close(resource_fd);
     return ERR_ALL_GOOD;
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_tcp_utils(void) {}
-#endif
+#endif /* _TEST */

@@ -1,6 +1,6 @@
 {
-	"value_int": 23,
-	"value_negative_int": -123,
-	"value_small_uint": 43,
-	"value_uint": 2342342123424
+  "value_positive_lld": 23,
+  "value_negative_lld": -123,
+  "value_small_llu": 43,
+  "value_large_llu": 18446744073709551615
 }

@@ -1,24 +1,29 @@
-#include "class_json.h"
-#include "class_string.h"
-#include "class_string_array.h"
-#include "common.h"
-#include "converter.h"
-#include "fs_utils.h"
-#include "my_memory.h"
-#include "tcp_utils.h"
+#include "mylibc.h"
+#include "class_json.c"
+#include "class_string.c"
+#include "class_string_array.c"
+#include "common.c"
+#include "numparser.c"
+#include "fs.c"
+#include "my_memory.c"
+#include "tcp_utils.c"
+#include "hashmap.c"
 
+#ifdef _TEST
+#ifndef _MODULE
 int main(void)
 {
-#if TEST == 1
     logger_init(NULL, NULL);
     test_logger();
     test_class_string();
     test_class_string_array();
     test_class_json();
-    test_converter();
-    test_fs_utils();
+    test_numparser();
+    test_fs();
     test_tcp_utils();
     test_my_memory();
     test_common();
-#endif /* TEST == 1 */
+    test_hashmap();
 }
+#endif /* _MODULE */
+#endif /* _TEST */

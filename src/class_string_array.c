@@ -1,8 +1,3 @@
-#include "class_string_array.h"
-#include "my_memory.h"
-#include <stdlib.h>
-#include <string.h>
-
 StringArray StringArray_empty(void)
 {
     StringArray ret_string_array
@@ -97,7 +92,7 @@ void StringArray_destroy(StringArray* string_array_p)
     string_array_p->str_char_p       = NULL;
 }
 
-#if TEST == 1
+#ifdef _TEST
 void test_class_string_array(void)
 {
     StringArray test_string_array = StringArray_empty();
@@ -167,4 +162,4 @@ void test_class_string_array(void)
     ASSERT_EQ(test_string_array.num_of_elements, 0, "No split performed");
     StringArray_destroy(&test_string_array);
 }
-#endif
+#endif /* _TEST */
