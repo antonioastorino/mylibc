@@ -93,7 +93,8 @@ Error _String_print(const String* string_obj_p)
         LOG_ERROR("Uninitialized string.");
         return ERR_NULL;
     }
-    for (size_t i = 0; i < string_obj_p->length; i++)
+    // I cannot use a formatter with field precision (i.e., "%.*s") because `length` is not `int` and the compiler doesn't like it.
+    for (llu_t i = 0; i < string_obj_p->length; i++)
     {
         printf("%c", string_obj_p->str[i]);
     }
@@ -131,6 +132,10 @@ bool String_match(const String* a_string_p, const String* b_string_p)
     if (a_string_p == NULL || b_string_p == NULL)
     {
         LOG_WARNING("Input strings should not be NULL");
+        return false;
+    }
+    if (a_string_p->length != b_string_p->length)
+    {
         return false;
     }
     if (strcmp(a_string_p->str, b_string_p->str))
@@ -175,30 +180,26 @@ Error String_replace_char(
     return ERR_ALL_GOOD;
 }
 
-#define STRING_REPLACE_PATTERN_C(suffix)                                                               \
-    Error String_replace_pattern_##suffix(                                                             \
-        String* haystack_string_p,                                                                     \
-        const char* needle,                                                                            \
-        const char* format,                                                                            \
-        const suffix replacement,                                                                      \
-        size_t* out_count)                                                                             \
-    {                                                                                                  \
-        String replacement_string = String_new(format, replacement);                                   \
-        Error res_replace         = _String_replace_pattern(                                           \
+#define STRING_REPLACE_PATTERN_C(suffix)                                                       \
+    Error String_replace_pattern_##suffix(                                                     \
+        String* haystack_string_p,                                                             \
+        const char* needle,                                                                    \
+        const char* format,                                                                    \
+        const suffix replacement,                                                              \
+        size_t* out_count)                                                                     \
+    {                                                                                          \
+        String replacement_string = String_new(format, replacement);                           \
+        Error res_replace         = _String_replace_pattern(                                   \
             __FILE__, __LINE__, haystack_string_p, needle, replacement_string.str, out_count); \
-        String_destroy(&replacement_string);                                                           \
-        return res_replace;                                                                            \
+        String_destroy(&replacement_string);                                                   \
+        return res_replace;                                                                    \
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wextra-semi"
-// I ma forced to add a semi-colon at the end of each of the following lines otherwise the formatter
-// will make a mess. However, the compiler is complaining about those, and hence I disabled the
-// warning.
-STRING_REPLACE_PATTERN_C(llu_t);
-STRING_REPLACE_PATTERN_C(double);
-STRING_REPLACE_PATTERN_C(lld_t);
-#pragma GCC diagnostic pop
+// clang-format off
+STRING_REPLACE_PATTERN_C(llu_t)
+STRING_REPLACE_PATTERN_C(double)
+STRING_REPLACE_PATTERN_C(lld_t)
+// clang-format on
 
 Error _String_replace_pattern(
     const char* file,
