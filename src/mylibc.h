@@ -85,6 +85,8 @@ typedef enum
 
 #define is_err(_expr) ((_expr) != ERR_ALL_GOOD)
 #define is_ok(_expr) ((_expr) == ERR_ALL_GOOD)
+
+// ---------- STRING START ----------
 /* ------- String ------- */
 typedef struct String
 {
@@ -162,8 +164,9 @@ Error String_replace_pattern_double(String*, const char*, const char*, const dou
     double:             String_replace_pattern_double  \
     )(haystack, needle, format, replacement, out_count)
 // clang-format on
+// ---------- STRING END ----------
 
-/* ------- String Array ------- */
+// ---------- STRING ARRAY START ----------
 typedef struct
 {
     llu_t num_of_elements;
@@ -174,10 +177,11 @@ typedef struct
 StringArray StringArray_empty(void);
 StringArray _StringArray_new(const char* file, const int line, const char*, const char*);
 void StringArray_destroy(StringArray*);
-
 #define StringArray_new(str, separator) _StringArray_new(__FILENAME__, __LINE__, str, separator)
+// ---------- STRING ARRAY END ----------
 
 #ifdef _TEST
+// During unit testing, if something is printed to `strerr` it will indicate that some tests have failed. Therefore, all logs are redirected to `stdout`.
 #define log_out stdout
 #define log_err stdout
 
@@ -270,8 +274,7 @@ void test_hashmap(void);
 #else /* _TEST not defined */
 #define log_out (log_out_file_p == NULL ? stdout : log_out_file_p)
 #define log_err (log_err_file_p == NULL ? stderr : log_err_file_p)
-
-#endif
+#endif /* _TEST */
 
 #define SET_MISSING_ENTRY(result, bool_value, success_string) \
     if (is_err(result))                                       \
@@ -281,6 +284,7 @@ void test_hashmap(void);
     }                                                         \
     LOG_TRACE("%s", success_string);
 
+// ---------- JSON START ----------
 typedef struct JsonItem JsonItem;
 typedef struct JsonValue JsonValue;
 typedef struct JsonArray JsonArray;
@@ -407,18 +411,10 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
             JsonArray**  : invalid_request                 \
             )                                              \
         )(json_stuff, needle, out_p)
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wextra-semi"
-;
-#pragma GCC diagnostic pop
 // clang-format on
+// ---------- JSON END----------
 
-// ---------- LOGGER ----------
-
-// Ensure that errors are not printed to stderr during tests as they would cause the unit test
-// to fail.
-
+// ---------- LOGGER START ----------
 #define return_on_err(_expr)                            \
     {                                                   \
         Error _res = _expr;                             \
@@ -431,7 +427,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
 #define DATE_TIME_STR_LEN 32
-void logger_init(const char*, const char*);
+                                                                                void logger_init(const char*, const char*);
 
 FILE* log_out_file_p = NULL;
 FILE* log_err_file_p = NULL;
@@ -501,6 +497,8 @@ void get_date_time(char* date_time_str);
 #define LOG_TRACE(...)
 #endif
 // ---------- LOGGER END ----------
+
+// ---------- HASHMAP START ----------
 #define MAX_MAP_KEY_LEN (256)
 
 typedef enum
@@ -531,7 +529,11 @@ typedef struct
     size_t size;
     HashMapType type;
     HashMapEntry* entries;
+    // private (used when traversing the hashmap)
+    size_t __traverse_curr_index;
+    HashMapEntry* __traverse_curr_entry_p;
 } HashMap;
+// ---------- HASHMAP END ----------
 
 Error numparser_cstr_to_lld(const char* str_p, lld_t* out_lld_p, char terminator);
 Error numparser_cstr_to_llu(const char* str_p, llu_t* out_llu_p, char terminator);

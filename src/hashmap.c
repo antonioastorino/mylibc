@@ -35,80 +35,78 @@ size_t __hm_cstr_to_index(char const* cstr, llu_t const max_size)
     return ret_val;
 }
 
-#define __HASHMAP_TRAVERSE(__suffix, __SUFFIX, __type, __ret_action)      \
-    bool HashMap_traverse_##__suffix(                                     \
-        HashMap* hm_p,                                                    \
-        bool* restart,                                                    \
-        char* out_key,                                                    \
-        __type out_val_p)                                                 \
-    {                                                                     \
-        static size_t curr_index        = 0;                              \
-        static HashMapEntry* hm_entry_p = NULL;                           \
-        out_key[0]                      = 0;                              \
-        *out_val_p                      = 0;                              \
-        if (!hm_p)                                                        \
-        {                                                                 \
-            return false;                                                 \
-        }                                                                 \
-        if (hm_p->type != HM_TYPE_##__SUFFIX)                             \
-        {                                                                 \
-            LOG_ERROR("Wrong hashmap type: expected HM_TYPE_" #__SUFFIX); \
-            return false;                                                 \
-        }                                                                 \
-        if (*restart)                                                     \
-        {                                                                 \
-            *restart   = false;                                           \
-            hm_entry_p = NULL;                                            \
-            curr_index = 0;                                               \
-        }                                                                 \
-        if (curr_index >= hm_p->capacity)                                 \
-        {                                                                 \
-            LOG_INFO("Reached the bottom");                               \
-            return false;                                                 \
-        }                                                                 \
-                                                                          \
-        /* hm_entry_p is set to NULL when we want to look at              \
-         * the root element, otherwise it points to a child element */    \
-        if (!hm_entry_p)                                                  \
-        {                                                                 \
-            hm_entry_p = &hm_p->entries[curr_index];                      \
-        }                                                                 \
-                                                                          \
-        while (hm_entry_p->key[0] == 0)                                   \
-        {                                                                 \
-            curr_index++;                                                 \
-            if (curr_index >= hm_p->capacity)                             \
-            {                                                             \
-                LOG_INFO("No more entries");                              \
-                return false;                                             \
-            }                                                             \
-            hm_entry_p = &hm_p->entries[curr_index];                      \
-        }                                                                 \
-        strncpy(out_key, hm_entry_p->key, MAX_MAP_KEY_LEN - 1);           \
-        __ret_action;                                                     \
-        /* Set the next place to scan:                                    \
-         * - the next child of the current element                        \
-         * - the next element*/                                           \
-        if (hm_entry_p->next_p)                                           \
-        {                                                                 \
-            hm_entry_p = hm_entry_p->next_p;                              \
-        }                                                                 \
-        else                                                              \
-        {                                                                 \
-            hm_entry_p = NULL;                                            \
-            curr_index++;                                                 \
-        }                                                                 \
-        LOG_TRACE("Next index `%zu`", curr_index);                        \
-        return true;                                                      \
+#define __HASHMAP_TRAVERSE(__suffix, __SUFFIX, __type, __ret_action)                     \
+    bool HashMap_traverse_##__suffix(                                                    \
+        HashMap* hm_p,                                                                   \
+        bool* restart,                                                                   \
+        char* out_key,                                                                   \
+        __type out_val_p)                                                                \
+    {                                                                                    \
+        out_key[0] = 0;                                                                  \
+        *out_val_p = 0;                                                                  \
+        if (!hm_p)                                                                       \
+        {                                                                                \
+            return false;                                                                \
+        }                                                                                \
+        if (hm_p->type != HM_TYPE_##__SUFFIX)                                            \
+        {                                                                                \
+            LOG_ERROR("Wrong hashmap type: expected HM_TYPE_" #__SUFFIX);                \
+            return false;                                                                \
+        }                                                                                \
+        if (*restart)                                                                    \
+        {                                                                                \
+            *restart                      = false;                                       \
+            hm_p->__traverse_curr_entry_p = NULL;                                        \
+            hm_p->__traverse_curr_index   = 0;                                           \
+        }                                                                                \
+        if (hm_p->__traverse_curr_index >= hm_p->capacity)                               \
+        {                                                                                \
+            LOG_INFO("Reached the bottom");                                              \
+            return false;                                                                \
+        }                                                                                \
+                                                                                         \
+        /* hm_p->__traverse_curr_entry_p is set to NULL when we want to look at          \
+         * the root element, otherwise it points to a child element */                   \
+        if (!hm_p->__traverse_curr_entry_p)                                              \
+        {                                                                                \
+            hm_p->__traverse_curr_entry_p = &hm_p->entries[hm_p->__traverse_curr_index]; \
+        }                                                                                \
+                                                                                         \
+        while (hm_p->__traverse_curr_entry_p->key[0] == 0)                               \
+        {                                                                                \
+            hm_p->__traverse_curr_index++;                                               \
+            if (hm_p->__traverse_curr_index >= hm_p->capacity)                           \
+            {                                                                            \
+                LOG_INFO("No more entries");                                             \
+                return false;                                                            \
+            }                                                                            \
+            hm_p->__traverse_curr_entry_p = &hm_p->entries[hm_p->__traverse_curr_index]; \
+        }                                                                                \
+        strncpy(out_key, hm_p->__traverse_curr_entry_p->key, MAX_MAP_KEY_LEN - 1);       \
+        __ret_action;                                                                    \
+        /* Set the next place to scan:                                                   \
+         * - the next child of the current element                                       \
+         * - the next element*/                                                          \
+        if (hm_p->__traverse_curr_entry_p->next_p)                                       \
+        {                                                                                \
+            hm_p->__traverse_curr_entry_p = hm_p->__traverse_curr_entry_p->next_p;       \
+        }                                                                                \
+        else                                                                             \
+        {                                                                                \
+            hm_p->__traverse_curr_entry_p = NULL;                                        \
+            hm_p->__traverse_curr_index++;                                               \
+        }                                                                                \
+        LOG_TRACE("Next index `%zu`", hm_p->__traverse_curr_index);                      \
+        return true;                                                                     \
     }
 
 // clang-format off
-__HASHMAP_TRAVERSE(lld, LLD, lld_t*, *out_val_p = hm_entry_p->value_lld)
-__HASHMAP_TRAVERSE(llu, LLU, llu_t*, *out_val_p = hm_entry_p->value_llu)
+__HASHMAP_TRAVERSE(lld, LLD, lld_t*, *out_val_p = hm_p->__traverse_curr_entry_p->value_lld)
+__HASHMAP_TRAVERSE(llu, LLU, llu_t*, *out_val_p = hm_p->__traverse_curr_entry_p->value_llu)
 __HASHMAP_TRAVERSE(cstr, CSTR, char**,
-            size_t val_len = strlen(hm_entry_p->value_cstr) + 1;
+            size_t val_len = strlen(hm_p->__traverse_curr_entry_p->value_cstr) + 1;
             *out_val_p     = (char*)my_memory_malloc(__FILE__, __LINE__, val_len);
-            strncpy(*out_val_p, hm_entry_p->value_cstr, val_len)
+            strncpy(*out_val_p, hm_p->__traverse_curr_entry_p->value_cstr, val_len)
 )
 
 #define HashMap_traverse(__hm_p, __restart, __out_key_p, __out_val_p) \
@@ -161,7 +159,7 @@ HashMap* __HashMap_new_with_capacity(const char* __file, int __line, HashMapType
 
 void HashMap_resize_if_needed(HashMap** src_hm_pp)
 {
-    if ((src_hm_pp) == NULL | (*src_hm_pp) == NULL)
+    if ((src_hm_pp) == NULL || (*src_hm_pp) == NULL)
     {
         return;
     }
@@ -263,7 +261,7 @@ void HashMap_delete(HashMap** map_pp)
                 {                                                                        \
                     *out_value_p = hm_entry_p->value_llu;                                \
                 }                                                                        \
-                else if (hm_p->type == HM_TYPE_LLU)                                      \
+                else if (hm_p->type == HM_TYPE_LLD)                                      \
                 {                                                                        \
                     *out_value_p = hm_entry_p->value_lld;                                \
                 }                                                                        \
@@ -583,8 +581,9 @@ void test_hashmap(void)
         ASSERT_EQ(test_hm_p->capacity, 11, "Initial capacity correct");
         ASSERT(!HashMap_put(&test_hm_p, "test key00", 99U), "Entry not put");
         ASSERT(!HashMap_get_lld(test_hm_p, "test key00", &value_lld), "Entry not gotten");
-        ASSERT(HashMap_put(&test_hm_p, "test key00", 99), "Entry put");
+        ASSERT(HashMap_put(&test_hm_p, "test key00", -99), "Entry put");
         ASSERT(HashMap_get_lld(test_hm_p, "test key00", &value_lld), "Entry gotten");
+        ASSERT_EQ(value_lld, -99, "Value correct");
     }
     PRINT_TEST_TITLE("HasMap LLD create, put, and resize");
     {
@@ -653,7 +652,7 @@ void test_hashmap(void)
         lld_t value_lld                    = 0;
         ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Empty map");
         ASSERT(restart == false, "Restart reset");
-        ASSERT(HashMap_put(&test_hm_p, "First entry", 1), "Entry put");
+        ASSERT(HashMap_put(&test_hm_p, "First entry", -1), "Entry put");
         restart = true;
         ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
         ASSERT_EQ(key, "First entry", "Entry found");
@@ -671,7 +670,7 @@ void test_hashmap(void)
         ASSERT_EQ(value_lld, 5, "Value correct");
         ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
         ASSERT_EQ(key, "First entry", "Entry found");
-        ASSERT_EQ(value_lld, 1, "Value correct");
+        ASSERT_EQ(value_lld, -1, "Value correct");
         HashMap_print(test_hm_p);
     }
     PRINT_TEST_TITLE("HashMap CSTR traverse");

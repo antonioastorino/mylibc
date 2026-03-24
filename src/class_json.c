@@ -369,7 +369,7 @@ Error _deserialize(const char* file, const int line, JsonItem* curr_item_p, char
         }
         case INVALID:
         {
-            LOG_ERROR("TODO: handle this");
+            LOG_ERROR("This should be unreachable.");
             exit(3);
         }
 
@@ -784,6 +784,12 @@ void test_class_json(void)
         const char* json_char_p = "{\"key\":{}}";
         ASSERT_OK(JsonObj_new(json_char_p, &json_obj), "Empty nested JSON");
         ASSERT_ERR(Json_get(&json_obj, "key", &value_cstr), "Key found but value cannot be retrieved");
+    }
+    PRINT_TEST_TITLE("Invalid rhs");
+    {
+        __autodestroy_json__ JsonObj json_obj;
+        const char* json_char_p = "{\"key\":undefined}";
+        ASSERT_ERR(JsonObj_new(json_char_p, &json_obj), "Invalid value");
     }
     PRINT_TEST_TITLE("Key-value pair");
     {
