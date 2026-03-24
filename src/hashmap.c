@@ -24,15 +24,15 @@ llu_t __prime_vec[] = {
     823117,
 };
 
-size_t __hm_cstr_to_index(char const* cstr, llu_t const max_size)
+size_t __hm_cstr_djb2_hash(char const* cstr, llu_t const max_size)
 {
-    size_t ret_val = 0;
+    size_t ret_val = 5381;
     while (*cstr)
     {
-        ret_val = (ret_val + *cstr) % max_size;
+        ret_val = ((ret_val << 5) + ret_val) + (unsigned char)*cstr;
         cstr++;
     }
-    return ret_val;
+    return ret_val % max_size;
 }
 
 #define __HASHMAP_TRAVERSE(__suffix, __SUFFIX, __type, __ret_action)                     \
@@ -241,7 +241,7 @@ void HashMap_delete(HashMap** map_pp)
 #define __HASHMAP_GET_(__suffix, __type)                                                 \
     bool __HASHMAP_GET_##__suffix(HashMap* hm_p, const char* __key, __type* out_value_p) \
     {                                                                                    \
-        size_t index             = __hm_cstr_to_index(__key, hm_p->capacity);            \
+        size_t index             = __hm_cstr_djb2_hash(__key, hm_p->capacity);           \
         HashMapEntry* hm_entry_p = &hm_p->entries[index];                                \
         if (hm_p->type == HM_TYPE_CSTR)                                                  \
         {                                                                                \
@@ -275,7 +275,7 @@ void HashMap_delete(HashMap** map_pp)
 bool __HashMap_get_cstr_malloc(const char* file, int line, HashMap* hm_p, const char* key, char** out_value_pp)
 {
     // This function allocates memory to prevent the output value from affecting the value stored in the hashmap and vice-versa.
-    size_t index             = __hm_cstr_to_index(key, hm_p->capacity);
+    size_t index             = __hm_cstr_djb2_hash(key, hm_p->capacity);
     HashMapEntry* hm_entry_p = &hm_p->entries[index];
     if (hm_p->size <= 0)
     {
@@ -296,7 +296,7 @@ bool __HashMap_get_cstr_malloc(const char* file, int line, HashMap* hm_p, const 
 
 bool HashMap_remove(HashMap* hm_p, const char* key)
 {
-    size_t index             = __hm_cstr_to_index(key, hm_p->capacity);
+    size_t index             = __hm_cstr_djb2_hash(key, hm_p->capacity);
     HashMapEntry* hm_entry_p = &hm_p->entries[index];
     if (hm_p->size <= 0)
     {
@@ -340,7 +340,7 @@ bool HashMap_remove(HashMap* hm_p, const char* key)
         const char* __key,                                                                                     \
         __type __value)                                                                                        \
     {                                                                                                          \
-        size_t index             = __hm_cstr_to_index(__key, (*__hm_pp)->capacity);                            \
+        size_t index             = __hm_cstr_djb2_hash(__key, (*__hm_pp)->capacity);                           \
         HashMapEntry* hm_entry_p = &(*__hm_pp)->entries[index];                                                \
         if ((*__hm_pp)->type != HM_TYPE_##__suffix)                                                            \
         {                                                                                                      \
@@ -391,7 +391,7 @@ bool HashMap_remove(HashMap* hm_p, const char* key)
 
 bool __HashMap_put_cstr(const char* __file, int __line, HashMap** __hm_pp, const char* __key, char* __value)
 {
-    size_t index             = __hm_cstr_to_index(__key, (*__hm_pp)->capacity);
+    size_t index             = __hm_cstr_djb2_hash(__key, (*__hm_pp)->capacity);
     HashMapEntry* hm_entry_p = &(*__hm_pp)->entries[index];
     if ((*__hm_pp)->type != HM_TYPE_CSTR)
     {
@@ -481,7 +481,7 @@ void test_hashmap(void)
 {
     PRINT_BANNER();
     PRINT_TEST_TITLE("Hashing");
-    __hm_cstr_to_index("TEST", 5);
+    __hm_cstr_djb2_hash("TEST", 5);
     PRINT_TEST_TITLE("HasMap LLU create, put, get, remove");
     {
         const size_t capacity              = 4;
@@ -630,17 +630,17 @@ void test_hashmap(void)
         ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_llu), "No more entries");
         ASSERT(HashMap_put(&test_hm_p, "Other entry", 4U), "Entry put");
         HashMap_print(test_hm_p);
-        ASSERT(HashMap_put(&test_hm_p, "First entrx", 10U), "Entry put");
+        ASSERT(HashMap_put(&test_hm_p, "First entry1", 10U), "Entry put");
         restart = true;
-        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
-        ASSERT_EQ(key, "Other entry", "Entry found");
-        ASSERT_EQ(value_llu, 4U, "Value correct");
-        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
-        ASSERT_EQ(key, "First entrx", "Entry found");
-        ASSERT_EQ(value_llu, 10U, "Value correct");
         ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
         ASSERT_EQ(key, "First entry", "Entry found");
         ASSERT_EQ(value_llu, 5041U, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
+        ASSERT_EQ(key, "First entry1", "Entry found");
+        ASSERT_EQ(value_llu, 10U, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_llu), "Map ok");
+        ASSERT_EQ(key, "Other entry", "Entry found");
+        ASSERT_EQ(value_llu, 4U, "Value correct");
         HashMap_print(test_hm_p);
     }
     PRINT_TEST_TITLE("HashMap LLD traverse");
@@ -659,18 +659,18 @@ void test_hashmap(void)
         ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_lld), "No more entries");
         ASSERT(!HashMap_traverse(test_hm_p, &restart, key, &value_lld), "No more entries");
         ASSERT(HashMap_put(&test_hm_p, "Other entry", 4), "Entry put");
+        ASSERT(HashMap_put(&test_hm_p, "First entry1", 5), "Entry put");
         HashMap_print(test_hm_p);
-        ASSERT(HashMap_put(&test_hm_p, "First entrx", 5), "Entry put");
         restart = true;
-        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
-        ASSERT_EQ(key, "Other entry", "Entry found");
-        ASSERT_EQ(value_lld, 4, "Value correct");
-        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
-        ASSERT_EQ(key, "First entrx", "Entry found");
-        ASSERT_EQ(value_lld, 5, "Value correct");
         ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
         ASSERT_EQ(key, "First entry", "Entry found");
         ASSERT_EQ(value_lld, -1, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
+        ASSERT_EQ(key, "First entry1", "Entry found");
+        ASSERT_EQ(value_lld, 5, "Value correct");
+        ASSERT(HashMap_traverse(test_hm_p, &restart, key, &value_lld), "Map ok");
+        ASSERT_EQ(key, "Other entry", "Entry found");
+        ASSERT_EQ(value_lld, 4, "Value correct");
         HashMap_print(test_hm_p);
     }
     PRINT_TEST_TITLE("HashMap CSTR traverse");
