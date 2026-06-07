@@ -682,7 +682,7 @@ GET_ARRAY_VALUE_c(value_child_p, VALUE_ITEM, JsonItem**)
 #pragma clang diagnostic ignored "-Wextra-semi"
 ; // ensure clang-format works when turned on again
 #pragma clang diagnostic pop
-                                                                                  // clang-format on
+// clang-format on
 
 #ifdef _TEST
 static char* load_file_alloc(char* filename)

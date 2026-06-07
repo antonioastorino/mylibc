@@ -416,6 +416,7 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
 
 // ---------- LOGGER START ----------
 #define return_on_err(_expr)                            \
+    do                                                  \
     {                                                   \
         Error _res = _expr;                             \
         if (_res != ERR_ALL_GOOD)                       \
@@ -423,11 +424,18 @@ Error invalid_request(const JsonArray*, llu_t, const JsonArray**);
             LOG_WARNING("Error propagated from here."); \
             return _res;                                \
         }                                               \
-    }
+    } while (false)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wextra-semi"
+    // clang-format off
+    ; // ensure clang-format works when turned on again
+// clang-format on
+#pragma clang diagnostic pop
 
 #if LOG_LEVEL > LEVEL_NO_LOGS
 #define DATE_TIME_STR_LEN 32
-                                                                                void logger_init(const char*, const char*);
+
+void logger_init(const char*, const char*);
 
 FILE* log_out_file_p = NULL;
 FILE* log_err_file_p = NULL;
